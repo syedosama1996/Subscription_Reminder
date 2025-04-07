@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -53,12 +53,14 @@ export default function HomeScreen() {
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [toggleLoading, setToggleLoading] = useState(false);
+  const categoriesScrollViewRef = useRef<ScrollView>(null);
 
   const loadData = async () => {
     if (!user) return;
     
     try {
       setError(null);
+      setLoading(true);
       
       // Load categories
       const categoriesData = await getCategories(user.id);
@@ -75,47 +77,48 @@ export default function HomeScreen() {
         filter.status = selectedStatuses as any[];
       }
       
-      if (activeCategory) {
-        filter.categories = [activeCategory];
-      }
-      
       // Load subscriptions with filters
       const data = await getSubscriptions(user.id, filter);
-      console.log('Raw subscriptions data:', data);
       
       // Filter only active subscriptions (is_active === true)
       const activeSubscriptions = data?.filter(sub => sub.is_active === true) || [];
-      console.log('Active subscriptions before sort:', activeSubscriptions);
       
       // Sort by created_at in descending order (newest first)
       const sortedSubscriptions = activeSubscriptions.sort((a, b) => {
         const dateA = new Date(a.created_at).getTime();
         const dateB = new Date(b.created_at).getTime();
-        return dateB - dateA; // This will put newest (larger date) first
+        return dateB - dateA;
       });
       
-      console.log('Sorted subscriptions:', sortedSubscriptions);
       setSubscriptions(sortedSubscriptions);
+      setFilteredSubscriptions(sortedSubscriptions);
       
-      // Apply search filter
-      if (searchQuery.trim() === '') {
-        setFilteredSubscriptions(sortedSubscriptions);
-      } else {
-        const filtered = sortedSubscriptions.filter(sub => 
-          sub.service_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (sub.domain_name && sub.domain_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (sub.vendor && sub.vendor.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
-        setFilteredSubscriptions(filtered);
-      }
+      // Debug logs
+      console.log('Loaded subscriptions:', {
+        total: sortedSubscriptions.length,
+        categories: categoriesData?.length,
+        activeCategory,
+        filteredCount: filteredSubscriptions.length,
+        firstSubscription: sortedSubscriptions[0]?.category_id,
+        categoriesData: categoriesData?.map(c => ({ id: c.id, name: c.name }))
+      });
+      
     } catch (err: any) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
+      Alert.alert('Error', 'Failed to load data. Please try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
+
+  const onRefresh = useCallback(() => {
+    if (!refreshing) {
+      setRefreshing(true);
+      loadData();
+    }
+  }, [refreshing]);
 
   useEffect(() => {
     if (user) {
@@ -123,7 +126,7 @@ export default function HomeScreen() {
     } else {
       setLoading(false);
     }
-  }, [user, selectedCategories, selectedStatuses, activeCategory]);
+  }, [user, selectedCategories, selectedStatuses]);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -137,11 +140,6 @@ export default function HomeScreen() {
       setFilteredSubscriptions(filtered);
     }
   }, [searchQuery, subscriptions]);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    loadData();
-  }, []);
 
   // Group subscriptions by expiry status
   const groupSubscriptions = () => {
@@ -293,10 +291,112 @@ export default function HomeScreen() {
     setSelectedSubscriptions([]);
   };
 
+  const handleCategoryPress = (categoryId: string | null) => {
+    setActiveCategory(activeCategory === categoryId ? null : categoryId);
+    
+    // Debug log to check subscription structure
+    console.log('Subscription structure:', subscriptions[0]);
+    
+    // Filter existing subscriptions instead of reloading
+    if (categoryId === null) {
+      setFilteredSubscriptions(subscriptions);
+    } else {
+      const filtered = subscriptions.filter(sub => {
+        console.log('Checking subscription:', {
+          subId: sub.id,
+          categoryId: sub.category_id,
+          category: sub.category,
+          targetCategoryId: categoryId
+        });
+        return sub.category_id === categoryId;
+      });
+      setFilteredSubscriptions(filtered);
+    }
+  };
+
+  // Add effect to update filtered subscriptions when activeCategory changes
+  useEffect(() => {
+    if (activeCategory === null) {
+      setFilteredSubscriptions(subscriptions);
+    } else {
+      const filtered = subscriptions.filter(sub => {
+        console.log('Effect - Checking subscription:', {
+          subId: sub.id,
+          categoryId: sub.category_id,
+          category: sub.category,
+          targetCategoryId: activeCategory
+        });
+        return sub.category_id === activeCategory;
+      });
+      setFilteredSubscriptions(filtered);
+    }
+  }, [activeCategory, subscriptions]);
+
+  // Update the renderEmptyState function
+  const renderEmptyState = () => {
+    const hasNoSubscriptions = subscriptions.length === 0;
+    const hasNoFilteredResults = filteredSubscriptions.length === 0 && subscriptions.length > 0;
+    
+    // Debug logs
+    console.log('Empty state conditions:', {
+      hasNoSubscriptions,
+      hasNoFilteredResults,
+      subscriptionsCount: subscriptions.length,
+      filteredCount: filteredSubscriptions.length,
+      activeCategory
+    });
+    
+    return (
+      <View style={[styles.emptyContainer, { flex: 1, justifyContent: 'center' }]}>
+        <Text style={styles.emptyTitle}>
+          {hasNoSubscriptions ? 'No subscriptions found' : 'No matching subscriptions'}
+        </Text>
+        <Text style={styles.emptySubtitle}>
+          {hasNoSubscriptions
+            ? "You haven't added any subscriptions yet."
+            : "No subscriptions match your search or filters."}
+        </Text>
+        <TouchableOpacity 
+                style={styles.addFirstButton}
+                onPress={() => router.push('/add')}
+              >
+                <Plus size={20} color="#fff" style={styles.addFirstIcon} />
+                <Text style={styles.addFirstText}>Add Your First Subscription</Text>
+              </TouchableOpacity>
+      </View>
+    );
+  };
+
+  // Add effect to scroll to active category
+  useEffect(() => {
+    if (activeCategory && categoriesScrollViewRef.current) {
+      // Find the index of the active category
+      const categoryIndex = categories.findIndex(cat => cat.id === activeCategory);
+      if (categoryIndex !== -1) {
+        // Calculate the scroll position
+        const scrollPosition = categoryIndex * 88; // 80px width + 8px margin
+        
+        // Use setTimeout to ensure the scroll happens after the render
+        setTimeout(() => {
+          categoriesScrollViewRef.current?.scrollTo({
+            x: scrollPosition,
+            animated: true
+          });
+        }, 100);
+      }
+    }
+  }, [activeCategory, categories]);
+
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4158D0" />
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#4158D0', '#C850C0']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        />
+        <CustomLoader visible={true} />
       </View>
     );
   }
@@ -311,7 +411,8 @@ export default function HomeScreen() {
       />
       
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.mainContent}>
+        {/* Header Section */}
+        <View style={styles.headerContainer}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.menuButton}>
               <Menu size={24} color="#fff" />
@@ -328,7 +429,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
           </View>
-
+          
           <View style={styles.searchContainer}>
             <View style={styles.searchBar}>
               <Search size={20} color="#7f8c8d" style={styles.searchIcon} />
@@ -346,75 +447,79 @@ export default function HomeScreen() {
           </View>
 
           <Text style={styles.title}>Active Subscriptions</Text>
+        </View>
 
+        {/* Main Content Section */}
+        <View style={styles.mainContent}>
+          {/* Categories Tabs */}
           {categories.length > 0 && (
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              style={styles.categoriesContainer}
-              contentContainerStyle={styles.categoriesScrollContent}
-              alwaysBounceHorizontal={false}
-            >
-              <TouchableOpacity
-                onPress={() => setActiveCategory(null)}
-                style={[
-                  styles.categoryTab,
-                  !activeCategory && styles.activeCategoryTab
-                ]}
+            <View style={styles.categoriesWrapper}>
+              <ScrollView 
+                ref={categoriesScrollViewRef}
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoriesContainer}
+                contentContainerStyle={styles.categoriesScrollContent}
+                alwaysBounceHorizontal={false}
               >
-                {!activeCategory ? (
-                  <LinearGradient
-                    colors={['#4158D0', '#C850C0']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.categoryTabContent]}
-                  >
-                    <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>All</Text>
-                  </LinearGradient>
-                ) : (
-                  <View style={styles.categoryTabContent}>
-                    <Text style={styles.categoryTabText}>All</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-              
-              {categories.map(category => (
                 <TouchableOpacity
-                  key={category.id}
-                  onPress={() => setActiveCategory(activeCategory === category.id ? null : category.id!)}
+                  onPress={() => handleCategoryPress(null)}
                   style={[
                     styles.categoryTab,
-                    activeCategory === category.id && styles.activeCategoryTab
+                    !activeCategory && styles.activeCategoryTab
                   ]}
                 >
-                  {activeCategory === category.id ? (
+                  {!activeCategory ? (
                     <LinearGradient
                       colors={['#4158D0', '#C850C0']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
                       style={[styles.categoryTabContent]}
                     >
-                      <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>
-                        {category.name}
-                      </Text>
+                      <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>All</Text>
                     </LinearGradient>
                   ) : (
                     <View style={styles.categoryTabContent}>
-                      <Text style={styles.categoryTabText}>{category.name}</Text>
+                      <Text style={styles.categoryTabText}>All</Text>
                     </View>
                   )}
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
+                
+                {categories.map(category => (
+                  <TouchableOpacity
+                    key={category.id}
+                    onPress={() => handleCategoryPress(category.id!)}
+                    style={[
+                      styles.categoryTab,
+                      activeCategory === category.id && styles.activeCategoryTab
+                    ]}
+                  >
+                    {activeCategory === category.id ? (
+                      <LinearGradient
+                        colors={['#4158D0', '#C850C0']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.categoryTabContent]}
+                      >
+                        <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>
+                          {category.name}
+                        </Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={styles.categoryTabContent}>
+                        <Text style={styles.categoryTabText}>{category.name}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           )}
 
-          <View style={styles.listContainer}>
+          {/* Subscriptions List */}
+          {filteredSubscriptions.length === 0 ? (
+            renderEmptyState()
+          ) : (
             <FlatList
               data={[
                 ...active.map(sub => ({ type: 'subscription', data: sub })),
@@ -432,6 +537,7 @@ export default function HomeScreen() {
                   selected={selectedSubscriptions.includes(item.data.id!)}
                   onToggleSelection={() => toggleSubscriptionSelection(item.data.id!)}
                   disabled={toggleLoading}
+                  onPress={() => router.push(`/subscription/${item.data.id}`)}
                 />
               )}
               contentContainerStyle={styles.listContent}
@@ -441,32 +547,15 @@ export default function HomeScreen() {
                   onRefresh={onRefresh}
                   colors={['#4158D0']}
                   tintColor="#4158D0"
+                  progressViewOffset={Platform.OS === 'android' ? 50 : 0}
                 />
               }
               showsVerticalScrollIndicator={true}
               scrollEnabled={true}
               bounces={true}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyTitle}>No subscriptions found</Text>
-                  <Text style={styles.emptySubtitle}>
-                    {subscriptions.length === 0
-                      ? "You haven't added any subscriptions yet."
-                      : "No subscriptions match your search or filters."}
-                  </Text>
-                  {subscriptions.length === 0 && (
-                    <TouchableOpacity 
-                      style={styles.addFirstButton}
-                      onPress={() => router.push('/add')}
-                    >
-                      <Plus size={20} color="#fff" style={styles.addFirstIcon} />
-                      <Text style={styles.addFirstText}>Add Your First Subscription</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              }
+              ListEmptyComponent={renderEmptyState}
             />
-          </View>
+          )}
         </View>
 
         <CustomLoader visible={toggleLoading} />
@@ -502,13 +591,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 240,
+    height: 240
   },
   safeArea: {
     flex: 1,
   },
-  mainContent: {
-    flex: 1,
+  headerContainer: {
+    paddingBottom: 16,
   },
   header: {
     flexDirection: 'row',
@@ -516,53 +605,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    height: 50,
-  },
-  title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 26,
-    color: '#fff',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  categoriesContainer: {
-    marginBottom: 12,
-  },
-  categoriesScrollContent: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    gap: 10,
-    height: 40,
-    marginBottom: 20,
-  },
-  listContainer: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    marginTop: 10,
-    overflow: 'hidden',
-  },
-  listContent: {
-    padding: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
   },
   menuButton: {
     width: 40,
@@ -585,11 +627,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-  searchIcon: {
-    marginRight: 12,
+  searchContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
-  filterButton: {
-    padding: 8,
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    height: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchInput: {
     flex: 1,
@@ -597,11 +650,42 @@ const styles = StyleSheet.create({
     color: '#2c3e50',
     fontFamily: 'Inter-Regular',
   },
+  searchIcon: {
+    marginRight: 12,
+  },
+  filterButton: {
+    padding: 8,
+  },
+  title: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 26,
+    color: '#fff',
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  mainContent: {
+    flex: 1,
+
+  },
+  categoriesWrapper: {
+    borderBottomColor: '#e6e6f0',
+  },
+  categoriesContainer: {
+    height: 40,
+  },
+  categoriesScrollContent: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    gap: 10,
+  },
   categoryTab: {
     borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: '#e6e6f0',
-    minWidth: 115,
+    minWidth: 80,
+    height: 36,
+    marginHorizontal: 4,
   },
   categoryTabContent: {
     width: '100%',
@@ -609,6 +693,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
+    paddingHorizontal: 16,
+  },
+  activeCategoryTab: {
+    backgroundColor: 'transparent',
+  },
+  activeCategoryTabContent: {
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   categoryTabText: {
     fontFamily: 'Inter-Medium',
@@ -616,11 +714,20 @@ const styles = StyleSheet.create({
     color: '#4158D0',
     textAlign: 'center',
   },
-  activeCategoryTab: {
-    backgroundColor: 'transparent',
-  },
   activeCategoryTabText: {
     color: '#fff',
+    fontFamily: 'Inter-SemiBold',
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 100,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -645,18 +752,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   emptyContainer: {
-    flex: 2,
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    marginTop: 60,
   },
   emptyTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 22,
+    fontSize: 20,
     color: '#2c3e50',
     marginBottom: 12,
+    textAlign: 'center',
   },
   emptySubtitle: {
     fontFamily: 'Inter-Regular',
-    fontSize: 16,
+    fontSize: 14,
     color: '#7f8c8d',
     textAlign: 'center',
     marginBottom: 24,
@@ -680,7 +791,7 @@ const styles = StyleSheet.create({
   addFirstText: {
     fontFamily: 'Inter-Medium',
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
   },
   errorContainer: {
     margin: 20,

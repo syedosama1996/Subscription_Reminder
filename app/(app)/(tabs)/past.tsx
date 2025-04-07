@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -16,6 +16,7 @@ import SubscriptionCard from '../../../components/SubscriptionCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { History } from 'lucide-react-native';
 import CustomLoader from '../../../components/CustomLoader';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function PastSubscriptionsScreen() {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ export default function PastSubscriptionsScreen() {
     
     try {
       setError(null);
+      setLoading(true);
       const data = await getSubscriptions(user.id);
       // Filter inactive subscriptions
       const inactiveSubscriptions = data?.filter(sub => sub.is_active === false) || [];
@@ -45,20 +47,26 @@ export default function PastSubscriptionsScreen() {
     } catch (err) {
       console.error('Error loading past subscriptions:', err);
       setError('Failed to load past subscriptions');
+      Alert.alert('Error', 'Failed to load past subscriptions');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, [user]);
+  // Load data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [user])
+  );
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadData();
-  };
+  const onRefresh = useCallback(() => {
+    if (!refreshing) {
+      setRefreshing(true);
+      loadData();
+    }
+  }, [refreshing]);
 
   const handleToggleSubscriptionStatus = async (id: string, isActive: boolean) => {
     if (!user) return;
@@ -77,8 +85,14 @@ export default function PastSubscriptionsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4158D0" />
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#4158D0', '#C850C0']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        />
+        <CustomLoader visible={true} />
       </View>
     );
   }

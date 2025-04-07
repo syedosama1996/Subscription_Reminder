@@ -73,8 +73,14 @@ export default function ExpiringSubscriptionsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4158D0" />
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#4158D0', '#C850C0']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        />
+        <CustomLoader visible={true} />
       </View>
     );
   }

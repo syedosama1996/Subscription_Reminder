@@ -15,6 +15,7 @@ interface SubscriptionCardProps {
   selected?: boolean;
   onToggleSelection?: () => void;
   disabled?: boolean;
+  onPress?: () => void;
 }
 
 const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
@@ -23,7 +24,8 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   selectionMode,
   selected,
   onToggleSelection,
-  disabled
+  disabled,
+  onPress
 }) => {
   const router = useRouter();
   
@@ -49,11 +51,11 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
 
   // Determine gradient colors based on status
   const getGradientColors = () => {
-    if (subscription.is_active === false) return ['#7f8c8d', '#95a5a6']; // Inactive
-    if (days < 0) return ['#e74c3c', '#c0392b']; // Expired
-    if (days <= 7) return ['#e67e22', '#d35400']; // Expiring soon
-    if (days <= 30) return ['#f1c40f', '#f39c12']; // Expiring in a month
-    return ['#2ecc71', '#27ae60']; // Good standing
+    if (subscription.is_active === false) return ['#7f8c8d', '#95a5a6'] as const; // Inactive
+    if (days < 0) return ['#e74c3c', '#c0392b'] as const; // Expired
+    if (days <= 7) return ['#e67e22', '#d35400'] as const; // Expiring soon
+    if (days <= 30) return ['#f1c40f', '#f39c12'] as const; // Expiring in a month
+    return ['#2ecc71', '#27ae60'] as const; // Good standing
   };
 
   const formatDate = (dateString: string) => {
@@ -69,7 +71,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     if (selectionMode) {
       onToggleSelection?.();
     } else {
-      router.push(`/subscription/${subscription.id}`);
+      onPress ? onPress() : router.push(`/subscription/${subscription.id}`);
     }
   };
 
@@ -82,7 +84,8 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   return (
     <TouchableOpacity 
       style={[styles.card, selected && styles.selectedCard]}
-      onPress={selectionMode ? onToggleSelection : undefined}
+      onPress={handlePress}
+      onLongPress={handleLongPress}
       disabled={disabled}
     >
       {Platform.OS === 'ios' ? (
@@ -260,7 +263,7 @@ const styles = StyleSheet.create({
     borderColor: '#4158D0',
   },
   cardContent: {
-    padding: 20,
+    padding: 16,
   },
   cardGradient: {
     position: 'absolute',
@@ -282,24 +285,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   checkboxContainer: {
     marginRight: 12,
   },
   serviceName: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Inter-Bold',
     color: '#2c3e50',
     flex: 1,
   },
   categoryContainer: {
-    marginBottom: 12,
+    marginBottom: 4,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 4,
   },
   infoText: {
     marginLeft: 10,
@@ -311,8 +314,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: 8,
+    paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: 'rgba(241, 242, 246, 0.5)',
   },
