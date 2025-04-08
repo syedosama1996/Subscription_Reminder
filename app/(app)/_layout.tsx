@@ -35,9 +35,7 @@ function CustomDrawerContent(props: any) {
       >
         <Text style={styles.drawerTitle}>Menu</Text>
       </LinearGradient>
-
       <View style={styles.drawerContent}>
-     
         <TouchableOpacity 
           style={styles.drawerItem}
           onPress={() => router.push('/(tabs)/profile')}
