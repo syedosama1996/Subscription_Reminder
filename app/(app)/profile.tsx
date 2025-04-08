@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
-import { User, Mail, Phone, Calendar, MapPin, Edit2, X } from 'lucide-react-native';
+import { User, Mail, Phone, Calendar, MapPin, Edit2, X, ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
+import { router } from 'expo-router';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -81,9 +82,19 @@ export default function ProfileScreen() {
         style={styles.headerGradient}
       />
       <View style={styles.headerContent}>
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>{getInitialLetter()}</Text>
+        <View style={styles.headerTop}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.avatarContainer}>
+            <Text style={styles.avatarText}>{getInitialLetter()}</Text>
+          </View>
+          <View style={styles.headerRight} />
         </View>
+        
         <Text style={styles.name}>{username || 'Loading...'}</Text>
         <Text style={styles.email}>{user?.email || ''}</Text>
         <TouchableOpacity 
@@ -203,25 +214,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  content: {
-    flex: 1,
-    marginTop: 0,
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
   },
-  avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 3,
+  },
+  avatarContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   avatarText: {
-    fontSize: 40,
+    fontSize: 24,
     fontFamily: 'Inter-Bold',
     color: '#fff',
+  },
+  headerRight: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    marginTop: 0,
   },
   name: {
     fontSize: 24,
