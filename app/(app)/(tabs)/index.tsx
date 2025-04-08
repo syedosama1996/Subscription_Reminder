@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../lib/auth';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useNavigation, DrawerNavigationProp } from '@react-navigation/native';
 import { Drawer } from 'expo-router/drawer';
 import { 
@@ -57,6 +57,14 @@ export default function HomeScreen() {
   const [exporting, setExporting] = useState(false);
   const [toggleLoading, setToggleLoading] = useState(false);
   const categoriesScrollViewRef = useRef<ScrollView>(null);
+
+  // Add focus effect to refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Refresh data when screen comes into focus
+      loadData();
+    }, [])
+  );
 
   const loadData = async () => {
     if (!user) return;
@@ -210,7 +218,7 @@ export default function HomeScreen() {
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (!user || selectedSubscriptions.length === 0) return;
     
     Alert.alert(
@@ -548,6 +556,7 @@ export default function HomeScreen() {
                   onToggleSelection={() => toggleSubscriptionSelection(item.data.id!)}
                   disabled={toggleLoading}
                   onPress={() => router.push(`/subscription/${item.data.id}`)}
+                  onRefresh={loadData}
                 />
               )}
               contentContainerStyle={styles.listContent}
@@ -579,6 +588,7 @@ export default function HomeScreen() {
         onSelectCategories={setSelectedCategories}
         selectedStatuses={selectedStatuses}
         onSelectStatuses={setSelectedStatuses}
+        onRefresh={loadData}
       />
       
       <BulkActionBar
