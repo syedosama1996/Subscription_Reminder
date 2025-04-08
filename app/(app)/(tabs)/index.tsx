@@ -402,7 +402,7 @@ export default function HomeScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.headerGradient}
       />
-      
+
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Header Section */}
         <View style={styles.headerContainer}>
@@ -611,8 +611,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 240
+    height: 240,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
+
   safeArea: {
     flex: 1,
   },
@@ -777,7 +780,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-    marginTop: 60,
   },
   emptyTitle: {
     fontFamily: 'Inter-Bold',

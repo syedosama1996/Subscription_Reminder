@@ -96,7 +96,7 @@ export default function ExpiringSubscriptionsScreen() {
       
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
-          <Text style={styles.title}>Expiring & Expired</Text>
+          <Text style={styles.title}>Expire Subscriptions</Text>
         </View>
 
         {error ? (
@@ -147,22 +147,28 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 180,
+    height: 150,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
+
   safeArea: {
     flex: 1,
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 20,
+    position: 'relative',
   },
+
   title: {
     fontFamily: 'Inter-Bold',
     fontSize: 32,
     color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 10,
+    letterSpacing: 0.5,
   },
   loadingContainer: {
     flex: 1,

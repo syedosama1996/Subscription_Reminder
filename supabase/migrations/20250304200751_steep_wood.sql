@@ -117,25 +117,22 @@ END $$;
 -- Create policies for activity_logs if they don't exist
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'activity_logs' AND policyname = 'Users can create their own activity logs'
-  ) THEN
-    CREATE POLICY "Users can create their own activity logs"
-      ON activity_logs
-      FOR INSERT
-      TO authenticated
-      WITH CHECK (auth.uid() = user_id);
-  END IF;
+  -- Drop existing policies if they exist
+  DROP POLICY IF EXISTS "Users can create their own activity logs" ON activity_logs;
+  DROP POLICY IF EXISTS "Users can view their own activity logs" ON activity_logs;
+  DROP POLICY IF EXISTS "Users can manage subscription activity logs" ON activity_logs;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'activity_logs' AND policyname = 'Users can view their own activity logs'
-  ) THEN
-    CREATE POLICY "Users can view their own activity logs"
-      ON activity_logs
-      FOR SELECT
-      TO authenticated
-      USING (auth.uid() = user_id);
-  END IF;
+  -- Create a single comprehensive policy for all activity log operations
+  CREATE POLICY "Users can manage all activity logs"
+    ON activity_logs
+    FOR ALL
+    TO authenticated
+    USING (
+      auth.uid() = user_id
+    )
+    WITH CHECK (
+      auth.uid() = user_id
+    );
 END $$;
 
 -- Create indexes for better performance if they don't exist

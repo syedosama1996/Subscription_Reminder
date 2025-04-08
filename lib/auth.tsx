@@ -199,7 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // If the user exists in profiles but not in auth, we need to recreate the auth user
         if (error.message === 'Invalid login credentials' && userData) {
-          console.log('User exists in profiles but not in auth. Attempting to reset password...');
+          console.log('User exists in profiles but auth login failed. Attempting to reset password...');
           
           // Try to reset the password
           const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
@@ -208,9 +208,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (resetError) {
             console.error('Password reset error:', resetError);
+            throw new Error('Failed to reset password. Please try again later.');
           } else {
             console.log('Password reset email sent to:', email);
-            throw new Error('Password reset email sent. Please check your inbox.');
+            throw new Error('Password reset email sent. Please check your inbox to reset your password.');
           }
         }
         

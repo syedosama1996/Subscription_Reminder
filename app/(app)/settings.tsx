@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
-import { Bell, Moon, Sun, Lock, CreditCard, HelpCircle, Shield, Mail, LogOut } from 'lucide-react-native';
+import { Bell, Moon, Sun, Lock, CreditCard, HelpCircle, Shield, Mail, LogOut,ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 
@@ -30,9 +30,16 @@ export default function SettingsScreen() {
       />
       
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Settings</Text>
-        </View>
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Settings</Text>
+        <View style={styles.placeholder} />
+      </View>
 
         <ScrollView style={styles.scrollView}>
           <View style={styles.section}>
@@ -145,17 +152,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   headerGradient: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
-    height: 180,
+    height: 150,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   safeArea: {
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
@@ -166,6 +186,11 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 10,
+    textAlign: 'center',
+  },
+  placeholder: {
+    width: 40,
+    height: 40,
   },
   scrollView: {
     flex: 1,

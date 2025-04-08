@@ -35,8 +35,18 @@ export default function RegisterScreen() {
       return;
     }
     
-    // Proceed with registration
-    await signUp(email, password);
+    try {
+      // Proceed with registration
+      await signUp(email, password);
+      
+      // Add a small delay to ensure auth state is updated
+      setTimeout(() => {
+        // Navigate to home screen after successful signup
+        router.replace('/(app)/(tabs)');
+      }, 500);
+    } catch (error) {
+      // Error is already handled by the auth context
+    }
   };
 
   return (

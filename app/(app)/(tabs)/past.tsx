@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  ActivityIndicator, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
   Alert
@@ -28,21 +28,21 @@ export default function PastSubscriptionsScreen() {
 
   const loadData = async () => {
     if (!user) return;
-    
+
     try {
       setError(null);
       setLoading(true);
       const data = await getSubscriptions(user.id);
       // Filter inactive subscriptions
       const inactiveSubscriptions = data?.filter(sub => sub.is_active === false) || [];
-      
+
       // Sort by created_at in descending order (newest first)
       const sortedSubscriptions = inactiveSubscriptions.sort((a, b) => {
         const dateA = new Date(a.created_at).getTime();
         const dateB = new Date(b.created_at).getTime();
         return dateB - dateA;
       });
-      
+
       setSubscriptions(sortedSubscriptions);
     } catch (err) {
       console.error('Error loading past subscriptions:', err);
@@ -70,7 +70,7 @@ export default function PastSubscriptionsScreen() {
 
   const handleToggleSubscriptionStatus = async (id: string, isActive: boolean) => {
     if (!user) return;
-    
+
     try {
       setToggleLoading(true);
       await toggleSubscriptionStatus(id, isActive, user.id);
@@ -104,7 +104,7 @@ export default function PastSubscriptionsScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.headerGradient}
       />
-      
+
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
           <Text style={styles.title}>Past Subscriptions</Text>
@@ -127,7 +127,7 @@ export default function PastSubscriptionsScreen() {
             data={subscriptions}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <SubscriptionCard 
+              <SubscriptionCard
                 subscription={item}
                 onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id, isActive)}
                 disabled={toggleLoading}
@@ -161,7 +161,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 180,
+    height: 150,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   safeArea: {
     flex: 1,
@@ -173,15 +175,17 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 20,
+    position: 'relative',
   },
   title: {
     fontFamily: 'Inter-Bold',
     fontSize: 32,
     color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 10,
+    letterSpacing: 0.5,
   },
   listContent: {
     padding: 20,
