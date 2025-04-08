@@ -9,7 +9,11 @@ import {
   Shield,
   HelpCircle,
   LogOut,
-  User
+  User,
+  FileText,
+  BarChart2,
+  Activity,
+  History
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,27 +31,32 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
     {
       icon: <User size={24} color="#4158D0" />,
       label: 'Profile',
-      onPress: () => router.push('/(tabs)/profile')
+      onPress: () => router.push('/(app)/profile')
+    },
+    {
+      icon: <FileText size={24} color="#4158D0" />,
+      label: 'Invoice',
+      onPress: () => router.push('/(app)/invoice')
+    },
+    {
+      icon: <BarChart2 size={24} color="#4158D0" />,
+      label: 'Report',
+      onPress: () => router.push('/(app)/report')
+    },
+    {
+      icon: <Activity size={24} color="#4158D0" />,
+      label: 'Activity Log',
+      onPress: () => router.push('/(app)/activity-log')
+    },
+    {
+      icon: <History size={24} color="#4158D0" />,
+      label: 'Purchase History',
+      onPress: () => router.push('/(app)/purchase-history')
     },
     {
       icon: <Settings size={24} color="#4158D0" />,
       label: 'Settings',
-      onPress: () => router.push('/(tabs)/settings')
-    },
-    {
-      icon: <Bell size={24} color="#4158D0" />,
-      label: 'Notifications',
-      onPress: () => router.push('/(tabs)/notifications')
-    },
-    {
-      icon: <Shield size={24} color="#4158D0" />,
-      label: 'Security',
-      onPress: () => router.push('/(tabs)/security')
-    },
-    {
-      icon: <HelpCircle size={24} color="#4158D0" />,
-      label: 'Help & Support',
-      onPress: () => router.push('/(tabs)/help')
+      onPress: () => router.push('/(app)/settings')
     }
   ];
 
