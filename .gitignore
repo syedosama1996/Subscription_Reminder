@@ -29,6 +29,42 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
+.env.development
+.env.test
+.env.production
+.env.staging
 
 # typescript
 *.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# iOS
+ios/Pods/
+ios/build/
+ios/*.xcworkspace
+ios/*.xcodeproj/*
+!ios/*.xcodeproj/project.pbxproj
+!ios/*.xcodeproj/xcshareddata/
+!ios/*.xcworkspace/contents.xcworkspacedata
+
+# Android
+android/app/build/
+android/build/
+android/local.properties
+android/.gradle/
+android/.idea/
+android/*.iml
+android/.settings/
+android/.project
+android/app/release/
+
+# Temporary files
+*.log
+*.tmp
+*.temp

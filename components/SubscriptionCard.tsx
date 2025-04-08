@@ -16,6 +16,7 @@ interface SubscriptionCardProps {
   onToggleSelection?: () => void;
   disabled?: boolean;
   onPress?: () => void;
+  onRefresh?: () => void;
 }
 
 const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
@@ -25,7 +26,8 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   selected,
   onToggleSelection,
   disabled,
-  onPress
+  onPress,
+  onRefresh
 }) => {
   const router = useRouter();
   
@@ -81,6 +83,17 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     }
   };
 
+  // Add a wrapper for onToggleStatus to refresh the screen after toggling
+  const handleToggleStatus = (isActive: boolean) => {
+    if (onToggleStatus) {
+      onToggleStatus(isActive);
+      // Call the refresh callback after a short delay to allow the toggle to complete
+      setTimeout(() => {
+        onRefresh?.();
+      }, 500);
+    }
+  };
+
   return (
     <TouchableOpacity 
       style={[styles.card, selected && styles.selectedCard]}
@@ -112,7 +125,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               {onToggleStatus && (
                 <StatusToggle 
                   subscription={subscription} 
-                  onToggle={onToggleStatus}
+                  onToggle={handleToggleStatus}
                   disabled={disabled}
                 />
               )}
@@ -182,7 +195,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               {onToggleStatus && (
                 <StatusToggle 
                   subscription={subscription} 
-                  onToggle={onToggleStatus}
+                  onToggle={handleToggleStatus}
                   disabled={disabled}
                 />
               )}

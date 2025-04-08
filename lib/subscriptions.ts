@@ -127,25 +127,25 @@ export const getSubscriptions = async (userId: string, filter?: SubscriptionFilt
         const expiryDate = new Date(sub.expiry_date);
         
         // Only include active subscriptions
-        if (!sub.is_active && !filter.status.includes('past')) {
+        if (!sub.is_active && filter.status && !filter.status.includes('past')) {
           return false;
         }
 
         // Filter by status
-        if (filter.status.includes('active') && expiryDate > thirtyDaysFromNow && sub.is_active) {
+        if (filter.status && filter.status.includes('active') && expiryDate > thirtyDaysFromNow && sub.is_active) {
           return true;
         }
-        if (filter.status.includes('expiring_soon') && expiryDate <= thirtyDaysFromNow && expiryDate >= today && sub.is_active) {
+        if (filter.status && filter.status.includes('expiring_soon') && expiryDate <= thirtyDaysFromNow && expiryDate >= today && sub.is_active) {
           return true;
         }
-        if (filter.status.includes('expired') && expiryDate < today && expiryDate >= thirtyDaysAgo && sub.is_active) {
+        if (filter.status && filter.status.includes('expired') && expiryDate < today && expiryDate >= thirtyDaysAgo && sub.is_active) {
           return true;
         }
-        if (filter.status.includes('past') && (!sub.is_active || expiryDate < thirtyDaysAgo)) {
+        if (filter.status && filter.status.includes('past') && (!sub.is_active || expiryDate < thirtyDaysAgo)) {
           return true;
         }
         
-        return filter.status.length === 0; // Include all if no status filter
+        return filter.status && filter.status.length === 0; // Include all if no status filter
       });
     }
 
@@ -558,13 +558,47 @@ export const deleteCategory = async (id: string, userId: string) => {
 // Activity Logs
 export const logActivity = async (log: ActivityLog) => {
   try {
+    // For subscription-related activities, ensure we have the correct user_id
+    if (log.entity_type === 'subscription' && log.entity_id) {
+      try {
+        const { data: subscription, error } = await supabase
+          .from('subscriptions')
+          .select('user_id')
+          .eq('id', log.entity_id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching subscription:', error);
+        } else if (subscription) {
+          log.user_id = subscription.user_id;
+        }
+      } catch (err) {
+        console.error('Error in subscription lookup:', err);
+      }
+    }
+
+    // Ensure user_id is set
+    if (!log.user_id) {
+      console.error('Activity log missing user_id:', log);
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('activity_logs')
-      .insert(log)
+      .insert({
+        user_id: log.user_id,
+        action: log.action,
+        entity_type: log.entity_type,
+        entity_id: log.entity_id,
+        details: log.details || null
+      })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error logging activity:', error);
+      throw error;
+    }
     return data;
   } catch (error) {
     console.error('Error logging activity:', error);

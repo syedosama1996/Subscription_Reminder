@@ -138,8 +138,8 @@ export default function SubscriptionDetailScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              if (!subscription?.id) return;
-              await deleteSubscription(subscription.id);
+              if (!subscription?.id || !user) return;
+              await deleteSubscription(subscription.id, user.id);
               router.replace('/');
             } catch (err) {
               console.error('Error deleting subscription:', err);
@@ -178,11 +178,11 @@ export default function SubscriptionDetailScreen() {
   };
   
   const handleSaveEdit = async () => {
-    if (!subscription?.id) return;
+    if (!subscription?.id || !user) return;
     
     try {
       setLoading(true);
-      await updateSubscription(subscription.id, editedSubscription);
+      await updateSubscription(subscription.id, editedSubscription, user.id);
       await loadSubscription();
       setIsEditing(false);
     } catch (err) {
@@ -211,7 +211,7 @@ export default function SubscriptionDetailScreen() {
   };
   
   const handleSaveRenewal = async () => {
-    if (!subscription?.id) return;
+    if (!subscription?.id || !user) return;
     
     try {
       setLoading(true);
@@ -223,7 +223,7 @@ export default function SubscriptionDetailScreen() {
         purchase_amount_usd: renewalData.purchase_amount_usd ? parseFloat(renewalData.purchase_amount_usd) : undefined,
         vendor: renewalData.sameVendor ? subscription.vendor : renewalData.vendor,
         vendor_link: renewalData.sameVendor ? subscription.vendor_link : renewalData.vendor_link
-      });
+      }, user.id);
       
       setRenewModalVisible(false);
       await loadSubscription();

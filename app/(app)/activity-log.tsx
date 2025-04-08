@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
-import { Activity, Filter, Clock, CheckCircle, AlertCircle, Info, Plus, Trash2, Edit, Power, RefreshCw, User, CreditCard, Tag, Settings, Bell, Lock, Mail, Phone, MapPin, Calendar } from 'lucide-react-native';
+import { Activity, Filter, Clock, CheckCircle, AlertCircle, Info, Plus, Trash2, Edit, Power, RefreshCw, User, CreditCard, Tag, Settings, Bell, Lock, Mail, Phone, MapPin, Calendar, ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityLogger } from '../../lib/services/activity-logger';
+import { useRouter } from 'expo-router';
 
 interface ActivityItem {
   id: string;
@@ -17,6 +18,7 @@ interface ActivityItem {
 
 export default function ActivityLogScreen() {
   const { user } = useAuth();
+  const router = useRouter();
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -314,6 +316,12 @@ export default function ActivityLogScreen() {
       />
       
       <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#fff" />
+        </TouchableOpacity>
         <Text style={styles.title}>Activity Log</Text>
         <TouchableOpacity 
           style={styles.filterButton} 
@@ -418,6 +426,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,

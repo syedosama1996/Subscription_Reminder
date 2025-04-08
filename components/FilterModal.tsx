@@ -21,6 +21,7 @@ type FilterModalProps = {
   onSelectCategories: (categoryIds: string[]) => void;
   selectedStatuses: string[];
   onSelectStatuses: (statuses: string[]) => void;
+  onRefresh?: () => void;
 };
 
 const STATUS_OPTIONS = [
@@ -37,7 +38,8 @@ export default function FilterModal({
   selectedCategories,
   onSelectCategories,
   selectedStatuses,
-  onSelectStatuses
+  onSelectStatuses,
+  onRefresh
 }: FilterModalProps) {
   const [localSelectedCategories, setLocalSelectedCategories] = useState<string[]>([]);
   const [localSelectedStatuses, setLocalSelectedStatuses] = useState<string[]>([]);
@@ -69,6 +71,10 @@ export default function FilterModal({
     onSelectCategories(localSelectedCategories);
     onSelectStatuses(localSelectedStatuses);
     onClose();
+    
+    setTimeout(() => {
+      onRefresh?.();
+    }, 300);
   };
 
   const handleClearFilters = () => {
@@ -77,6 +83,10 @@ export default function FilterModal({
     onSelectCategories([]);
     onSelectStatuses([]);
     onClose();
+    
+    setTimeout(() => {
+      onRefresh?.();
+    }, 300);
   };
 
   const hasActiveFilters = localSelectedCategories.length > 0 || localSelectedStatuses.length > 0;
