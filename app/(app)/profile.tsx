@@ -6,6 +6,7 @@ import { User, Mail, Phone, Calendar, MapPin, Edit2, X, ArrowLeft } from 'lucide
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { router } from 'expo-router';
+import { ActivityLogger } from '../../lib/services/activity-logger';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ export default function ProfileScreen() {
   const [phone, setPhone] = useState('Not set');
   const [location, setLocation] = useState('Not set');
   const [isLoading, setIsLoading] = useState(false);
+  const [previousUsername, setPreviousUsername] = useState('');
 
   useEffect(() => {
     // Initialize username from email or fetch from profiles table
@@ -30,11 +32,15 @@ export default function ProfileScreen() {
           if (error) throw error;
 
           // If username exists in profiles, use it, otherwise use email prefix
-          setUsername(data?.username || user.email.split('@')[0]);
+          const initialUsername = data?.username || user.email.split('@')[0];
+          setUsername(initialUsername);
+          setPreviousUsername(initialUsername);
         } catch (error) {
           console.error('Error fetching username:', error);
           // Fallback to email prefix if there's an error
-          setUsername(user.email.split('@')[0]);
+          const initialUsername = user.email.split('@')[0];
+          setUsername(initialUsername);
+          setPreviousUsername(initialUsername);
         }
       }
     };
@@ -59,6 +65,19 @@ export default function ProfileScreen() {
 
       if (error) throw error;
 
+      // Log the profile update activity
+      await ActivityLogger.log({
+        user_id: user?.id || '',
+        action: 'update',
+        entity_type: 'profile',
+        entity_id: user?.id,
+        details: {
+          previous_username: previousUsername,
+          new_username: username.trim()
+        }
+      });
+
+      setPreviousUsername(username.trim());
       setIsModalVisible(false);
       Alert.alert('Success', 'Profile updated successfully');
     } catch (error) {
