@@ -14,6 +14,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../lib/auth';
+import { useRouter } from 'expo-router';
+import { useNavigation, DrawerNavigationProp } from '@react-navigation/native';
+import { Drawer } from 'expo-router/drawer';
 import { 
   getSubscriptions, 
   getCategories, 
@@ -26,10 +29,9 @@ import SubscriptionCard from '../../../components/SubscriptionCard';
 import CategoryBadge from '../../../components/CategoryBadge';
 import FilterModal from '../../../components/FilterModal';
 import BulkActionBar from '../../../components/BulkActionBar';
-import { Search, Bell, Plus, Filter, Download, CheckSquare, Menu } from 'lucide-react-native';
+import { Search, Bell, Plus, Filter, Download, CheckSquare, Menu, CheckCircle2, XCircle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { useRouter } from 'expo-router';
 import { Category, SubscriptionFilter } from '../../../lib/types';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -38,6 +40,7 @@ import CustomLoader from '../../../components/CustomLoader';
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const navigation = useNavigation<DrawerNavigationProp<any>>();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [filteredSubscriptions, setFilteredSubscriptions] = useState<Subscription[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -92,16 +95,7 @@ export default function HomeScreen() {
       
       setSubscriptions(sortedSubscriptions);
       setFilteredSubscriptions(sortedSubscriptions);
-      
-      // Debug logs
-      console.log('Loaded subscriptions:', {
-        total: sortedSubscriptions.length,
-        categories: categoriesData?.length,
-        activeCategory,
-        filteredCount: filteredSubscriptions.length,
-        firstSubscription: sortedSubscriptions[0]?.category_id,
-        categoriesData: categoriesData?.map(c => ({ id: c.id, name: c.name }))
-      });
+    
       
     } catch (err: any) {
       console.error('Error loading data:', err);
@@ -295,19 +289,13 @@ export default function HomeScreen() {
     setActiveCategory(activeCategory === categoryId ? null : categoryId);
     
     // Debug log to check subscription structure
-    console.log('Subscription structure:', subscriptions[0]);
     
     // Filter existing subscriptions instead of reloading
     if (categoryId === null) {
       setFilteredSubscriptions(subscriptions);
     } else {
       const filtered = subscriptions.filter(sub => {
-        console.log('Checking subscription:', {
-          subId: sub.id,
-          categoryId: sub.category_id,
-          category: sub.category,
-          targetCategoryId: categoryId
-        });
+    
         return sub.category_id === categoryId;
       });
       setFilteredSubscriptions(filtered);
@@ -320,12 +308,7 @@ export default function HomeScreen() {
       setFilteredSubscriptions(subscriptions);
     } else {
       const filtered = subscriptions.filter(sub => {
-        console.log('Effect - Checking subscription:', {
-          subId: sub.id,
-          categoryId: sub.category_id,
-          category: sub.category,
-          targetCategoryId: activeCategory
-        });
+
         return sub.category_id === activeCategory;
       });
       setFilteredSubscriptions(filtered);
@@ -337,14 +320,6 @@ export default function HomeScreen() {
     const hasNoSubscriptions = subscriptions.length === 0;
     const hasNoFilteredResults = filteredSubscriptions.length === 0 && subscriptions.length > 0;
     
-    // Debug logs
-    console.log('Empty state conditions:', {
-      hasNoSubscriptions,
-      hasNoFilteredResults,
-      subscriptionsCount: subscriptions.length,
-      filteredCount: filteredSubscriptions.length,
-      activeCategory
-    });
     
     return (
       <View style={[styles.emptyContainer, { flex: 1, justifyContent: 'center' }]}>
@@ -387,6 +362,16 @@ export default function HomeScreen() {
     }
   }, [activeCategory, categories]);
 
+  const handleMarkAll = () => {
+    const allIds = filteredSubscriptions.map(sub => sub.id!);
+    setSelectedSubscriptions(allIds);
+  };
+
+  const handleRemoveAll = () => {
+    setSelectedSubscriptions([]);
+    setSelectionMode(false);
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -414,19 +399,44 @@ export default function HomeScreen() {
         {/* Header Section */}
         <View style={styles.headerContainer}>
           <View style={styles.header}>
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity 
+              style={styles.menuButton}
+              onPress={() => navigation.toggleDrawer()}
+            >
               <Menu size={24} color="#fff" />
             </TouchableOpacity>
             <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.iconButton}>
-                <CheckSquare size={22} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconButton}>
-                <Download size={22} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconButton}>
-                <Bell size={22} color="#fff" />
-              </TouchableOpacity>
+              {!selectionMode ? (
+                <>
+                  <TouchableOpacity 
+                    style={styles.iconButton}
+                    onPress={() => setSelectionMode(true)}
+                  >
+                    <CheckSquare size={22} color="#fff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Download size={22} color="#fff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Bell size={22} color="#fff" />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity 
+                    style={styles.iconButton}
+                    onPress={handleMarkAll}
+                  >
+                    <CheckCircle2 size={22} color="#fff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.iconButton}
+                    onPress={handleRemoveAll}
+                  >
+                    <XCircle size={22} color="#fff" />
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
           
@@ -665,6 +675,7 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
+    marginTop: Platform.OS === 'ios' ? 0 : 20,
 
   },
   categoriesWrapper: {
@@ -805,5 +816,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#e74c3c',
     fontSize: 14,
+  },
+  actionButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    marginLeft: 8,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
   },
 });

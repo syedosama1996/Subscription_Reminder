@@ -1,55 +1,108 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Drawer } from 'expo-router/drawer';
-import { useRouter, useSegments } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { 
-  FileText,
-  History,
-  Activity,
-  BarChart3,
+  Settings,
+  Bell,
+  Shield,
+  HelpCircle,
   LogOut,
-  Menu,
-  Home,
-  Plus,
-  Clock,
   User
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 
-function CustomDrawerContent(props: any) {
-  const { signOut } = useAuth();
+function CustomDrawerContent(props: DrawerContentComponentProps) {
+  const { user, signOut } = useAuth();
   const router = useRouter();
 
   const handleSignOut = () => {
     signOut();
   };
 
+  const menuItems = [
+    {
+      icon: <User size={24} color="#4158D0" />,
+      label: 'Profile',
+      onPress: () => router.push('/(tabs)/profile')
+    },
+    {
+      icon: <Settings size={24} color="#4158D0" />,
+      label: 'Settings',
+      onPress: () => router.push('/(tabs)/settings')
+    },
+    {
+      icon: <Bell size={24} color="#4158D0" />,
+      label: 'Notifications',
+      onPress: () => router.push('/(tabs)/notifications')
+    },
+    {
+      icon: <Shield size={24} color="#4158D0" />,
+      label: 'Security',
+      onPress: () => router.push('/(tabs)/security')
+    },
+    {
+      icon: <HelpCircle size={24} color="#4158D0" />,
+      label: 'Help & Support',
+      onPress: () => router.push('/(tabs)/help')
+    }
+  ];
+
   return (
     <View style={styles.drawerContainer}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.drawerHeader}
-      >
-        <Text style={styles.drawerTitle}>Menu</Text>
-      </LinearGradient>
-      <View style={styles.drawerContent}>
-        <TouchableOpacity 
-          style={styles.drawerItem}
-          onPress={() => router.push('/(tabs)/profile')}
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={['#4158D0', '#C850C0']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.drawerHeader}
         >
-          <User size={24} color="#4158D0" />
-          <Text style={styles.drawerItemText}>Profile</Text>
-        </TouchableOpacity>
+          <View style={styles.profileSection}>
+            <View style={styles.profileHeader}>
+              <View style={styles.avatarContainer}>
+                <Text style={styles.avatarText}>{user?.email?.[0].toUpperCase()}</Text>
+              </View>
+              <View style={styles.profileInfo}>
+                <Text numberOfLines={1} style={styles.emailText}>
+                  <Text>{user?.email?.split('@')[0]}</Text>
+                  <Text style={styles.emailDomain}>@{user?.email?.split('@')[1]}</Text>
+                </Text>
+                <TouchableOpacity onPress={() => router.push('/profile')}>
+                  <Text style={styles.viewProfileText}>View Profile</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+      </View>
 
-        <TouchableOpacity 
-          style={[styles.drawerItem, styles.signOutButton]}
+      <View style={styles.menuContainer}>
+        {menuItems.map((item, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[styles.menuItem, { backgroundColor: '#F8F9FA' }]}
+            onPress={item.onPress}
+          >
+            <View style={styles.menuIconContainer}>
+              {item.icon}
+            </View>
+            <Text style={styles.menuItemText}>{item.label}</Text>
+            <View style={styles.menuArrow} />
+          </TouchableOpacity>
+        ))}
+
+        <TouchableOpacity
+          style={[styles.menuItem, styles.signOutButton]}
           onPress={handleSignOut}
         >
-          <LogOut size={24} color="#e74c3c" />
-          <Text style={[styles.drawerItemText, styles.signOutText]}>Sign Out</Text>
+          <View style={styles.menuIconContainer}>
+            <LogOut size={24} color="#e74c3c" />
+          </View>
+          <Text style={[styles.menuItemText, styles.signOutText]}>Sign Out</Text>
+          <View style={[styles.menuArrow, styles.signOutArrow]} />
         </TouchableOpacity>
       </View>
     </View>
@@ -58,19 +111,9 @@ function CustomDrawerContent(props: any) {
 
 export default function AppLayout() {
   const { user, loading } = useAuth();
-  const segments = useSegments();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.replace('/(auth)/login');
-      }
-    }
-  }, [user, loading]);
-
-  if (loading) return null;
-  if (!user) return null;
+  if (loading || !user) return null;
 
   return (
     <Drawer
@@ -79,15 +122,16 @@ export default function AppLayout() {
         headerShown: false,
         drawerStyle: {
           backgroundColor: '#fff',
-          width: 300,
+          width: 320,
         },
+        swipeEnabled: true,
+        swipeEdgeWidth: 100,
       }}
     >
       <Drawer.Screen
         name="(tabs)"
         options={{
           drawerLabel: 'Home',
-          drawerIcon: ({ color }) => <Menu size={24} color={color} />,
         }}
       />
     </Drawer>
@@ -99,43 +143,98 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  headerContainer: {
+    overflow: 'hidden',
+    paddingBottom: 20,
+  },
   drawerHeader: {
-    padding: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 30,
+    paddingTop: Platform.OS === 'ios' ? 40 : 35,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  drawerTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 28,
-    color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 10,
+  profileSection: {
+    padding: 25,
   },
-  drawerContent: {
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileInfo: {
     flex: 1,
-    paddingTop: 20,
+    marginLeft: 12,
   },
-  drawerItem: {
+  avatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  avatarText: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: '#fff',
+  },
+  emailText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  emailDomain: {
+    opacity: 0.8,
+    color: '#fff',
+  },
+  viewProfileText: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  menuContainer: {
+    flex: 1,
+    paddingTop: 12,
+    paddingHorizontal: 16,
+  },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    marginHorizontal: 12,
     marginVertical: 4,
     borderRadius: 12,
   },
-  drawerItemText: {
+  menuIconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuItemText: {
+    flex: 1,
     fontFamily: 'Inter-Medium',
     fontSize: 16,
     color: '#2c3e50',
     marginLeft: 12,
   },
+  menuArrow: {
+    width: 8,
+    height: 8,
+    borderTopWidth: 2,
+    borderRightWidth: 2,
+    borderColor: '#95a5a6',
+    transform: [{ rotate: '45deg' }],
+  },
   signOutButton: {
     marginTop: 'auto',
     marginBottom: 20,
-    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+    backgroundColor: '#FFF5F5',
   },
   signOutText: {
     color: '#e74c3c',
+  },
+  signOutArrow: {
+    borderColor: '#e74c3c',
   },
 });

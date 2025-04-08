@@ -831,7 +831,9 @@ export default function SubscriptionDetailScreen() {
             
             <ScrollView style={styles.modalContent}>
               {subscription.history && subscription.history.length > 0 ? (
-                subscription.history.map((historyItem: SubscriptionHistory) => (
+                [...subscription.history]
+                  .sort((a, b) => new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime())
+                  .map((historyItem: SubscriptionHistory) => (
                   <View key={historyItem.id} style={styles.historyItem}>
                     <View style={styles.historyHeader}>
                       <Text style={styles.historyDate}>
