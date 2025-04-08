@@ -5,7 +5,7 @@ import { useAuth } from '../../lib/auth';
 import { LinearGradient } from 'expo-linear-gradient';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
-import { Shield, Eye, EyeOff } from 'lucide-react-native';
+import { Shield, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
 import { ActivityLogger } from '../../lib/services/activity-logger';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
@@ -52,6 +52,13 @@ export default function ChangePasswordScreen() {
       setLoading(true);
       setError(null);
 
+      // Validate new password
+      const validationError = validatePassword(newPassword);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+
       if (newPassword !== confirmPassword) {
         setError('Passwords do not match');
         return;
@@ -80,7 +87,6 @@ export default function ChangePasswordScreen() {
       Alert.alert('Success', 'Password updated successfully');
       router.back();
     } catch (error: any) {
-      console.error('Password change error:', error);
       setError(error.message || 'Failed to update password');
     } finally {
       setLoading(false);
@@ -97,11 +103,24 @@ export default function ChangePasswordScreen() {
       />
       
       <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#fff" />
+        </TouchableOpacity>
         <Text style={styles.title}>Change Password</Text>
+        <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.form}>
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Current Password</Text>
             <View style={styles.inputWrapper}>
@@ -111,6 +130,7 @@ export default function ChangePasswordScreen() {
                 onChangeText={setCurrentPassword}
                 secureTextEntry={!showCurrentPassword}
                 style={styles.input}
+                placeholder="Enter your current password"
               />
               <TouchableOpacity 
                 onPress={() => setShowCurrentPassword(!showCurrentPassword)}
@@ -134,6 +154,7 @@ export default function ChangePasswordScreen() {
                 onChangeText={setNewPassword}
                 secureTextEntry={!showNewPassword}
                 style={styles.input}
+                placeholder="Enter your new password"
               />
               <TouchableOpacity 
                 onPress={() => setShowNewPassword(!showNewPassword)}
@@ -157,6 +178,7 @@ export default function ChangePasswordScreen() {
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
                 style={styles.input}
+                placeholder="Confirm your new password"
               />
               <TouchableOpacity 
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -193,42 +215,80 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 180,
+    height: 150,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
+    marginTop: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholder: {
+    width: 40,
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 32,
+    fontSize: 24,
     color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 10,
+    textAlign: 'center',
   },
   content: {
     flex: 1,
+    marginTop: 10,
   },
   form: {
     padding: 20,
+    paddingTop: 30,
+  },
+  errorContainer: {
+    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(231, 76, 60, 0.3)',
+  },
+  errorText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
+    color: '#e74c3c',
+    textAlign: 'center',
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 24,
   },
   label: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#2c3e50',
-    marginBottom: 6,
+    marginBottom: 8,
+    marginLeft: 4,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f6fa',
+    backgroundColor: '#fff',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(223, 228, 234, 0.5)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    height: 56,
   },
   inputIcon: {
     marginLeft: 16,
@@ -244,6 +304,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   button: {
-    marginTop: 20,
+    marginTop: 30,
+    marginBottom: 20,
   },
 }); 

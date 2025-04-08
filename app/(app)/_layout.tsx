@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Drawer } from 'expo-router/drawer';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
@@ -21,7 +21,6 @@ import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const { user, signOut } = useAuth();
-  console.log(user);
   const router = useRouter();
 
   const handleSignOut = () => {
@@ -120,6 +119,15 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 export default function AppLayout() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [initialRoute, setInitialRoute] = useState<string>('/(tabs)');
+
+  useEffect(() => {
+    if (user) {
+      setInitialRoute('/(tabs)');
+    } else {
+      setInitialRoute('/login');
+    }
+  }, [user]);
 
   if (loading || !user) return null;
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
-import { History, Filter, Calendar, DollarSign, CreditCard, ArrowLeft } from 'lucide-react-native';
+import { History, Filter, Calendar, CreditCard, ArrowLeft, IndianRupee } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getSubscriptions, Subscription } from '../../lib/subscriptions';
 import { router } from 'expo-router';
@@ -28,7 +28,6 @@ export default function PurchaseHistoryScreen() {
       });
       setSubscriptions(data || []);
     } catch (err) {
-      console.error('Error loading subscriptions:', err);
       setError('Failed to load subscriptions');
     } finally {
       setLoading(false);
@@ -52,8 +51,7 @@ export default function PurchaseHistoryScreen() {
       
       <View style={styles.purchaseDetails}>
         <View style={styles.amountContainer}>
-          <DollarSign size={20} color="#4158D0" />
-          <Text style={styles.amountText}>PKR {item.purchase_amount_pkr.toLocaleString()}</Text>
+          <Text style={styles.amountText}>Rs. {item.purchase_amount_pkr.toLocaleString()}</Text>
         </View>
       </View>
 
@@ -227,9 +225,8 @@ const styles = StyleSheet.create({
   },
   amountText: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 20,
+    fontSize: 22,
     color: '#2c3e50',
-    marginLeft: 8,
   },
   dateContainer: {
     flexDirection: 'row',

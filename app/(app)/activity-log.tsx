@@ -29,6 +29,7 @@ export default function ActivityLogScreen() {
   const [offset, setOffset] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [timeUpdateInterval, setTimeUpdateInterval] = useState<NodeJS.Timeout | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const PAGE_SIZE = 50;
 
@@ -62,66 +63,57 @@ export default function ActivityLogScreen() {
     };
   }, []);
 
-  const loadActivities = async (isRefreshing = false) => {
-    if (!user?.id) return;
+  const loadActivities = async () => {
+    if (!user) return;
     
     try {
-      if (isRefreshing) {
-        setRefreshing(true);
-        setOffset(0);
-      } else {
-        setLoading(true);
-      }
-      const result = await ActivityLogger.getUserActivities(user.id, { 
+      setLoading(true);
+      setError(null);
+      const data = await ActivityLogger.getUserActivities(user.id, { 
         limit: PAGE_SIZE,
         offset: 0
       });
       
-      if (result.activities.length === 0) {
-        console.log('No activities found in the database');
+      if (data.activities.length === 0) {
+        setActivities([]);
+      } else {
+        setActivities(data.activities);
       }
-      
-      setActivities(result.activities);
-      setHasMore(result.hasMore);
-      setTotalCount(result.totalCount);
-    } catch (error) {
-      console.error('Failed to load activities:', error);
-      Alert.alert('Error', 'Failed to load activity logs. Please try again.');
+      setHasMore(data.hasMore);
+      setTotalCount(data.totalCount);
+    } catch (err) {
+      setError('Failed to load activities');
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
   const loadMoreActivities = async () => {
-    if (!user?.id || loadingMore || !hasMore) return;
+    if (!user || loading || !hasMore) return;
     
     try {
       setLoadingMore(true);
-      const nextOffset = offset + PAGE_SIZE;
-      
-      const result = await ActivityLogger.getUserActivities(user.id, { 
+      const lastActivity = activities[activities.length - 1];
+      const data = await ActivityLogger.getUserActivities(user.id, {
         limit: PAGE_SIZE,
-        offset: nextOffset
+        offset: offset + PAGE_SIZE
       });
       
-      
-      if (result.activities.length > 0) {
-        setActivities(prevActivities => [...prevActivities, ...result.activities]);
-        setOffset(nextOffset);
-        setHasMore(result.hasMore);
+      if (data.activities.length > 0) {
+        setActivities(prev => [...prev, ...data.activities]);
+        setOffset(offset + PAGE_SIZE);
       } else {
         setHasMore(false);
       }
-    } catch (error) {
-      console.error('Failed to load more activities:', error);
+    } catch (err) {
+      setError('Failed to load more activities');
     } finally {
       setLoadingMore(false);
     }
   };
 
   const onRefresh = () => {
-    loadActivities(true);
+    loadActivities();
   };
 
   const onEndReached = () => {
@@ -439,7 +431,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 32,
+    fontSize: 24,
     color: '#fff',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },

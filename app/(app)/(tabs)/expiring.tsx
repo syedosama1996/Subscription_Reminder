@@ -23,52 +23,37 @@ export default function ExpiringSubscriptionsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadExpiringSubscriptions = async () => {
     if (!user) return;
     
     try {
+      setLoading(true);
       setError(null);
       const data = await getSubscriptions(user.id);
-      console.log('All subscriptions:', data); // Debug log
-      
       const today = new Date();
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(today.getDate() + 30);
-      
-      console.log('Today:', today); // Debug log
-      console.log('30 days from now:', thirtyDaysFromNow); // Debug log
-      
-      // Get expired and soon-to-expire subscriptions
+      const thirtyDaysFromNow = new Date(today);
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
       const expiringSubscriptions = data?.filter(sub => {
-        if (!sub.is_active) return false;
         const expiryDate = new Date(sub.expiry_date);
-        return expiryDate <= thirtyDaysFromNow;
+        return expiryDate <= thirtyDaysFromNow && expiryDate >= today && sub.is_active;
       }) || [];
-      
-      // Sort by created_at in descending order (newest first)
-      const sortedSubscriptions = expiringSubscriptions.sort((a, b) => {
-        const dateA = new Date(a.created_at).getTime();
-        const dateB = new Date(b.created_at).getTime();
-        return dateB - dateA;
-      });
-      
-      setSubscriptions(sortedSubscriptions);
+
+      setSubscriptions(expiringSubscriptions);
     } catch (err) {
-      console.error('Error loading expiring subscriptions:', err);
       setError('Failed to load expiring subscriptions');
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    loadExpiringSubscriptions();
   }, [user]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadData();
+    loadExpiringSubscriptions();
   };
 
   if (loading) {
