@@ -82,7 +82,6 @@ export default function PastSubscriptionsScreen() {
       setToggleLoading(false);
     }
   };
-
   if (loading) {
     return (
       <View style={styles.container}>
