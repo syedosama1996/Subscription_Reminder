@@ -374,12 +374,33 @@ export const createSubscriptionHistory = async (history: SubscriptionHistory) =>
 };
 
 // Get subscription history
-export const getSubscriptionHistory = async (subscriptionId: string) => {
+export const getSubscriptionHistory = async (userId: string) => {
   try {
+    // First get all subscription IDs for the user
+    const { data: userSubscriptions, error: subError } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (subError) throw subError;
+
+    if (!userSubscriptions || userSubscriptions.length === 0) {
+      return [];
+    }
+
+    const subscriptionIds = userSubscriptions.map(sub => sub.id);
+
+    // Then get the history for these subscriptions
     const { data, error } = await supabase
       .from('subscription_history')
-      .select('*')
-      .eq('subscription_id', subscriptionId)
+      .select(`
+        *,
+        subscription:subscriptions (
+          service_name,
+          domain_name
+        )
+      `)
+      .in('subscription_id', subscriptionIds)
       .order('created_at', { ascending: false });
 
     if (error) throw error;

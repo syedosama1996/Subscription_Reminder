@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
-import { Lock, Mail } from 'lucide-react-native';
+import { Lock, Mail, Eye, EyeOff } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LoginScreen() {
@@ -12,6 +12,7 @@ export default function LoginScreen() {
   const { signIn, loading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) return;
@@ -58,25 +59,39 @@ export default function LoginScreen() {
 
             <View style={styles.inputContainer}>
               <Mail size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <Input
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                containerStyle={styles.input}
-              />
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  containerStyle={styles.input}
+                />
+              </View>
             </View>
 
             <View style={styles.inputContainer}>
               <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <Input
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                containerStyle={styles.input}
-              />
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  containerStyle={styles.input}
+                />
+                <TouchableOpacity 
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color="#7f8c8d" />
+                  ) : (
+                    <Eye size={20} color="#7f8c8d" />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <Button
@@ -185,12 +200,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  inputWrapper: {
+    flex: 1,
+    position: 'relative',
+  },
   inputIcon: {
     marginRight: 12,
   },
   input: {
-    flex: 1,
     marginBottom: 0,
+    flex: 1,
   },
   button: {
     marginTop: 8,
@@ -211,5 +230,11 @@ const styles = StyleSheet.create({
   footerLink: {
     fontFamily: 'Inter-Medium',
     color: '#4158D0',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 12,
+    top: 18,
+    padding: 4,
   },
 });

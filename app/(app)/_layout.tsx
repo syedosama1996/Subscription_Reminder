@@ -21,6 +21,7 @@ import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const { user, signOut } = useAuth();
+  console.log(user);
   const router = useRouter();
 
   const handleSignOut = () => {
@@ -79,9 +80,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
                   <Text>{user?.email?.split('@')[0]}</Text>
                   <Text style={styles.emailDomain}>@{user?.email?.split('@')[1]}</Text>
                 </Text>
-                <TouchableOpacity onPress={() => router.push('/profile')}>
-                  <Text style={styles.viewProfileText}>View Profile</Text>
-                </TouchableOpacity>
+          
               </View>
             </View>
           </View>

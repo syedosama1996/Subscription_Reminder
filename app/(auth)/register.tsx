@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
-import { Lock, Mail } from 'lucide-react-native';
+import { Lock, Mail, Eye, EyeOff } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RegisterScreen() {
@@ -13,6 +13,8 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleRegister = async () => {
@@ -49,6 +51,14 @@ export default function RegisterScreen() {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -70,7 +80,7 @@ export default function RegisterScreen() {
               style={styles.logo}
             />
             <Text style={styles.title}>Subscription Reminder</Text>
-            <Text style={styles.subtitle}>Create your account to get started</Text>
+            <Text style={styles.subtitle}>Track and manage all your subscriptions</Text>
           </View>
 
           <View style={styles.formContainer}>
@@ -100,9 +110,19 @@ export default function RegisterScreen() {
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 containerStyle={styles.input}
               />
+              <TouchableOpacity 
+                style={styles.passwordToggle}
+                onPress={togglePasswordVisibility}
+              >
+                {showPassword ? (
+                  <EyeOff size={20} color="#7f8c8d" />
+                ) : (
+                  <Eye size={20} color="#7f8c8d" />
+                )}
+              </TouchableOpacity>
             </View>
 
             <View style={styles.inputContainer}>
@@ -111,9 +131,19 @@ export default function RegisterScreen() {
                 placeholder="Confirm Password"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                secureTextEntry
+                secureTextEntry={!showConfirmPassword}
                 containerStyle={styles.input}
               />
+              <TouchableOpacity 
+                style={styles.passwordToggle}
+                onPress={toggleConfirmPasswordVisibility}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff size={20} color="#7f8c8d" />
+                ) : (
+                  <Eye size={20} color="#7f8c8d" />
+                )}
+              </TouchableOpacity>
             </View>
 
             <Button
@@ -228,6 +258,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     marginBottom: 0,
+  },
+  passwordToggle: {
+    padding: 8,
+    marginLeft: 8,
   },
   button: {
     marginTop: 8,

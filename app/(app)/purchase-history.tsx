@@ -1,80 +1,80 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
-import { History, Filter, Calendar, DollarSign, CreditCard, Download } from 'lucide-react-native';
+import { History, Filter, Calendar, DollarSign, CreditCard, ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getSubscriptions, Subscription } from '../../lib/subscriptions';
+import { router } from 'expo-router';
 
 export default function PurchaseHistoryScreen() {
   const { user } = useAuth();
-  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data for purchase history
-  const purchases = [
-    {
-      id: '1',
-      date: '2024-03-15',
-      amount: 2999,
-      subscription: 'Netflix Premium',
-      paymentMethod: 'Credit Card',
-      status: 'completed'
-    },
-    {
-      id: '2',
-      date: '2024-02-15',
-      amount: 2999,
-      subscription: 'Netflix Premium',
-      paymentMethod: 'Credit Card',
-      status: 'completed'
-    },
-    {
-      id: '3',
-      date: '2024-01-15',
-      amount: 2999,
-      subscription: 'Netflix Premium',
-      paymentMethod: 'Credit Card',
-      status: 'completed'
-    },
-    {
-      id: '4',
-      date: '2024-03-10',
-      amount: 999,
-      subscription: 'Spotify Premium',
-      paymentMethod: 'Debit Card',
-      status: 'completed'
+  useEffect(() => {
+    loadSubscriptions();
+  }, []);
+
+  const loadSubscriptions = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getSubscriptions(user.id, {
+        status: ['active', 'expired', 'expiring_soon', 'past']
+      });
+      setSubscriptions(data || []);
+    } catch (err) {
+      console.error('Error loading subscriptions:', err);
+      setError('Failed to load subscriptions');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const renderPurchaseItem = ({ item }) => (
+  const renderSubscriptionItem = ({ item }: { item: Subscription }) => (
     <View style={styles.purchaseCard}>
       <View style={styles.purchaseHeader}>
         <View style={styles.purchaseInfo}>
-          <Text style={styles.subscriptionName}>{item.subscription}</Text>
+          <Text style={styles.subscriptionName}>{item.service_name}</Text>
           <View style={styles.paymentInfo}>
             <CreditCard size={16} color="#7f8c8d" />
-            <Text style={styles.paymentMethod}>{item.paymentMethod}</Text>
+            <Text style={styles.paymentMethod}>{item.vendor || 'Unknown Vendor'}</Text>
           </View>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: item.status === 'completed' ? '#2ecc71' : '#e74c3c' }]}>
-          <Text style={styles.statusText}>{item.status}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: item.is_active ? '#2ecc71' : '#e74c3c' }]}>
+          <Text style={styles.statusText}>{item.is_active ? 'Active' : 'Inactive'}</Text>
         </View>
       </View>
       
       <View style={styles.purchaseDetails}>
         <View style={styles.amountContainer}>
-          <DollarSign size={20} color="#7f8c8d" />
-          <Text style={styles.amountText}>PKR {item.amount.toLocaleString()}</Text>
-        </View>
-        <View style={styles.dateContainer}>
-          <Calendar size={16} color="#7f8c8d" />
-          <Text style={styles.dateText}>{item.date}</Text>
+          <DollarSign size={20} color="#4158D0" />
+          <Text style={styles.amountText}>PKR {item.purchase_amount_pkr.toLocaleString()}</Text>
         </View>
       </View>
 
-      <TouchableOpacity style={styles.downloadButton}>
-        <Download size={20} color="#4158D0" />
-        <Text style={styles.downloadText}>Download Receipt</Text>
-      </TouchableOpacity>
+      <View style={styles.dateContainer}>
+        <View style={styles.dateBox}>
+          <Calendar size={18} color="#4158D0" />
+          <View style={styles.dateTextContainer}>
+            <Text style={styles.dateLabel}>Purchase Date</Text>
+            <Text style={styles.dateText}>{new Date(item.purchase_date).toLocaleDateString()}</Text>
+          </View>
+        </View>
+        <View style={styles.dateBox}>
+          <Calendar size={18} color="#C850C0" />
+          <View style={styles.dateTextContainer}>
+            <Text style={styles.dateLabel}>Expiry Date</Text>
+            <Text style={[styles.dateText, new Date(item.expiry_date) < new Date() ? styles.expiredDate : null]}>
+              {new Date(item.expiry_date).toLocaleDateString()}
+            </Text>
+          </View>
+        </View>
+      </View>
     </View>
   );
 
@@ -86,42 +86,42 @@ export default function PurchaseHistoryScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.headerGradient}
       />
-      
+ 
       <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#fff" />
+        </TouchableOpacity>
         <Text style={styles.title}>Purchase History</Text>
-        <TouchableOpacity style={styles.filterButton}>
-          <Filter size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.placeholder} />
       </View>
-
-      <View style={styles.filterContainer}>
-        <TouchableOpacity 
-          style={[styles.filterTab, selectedFilter === 'all' && styles.activeFilterTab]}
-          onPress={() => setSelectedFilter('all')}
-        >
-          <Text style={[styles.filterText, selectedFilter === 'all' && styles.activeFilterText]}>All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.filterTab, selectedFilter === 'completed' && styles.activeFilterTab]}
-          onPress={() => setSelectedFilter('completed')}
-        >
-          <Text style={[styles.filterText, selectedFilter === 'completed' && styles.activeFilterText]}>Completed</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.filterTab, selectedFilter === 'pending' && styles.activeFilterTab]}
-          onPress={() => setSelectedFilter('pending')}
-        >
-          <Text style={[styles.filterText, selectedFilter === 'pending' && styles.activeFilterText]}>Pending</Text>
-        </TouchableOpacity>
-      </View>
-
-      <FlatList
-        data={purchases}
-        renderItem={renderPurchaseItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4158D0" />
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadSubscriptions}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : subscriptions.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <History size={48} color="#7f8c8d" />
+          <Text style={styles.emptyText}>No subscriptions available</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={subscriptions}
+          renderItem={renderSubscriptionItem}
+          keyExtractor={item => item.id || ''}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -131,12 +131,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   headerGradient: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
-    height: 120,
+    height: 150,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  placeholder: {
+    width: 40,
   },
   header: {
     flexDirection: 'row',
@@ -150,42 +163,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
     color: '#fff',
   },
-  filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginTop: 8,
-  },
-  filterTab: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginRight: 8,
-  },
-  activeFilterTab: {
-    backgroundColor: '#fff',
-  },
-  filterText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  activeFilterText: {
-    color: '#4158D0',
-  },
   listContent: {
     padding: 20,
   },
   purchaseCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     shadowColor: '#000',
@@ -205,7 +188,7 @@ const styles = StyleSheet.create({
   },
   subscriptionName: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
+    fontSize: 18,
     color: '#2c3e50',
     marginBottom: 4,
   },
@@ -221,7 +204,7 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: 12,
   },
   statusText: {
@@ -233,7 +216,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    backgroundColor: 'rgba(65, 88, 208, 0.1)',
+    padding: 12,
+    borderRadius: 12,
   },
   amountContainer: {
     flexDirection: 'row',
@@ -241,19 +227,41 @@ const styles = StyleSheet.create({
   },
   amountText: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 18,
+    fontSize: 20,
     color: '#2c3e50',
     marginLeft: 8,
   },
   dateContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  dateBox: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  dateTextContainer: {
+    marginLeft: 8,
+  },
+  dateLabel: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 12,
+    color: '#7f8c8d',
+    marginBottom: 2,
   },
   dateText: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Inter-SemiBold',
     fontSize: 14,
-    color: '#7f8c8d',
-    marginLeft: 8,
+    color: '#2c3e50',
+  },
+  expiredDate: {
+    color: '#e74c3c',
   },
   downloadButton: {
     flexDirection: 'row',
@@ -269,5 +277,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4158D0',
     marginLeft: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 16,
+    color: '#e74c3c',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#4158D0',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
+    color: '#fff',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 16,
+    color: '#7f8c8d',
+    textAlign: 'center',
+    marginTop: 16,
   },
 }); 
