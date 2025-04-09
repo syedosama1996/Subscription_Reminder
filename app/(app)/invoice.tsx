@@ -9,6 +9,7 @@ import { Invoice, getUserInvoices } from '../../lib/invoices';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
+import CustomLoader from '@/components/CustomLoader';
 
 interface InvoiceItemProps {
   item: Invoice;
@@ -589,9 +590,15 @@ export default function InvoiceScreen() {
         <View style={styles.placeholder} />
       </View>
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4158D0" />
-        </View>
+         <View style={styles.container}>
+         <LinearGradient
+           colors={['#4158D0', '#C850C0']}
+           start={{ x: 0, y: 0 }}
+           end={{ x: 1, y: 1 }}
+           style={styles.headerGradient}
+         />
+         <CustomLoader visible={true} />
+       </View>
       ) : (
         <FlatList
           data={invoices}

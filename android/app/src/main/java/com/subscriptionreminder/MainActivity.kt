@@ -1,4 +1,4 @@
-package com.yourcompany.subscriptionreminder
+package com.subscriptionreminder
 
 import android.os.Build
 import android.os.Bundle
