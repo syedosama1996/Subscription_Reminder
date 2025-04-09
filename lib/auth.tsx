@@ -199,20 +199,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // If the user exists in profiles but not in auth, we need to recreate the auth user
         if (error.message === 'Invalid login credentials' && userData) {
-          console.log('User exists in profiles but auth login failed. Attempting to reset password...');
+          throw new Error('Invalid login credentials.');
           
-          // Try to reset the password
-          const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: Platform.OS === 'web' ? window.location.origin : undefined,
-          });
-          
-          if (resetError) {
-            console.error('Password reset error:', resetError);
-            throw new Error('Failed to reset password. Please try again later.');
-          } else {
-            console.log('Password reset email sent to:', email);
-            throw new Error('Password reset email sent. Please check your inbox to reset your password.');
-          }
         }
         
         throw error;
@@ -251,6 +239,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
+      // Navigate to login screen before signing out to prevent white screen
+      router.replace('/(auth)/login');
+
       // Log sign out activity before signing out
       if (user) {
         await ActivityLogger.log({
@@ -266,9 +257,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-
-      // Navigate to login screen after successful sign out
-      router.replace('/(auth)/login');
 
     } catch (error: any) {
       console.error('Sign out error:', error);

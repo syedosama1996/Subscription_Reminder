@@ -422,9 +422,19 @@ export default function HomeScreen() {
                   >
                     <CheckSquare size={22} color="#fff" />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.iconButton}>
+            
+
+                  <TouchableOpacity 
+                  style={styles.iconButton}
+                  onPress={handleExportData}
+                  disabled={exporting}
+                >
+                  {exporting ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
                     <Download size={22} color="#fff" />
-                  </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
                   <TouchableOpacity style={styles.iconButton}>
                     <Bell size={22} color="#fff" />
                   </TouchableOpacity>
