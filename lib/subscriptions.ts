@@ -1,5 +1,8 @@
 import { supabase } from './supabase';
 import { Category, ActivityLog, SubscriptionFilter } from './types';
+import { generateInvoiceForSubscription } from './invoices';
+// Keep shared functions within this file or import correctly if moved
+// import { createSubscriptionHistory, logActivity } from './sharedSubscriptionFunctions'; 
 
 export type SubscriptionHistory = {
   id?: string;
@@ -24,18 +27,18 @@ export type Subscription = {
   id?: string;
   user_id: string;
   service_name: string;
-  domain_name?: string;
+  domain_name?: string | null;
   purchase_date: string;
   purchase_amount_pkr: number;
   purchase_amount_usd: number;
   expiry_date: string;
-  email?: string;
-  username?: string;
-  password?: string;
-  notes?: string;
-  vendor?: string;
-  vendor_link?: string;
-  category_id?: string;
+  email?: string | null;
+  username?: string | null;
+  password?: string | null;
+  notes?: string | null;
+  vendor?: string | null;
+  vendor_link?: string | null;
+  category_id?: string | null;
   is_active?: boolean;
   created_at?: string;
   reminders?: Reminder[];
@@ -44,38 +47,78 @@ export type Subscription = {
 };
 
 // Create a new subscription
-export const createSubscription = async (subscription: Subscription, userId: string) => {
+export const createSubscription = async (subscription: Partial<Subscription>, userId: string) => {
   try {
+    const subscriptionPayload = {
+      user_id: userId,
+      service_name: subscription.service_name,
+      purchase_date: subscription.purchase_date,
+      purchase_amount_pkr: subscription.purchase_amount_pkr,
+      expiry_date: subscription.expiry_date,
+      domain_name: subscription.domain_name,
+      purchase_amount_usd: subscription.purchase_amount_usd || 0,
+      email: subscription.email,
+      username: subscription.username,
+      password: subscription.password,
+      notes: subscription.notes,
+      vendor: subscription.vendor,
+      vendor_link: subscription.vendor_link,
+      category_id: subscription.category_id,
+      is_active: subscription.is_active ?? true,
+    };
+
+    if (!subscriptionPayload.service_name || !subscriptionPayload.purchase_date || subscriptionPayload.purchase_amount_pkr === undefined || !subscriptionPayload.expiry_date) {
+        throw new Error("Missing required subscription fields for creation.");
+    }
+
     const { data, error } = await supabase
       .from('subscriptions')
-      .insert(subscription)
+      .insert(subscriptionPayload)
       .select()
       .single();
 
     if (error) throw error;
     
-    // Create initial history record
-    if (data?.id) {
+    const newSubscription = data as Subscription;
+
+    if (newSubscription?.id) {
       await createSubscriptionHistory({
-        subscription_id: data.id,
-        purchase_date: subscription.purchase_date,
-        purchase_amount_pkr: subscription.purchase_amount_pkr,
-        purchase_amount_usd: subscription.purchase_amount_usd || 0,
-        vendor: subscription.vendor,
-        vendor_link: subscription.vendor_link
+        subscription_id: newSubscription.id,
+        purchase_date: newSubscription.purchase_date,
+        purchase_amount_pkr: newSubscription.purchase_amount_pkr,
+        purchase_amount_usd: newSubscription.purchase_amount_usd ?? 0,
+        vendor: newSubscription.vendor ?? undefined, // Handle potential null from DB
+        vendor_link: newSubscription.vendor_link ?? undefined // Handle potential null from DB
       });
 
-      // Log activity
+      const subscriptionDetailsForInvoice = {
+        service_name: newSubscription.service_name,
+        purchase_date: newSubscription.purchase_date,
+        purchase_amount_pkr: newSubscription.purchase_amount_pkr,
+        domain_name: newSubscription.domain_name,
+        email: newSubscription.email,
+        username: newSubscription.username,
+        vendor: newSubscription.vendor,
+        vendor_link: newSubscription.vendor_link,
+        category_id: newSubscription.category_id,
+      };
+
+      await generateInvoiceForSubscription(
+        newSubscription.id,
+        userId,
+        subscriptionDetailsForInvoice
+      );
+
       await logActivity({
         user_id: userId,
         action: 'create',
         entity_type: 'subscription',
-        entity_id: data.id,
-        details: { service_name: subscription.service_name }
+        entity_id: newSubscription.id,
+        details: { service_name: newSubscription.service_name }
       });
     }
     
-    return data;
+    return newSubscription;
   } catch (error) {
     console.error('Error creating subscription:', error);
     throw error;
@@ -425,25 +468,35 @@ export const renewSubscription = async (
   userId: string
 ) => {
   try {
-    // First update the subscription
+    const { data: existingSubscription, error: fetchError } = await supabase
+      .from('subscriptions')
+      .select('service_name, domain_name, email, username, vendor, vendor_link, category_id')
+      .eq('id', id)
+      .single();
+      
+    if (fetchError) throw fetchError;
+    if (!existingSubscription) throw new Error("Subscription not found for renewal.");
+    
+    const updatePayload = {
+      purchase_date: renewalData.purchase_date,
+      expiry_date: renewalData.expiry_date,
+      purchase_amount_pkr: renewalData.purchase_amount_pkr,
+      purchase_amount_usd: renewalData.purchase_amount_usd || 0,
+      vendor: renewalData.vendor,
+      vendor_link: renewalData.vendor_link,
+      is_active: true 
+    };
+
     const { data: updatedSubscription, error: updateError } = await supabase
       .from('subscriptions')
-      .update({
-        purchase_date: renewalData.purchase_date,
-        expiry_date: renewalData.expiry_date,
-        purchase_amount_pkr: renewalData.purchase_amount_pkr,
-        purchase_amount_usd: renewalData.purchase_amount_usd || 0,
-        vendor: renewalData.vendor,
-        vendor_link: renewalData.vendor_link,
-        is_active: true // Ensure subscription is active when renewed
-      })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();
 
     if (updateError) throw updateError;
+    const finalSubscription = updatedSubscription as Subscription;
 
-    // Then create a history record
     await createSubscriptionHistory({
       subscription_id: id,
       purchase_date: renewalData.purchase_date,
@@ -452,8 +505,25 @@ export const renewSubscription = async (
       vendor: renewalData.vendor,
       vendor_link: renewalData.vendor_link
     });
+    
+    const subscriptionDetailsForInvoice = {
+      service_name: existingSubscription.service_name,
+      purchase_date: renewalData.purchase_date,
+      purchase_amount_pkr: renewalData.purchase_amount_pkr,
+      domain_name: existingSubscription.domain_name,
+      email: existingSubscription.email,
+      username: existingSubscription.username,
+      vendor: renewalData.vendor,
+      vendor_link: renewalData.vendor_link,
+      category_id: existingSubscription.category_id,
+    };
 
-    // Log activity
+    await generateInvoiceForSubscription(
+      id,
+      userId,
+      subscriptionDetailsForInvoice
+    );
+
     await logActivity({
       user_id: userId,
       action: 'renew',
@@ -465,7 +535,7 @@ export const renewSubscription = async (
       }
     });
 
-    return updatedSubscription;
+    return finalSubscription;
   } catch (error) {
     console.error('Error renewing subscription:', error);
     throw error;
@@ -577,57 +647,6 @@ export const deleteCategory = async (id: string, userId: string) => {
 };
 
 // Activity Logs
-export const logActivity = async (log: ActivityLog) => {
-  try {
-    // For subscription-related activities, ensure we have the correct user_id
-    if (log.entity_type === 'subscription' && log.entity_id) {
-      try {
-        const { data: subscription, error } = await supabase
-          .from('subscriptions')
-          .select('user_id')
-          .eq('id', log.entity_id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching subscription:', error);
-        } else if (subscription) {
-          log.user_id = subscription.user_id;
-        }
-      } catch (err) {
-        console.error('Error in subscription lookup:', err);
-      }
-    }
-
-    // Ensure user_id is set
-    if (!log.user_id) {
-      console.error('Activity log missing user_id:', log);
-      return null;
-    }
-
-    const { data, error } = await supabase
-      .from('activity_logs')
-      .insert({
-        user_id: log.user_id,
-        action: log.action,
-        entity_type: log.entity_type,
-        entity_id: log.entity_id,
-        details: log.details || null
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error logging activity:', error);
-      throw error;
-    }
-    return data;
-  } catch (error) {
-    console.error('Error logging activity:', error);
-    // Don't throw here to prevent cascading errors
-    return null;
-  }
-};
-
 export const getActivityLogs = async (userId: string, options?: { startDate?: Date, endDate?: Date }) => {
   try {
     let query = supabase
@@ -704,4 +723,58 @@ export const exportSubscriptionsToCSV = (subscriptions: Subscription[]): string 
   ].join('\n');
 
   return csvContent;
+};
+
+// Activity Logs
+export const logActivity = async (log: ActivityLog) => {
+  try {
+    // For subscription-related activities, ensure we have the correct user_id
+    if (log.entity_type === 'subscription' && log.entity_id) {
+      try {
+        const { data: subscription, error } = await supabase
+          .from('subscriptions')
+          .select('user_id')
+          .eq('id', log.entity_id)
+          .single();
+
+        if (error) {
+          // Log the error but don't necessarily stop the activity logging
+          console.error('Error fetching subscription user_id for activity log:', error);
+        } else if (subscription) {
+          log.user_id = subscription.user_id;
+        }
+      } catch (err) {
+        console.error('Error in subscription lookup for activity log:', err);
+      }
+    }
+
+    // Ensure user_id is set before inserting
+    if (!log.user_id) {
+      console.error('Activity log missing user_id:', log);
+      // Decide how to handle: throw error, return null, or try to find user_id another way
+      return null; // Example: Don't insert log if user_id is missing
+    }
+
+    const { data, error } = await supabase
+      .from('activity_logs')
+      .insert({
+        user_id: log.user_id,
+        action: log.action,
+        entity_type: log.entity_type,
+        entity_id: log.entity_id,
+        details: log.details || null
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error logging activity:', error);
+      // Decide whether to throw: throw error;
+      return null; // Example: Return null on logging failure but don't crash app
+    }
+    return data;
+  } catch (error) {
+    console.error('Caught error during activity logging:', error);
+    return null;
+  }
 };

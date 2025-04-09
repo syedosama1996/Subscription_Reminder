@@ -159,14 +159,13 @@ export default function AddSubscriptionScreen() {
             style={{
               height: 48,
               borderRadius: 16,
-              paddingHorizontal: 16,
+              paddingLeft: 16,
+              paddingRight: 16,
               fontSize: 16,
               borderWidth: 1,
               borderColor: '#dfe4ea',
               backgroundColor: '#f5f6fa',
               width: '100%',
-              paddingLeft: 16,
-              paddingRight: 16,
             }}
           />
         </View>
