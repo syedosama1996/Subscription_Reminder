@@ -4,6 +4,8 @@ import { Session, User } from '@supabase/supabase-js';
 import { Alert, Platform } from 'react-native';
 import { ActivityLogger } from './services/activity-logger';
 import { router } from 'expo-router';
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
 
 type AuthContextType = {
   user: User | null;
@@ -14,17 +16,54 @@ type AuthContextType = {
   signInWithId: (userId: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   error: string | null;
+  isBiometricSupported: boolean;
+  enableBiometric: (email: string, password: string) => Promise<void>;
+  signInWithBiometric: () => Promise<void>;
+  isBiometricEnabled: boolean;
+  resetBiometric: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Keys for secure storage
+const BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
+const CREDENTIALS_KEY = 'auth_credentials';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+  const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
 
   useEffect(() => {
+    // Check if biometric authentication is supported
+    const checkBiometricSupport = async () => {
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      setIsBiometricSupported(compatible && enrolled);
+      
+      // Check if biometric is enabled for this user
+      const biometricEnabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
+      const hasCredentials = await SecureStore.getItemAsync(CREDENTIALS_KEY);
+      
+      // Only set biometric as enabled if both flags are true
+      const isEnabled = biometricEnabled === 'true' && !!hasCredentials;
+      setIsBiometricEnabled(isEnabled);
+      
+      // If one flag is true but the other isn't, reset both
+      if ((biometricEnabled === 'true' && !hasCredentials) || 
+          (biometricEnabled !== 'true' && hasCredentials)) {
+        console.log('Inconsistent biometric state detected, resetting...');
+        await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
+        await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+        setIsBiometricEnabled(false);
+      }
+    };
+    
+    checkBiometricSupport();
+    
     // Initialize auth state
     const initializeAuth = async () => {
       try {
@@ -307,6 +346,98 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const enableBiometric = async (email: string, password: string) => {
+    try {
+      if (!isBiometricSupported) {
+        throw new Error('Biometric authentication is not supported on this device');
+      }
+      
+      console.log('Enabling biometric authentication...');
+      
+      // Authenticate with biometrics first
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Authenticate to enable fingerprint login',
+        fallbackLabel: 'Use password instead',
+      });
+      
+      if (!result.success) {
+        throw new Error('Biometric authentication failed');
+      }
+      
+      console.log('Biometric authentication successful, storing credentials...');
+      
+      // Store credentials securely
+      await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify({ email, password }));
+      await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, 'true');
+      
+      // Verify credentials were stored
+      const storedCredentials = await SecureStore.getItemAsync(CREDENTIALS_KEY);
+      console.log('Credentials stored successfully:', !!storedCredentials);
+      
+      setIsBiometricEnabled(true);
+      
+      Alert.alert('Success', 'Fingerprint login has been enabled');
+    } catch (error: any) {
+      console.error('Error enabling biometric:', error);
+      setError(error.message || 'Failed to enable fingerprint login');
+      throw error;
+    }
+  };
+  
+  const signInWithBiometric = async () => {
+    try {
+      if (!isBiometricSupported || !isBiometricEnabled) {
+        throw new Error('Biometric authentication is not enabled');
+      }
+      
+      console.log('Attempting biometric sign in...');
+      
+      // Authenticate with biometrics
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Authenticate to login',
+        fallbackLabel: 'Use password instead',
+      });
+      
+      if (!result.success) {
+        throw new Error('Biometric authentication failed');
+      }
+      
+      console.log('Biometric authentication successful, retrieving credentials...');
+      
+      // Retrieve stored credentials
+      const credentialsStr = await SecureStore.getItemAsync(CREDENTIALS_KEY);
+      
+      if (!credentialsStr) {
+        console.error('No credentials found in secure storage');
+        throw new Error('No stored credentials found');
+      }
+      
+      console.log('Credentials retrieved successfully');
+      
+      const credentials = JSON.parse(credentialsStr);
+      
+      // Sign in with stored credentials
+      await signIn(credentials.email, credentials.password);
+    } catch (error: any) {
+      console.error('Error signing in with biometric:', error);
+      setError(error.message || 'Failed to sign in with fingerprint');
+      throw error;
+    }
+  };
+
+  const resetBiometric = async () => {
+    try {
+      console.log('Resetting biometric authentication...');
+      await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
+      await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+      setIsBiometricEnabled(false);
+      console.log('Biometric authentication reset successfully');
+    } catch (error) {
+      console.error('Error resetting biometric:', error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -318,6 +449,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithId,
         signOut,
         error,
+        isBiometricSupported,
+        enableBiometric,
+        signInWithBiometric,
+        isBiometricEnabled,
+        resetBiometric,
       }}
     >
       {children}
