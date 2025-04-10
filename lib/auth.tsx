@@ -6,6 +6,7 @@ import { ActivityLogger } from './services/activity-logger';
 import { router } from 'expo-router';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
+import Toast from 'react-native-toast-message';
 
 type AuthContextType = {
   user: User | null;
@@ -86,11 +87,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
+        console.log('Session updated');
         setSession(session);
         setUser(session.user);
       } else {
         setSession(null);
         setUser(null);
+        console.log('Session expired');
+        // Show toast when session expires automatically
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+          Toast.show({
+            type: 'error',
+            text1: 'Your session is expire please login again',
+            position: 'top',
+            visibilityTime: 3000,
+            autoHide: true,
+            topOffset: 30,
+          });
+        }
       }
       setLoading(false);
     });
@@ -296,6 +310,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+
+      // Show success toast message only for manual logo
 
     } catch (error: any) {
       console.error('Sign out error:', error);

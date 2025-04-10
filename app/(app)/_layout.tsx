@@ -17,14 +17,17 @@ import {
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { DrawerContentComponentProps as DrawerContentComponentPropsType } from '@react-navigation/drawer';
+import { useUserActivity } from '../../lib/hooks/useUserActivity';
+import { Ionicons } from '@expo/vector-icons';
 
-function CustomDrawerContent(props: DrawerContentComponentProps) {
+function CustomDrawerContent(props: DrawerContentComponentPropsType) {
   const { user, signOut } = useAuth();
   const router = useRouter();
 
   const handleSignOut = () => {
     signOut();
+    props.navigation.navigate('index');
   };
 
   const menuItems = [
@@ -106,7 +109,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
           onPress={handleSignOut}
         >
           <View style={styles.menuIconContainer}>
-            <LogOut size={24} color="#e74c3c" />
+            <Ionicons name="log-out-outline" size={24} color="black" />
           </View>
           <Text style={[styles.menuItemText, styles.signOutText]}>Sign Out</Text>
           <View style={[styles.menuArrow, styles.signOutArrow]} />
@@ -117,9 +120,12 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 }
 
 export default function AppLayout() {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const [initialRoute, setInitialRoute] = useState<string>('/(tabs)');
+
+  // Initialize user activity tracking
+  useUserActivity();
 
   useEffect(() => {
     if (user) {
@@ -133,7 +139,7 @@ export default function AppLayout() {
 
   return (
     <Drawer
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      drawerContent={(props: DrawerContentComponentPropsType) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
         drawerStyle: {

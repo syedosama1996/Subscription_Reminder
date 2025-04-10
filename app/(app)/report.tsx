@@ -13,7 +13,7 @@ import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import { router } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import RNDateTimePicker from '@react-native-community/datetimepicker';
 import CustomLoader from '@/components/CustomLoader';
 
 interface CategoryData {
@@ -728,21 +728,19 @@ export default function ReportScreen() {
       </Modal>
 
       {/* Date Pickers */}
-      {showStartDatePicker && (
-        <DateTimePicker
+      {showStartDatePicker && Platform.OS !== 'web' && (
+        <RNDateTimePicker
           value={dateRange.startDate}
           mode="date"
-          display="default"
           onChange={(event, date) => handleCustomDateChange(event, date, true)}
           maximumDate={dateRange.endDate}
         />
       )}
       
-      {showEndDatePicker && (
-        <DateTimePicker
+      {showEndDatePicker && Platform.OS !== 'web' && (
+        <RNDateTimePicker
           value={dateRange.endDate}
           mode="date"
-          display="default"
           onChange={(event, date) => handleCustomDateChange(event, date, false)}
           minimumDate={dateRange.startDate}
         />

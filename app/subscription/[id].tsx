@@ -44,7 +44,7 @@ import {
   Check
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import RNDateTimePicker from '@react-native-community/datetimepicker';
 
 export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -755,10 +755,9 @@ export default function SubscriptionDetailScreen() {
               )}
               
               {showRenewPurchaseDatePicker && Platform.OS !== 'web' && (
-                <DateTimePicker
+                <RNDateTimePicker
                   value={renewalData.purchase_date}
                   mode="date"
-                  display="default"
                   onChange={(event, selectedDate) => {
                     setShowRenewPurchaseDatePicker(false);
                     if (selectedDate) {
@@ -769,10 +768,9 @@ export default function SubscriptionDetailScreen() {
               )}
               
               {showRenewExpiryDatePicker && Platform.OS !== 'web' && (
-                <DateTimePicker
+                <RNDateTimePicker
                   value={renewalData.expiry_date}
                   mode="date"
-                  display="default"
                   onChange={(event, selectedDate) => {
                     setShowRenewExpiryDatePicker(false);
                     if (selectedDate) {

@@ -17,7 +17,7 @@ import Input from '../../../components/Input';
 import Button from '../../../components/Button';
 import CategorySelector from '../../../components/CategorySelector';
 import { Calendar, DollarSign, Globe, Key, Mail, User, X, Link } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Category } from '../../../lib/types';
@@ -285,7 +285,7 @@ export default function AddSubscriptionScreen() {
               )}
 
               {showPurchaseDatePicker && Platform.OS !== 'web' && (
-                <DateTimePicker
+                <RNDateTimePicker
                   value={purchaseDate}
                   mode="date"
                   display="default"
@@ -299,7 +299,7 @@ export default function AddSubscriptionScreen() {
               )}
 
               {showExpiryDatePicker && Platform.OS !== 'web' && (
-                <DateTimePicker
+                <RNDateTimePicker
                   value={expiryDate}
                   mode="date"
                   display="default"

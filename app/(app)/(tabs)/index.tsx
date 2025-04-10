@@ -424,7 +424,7 @@ export default function HomeScreen() {
                   </TouchableOpacity>
             
 
-                  <TouchableOpacity 
+                  {/* <TouchableOpacity 
                   style={styles.iconButton}
                   onPress={handleExportData}
                   disabled={exporting}
@@ -434,7 +434,7 @@ export default function HomeScreen() {
                   ) : (
                     <Download size={22} color="#fff" />
                   )}
-                </TouchableOpacity>
+                </TouchableOpacity> */}
                   <TouchableOpacity style={styles.iconButton}>
                     <Bell size={22} color="#fff" />
                   </TouchableOpacity>
