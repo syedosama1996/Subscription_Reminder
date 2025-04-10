@@ -215,9 +215,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 150,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    height: 160,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   header: {
     flexDirection: 'row',

@@ -6,6 +6,7 @@ import { Activity, Filter, Clock, CheckCircle, AlertCircle, Info, Plus, Trash2, 
 import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityLogger } from '../../lib/services/activity-logger';
 import { useRouter } from 'expo-router';
+import CustomLoader from '@/components/CustomLoader';
 
 interface ActivityItem {
   id: string;
@@ -47,15 +48,15 @@ export default function ActivityLogScreen() {
 
   useEffect(() => {
     loadActivities();
-    
+
     // Set up an interval to update relative times every minute
     const interval = setInterval(() => {
       // Force a re-render to update relative times
       setActivities(prevActivities => [...prevActivities]);
     }, 60000); // Update every minute
-    
+
     setTimeUpdateInterval(interval);
-    
+
     return () => {
       if (timeUpdateInterval) {
         clearInterval(timeUpdateInterval);
@@ -65,15 +66,15 @@ export default function ActivityLogScreen() {
 
   const loadActivities = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
       setError(null);
-      const data = await ActivityLogger.getUserActivities(user.id, { 
+      const data = await ActivityLogger.getUserActivities(user.id, {
         limit: PAGE_SIZE,
         offset: 0
       });
-      
+
       if (data.activities.length === 0) {
         setActivities([]);
       } else {
@@ -90,7 +91,7 @@ export default function ActivityLogScreen() {
 
   const loadMoreActivities = async () => {
     if (!user || loading || !hasMore) return;
-    
+
     try {
       setLoadingMore(true);
       const lastActivity = activities[activities.length - 1];
@@ -98,7 +99,7 @@ export default function ActivityLogScreen() {
         limit: PAGE_SIZE,
         offset: offset + PAGE_SIZE
       });
-      
+
       if (data.activities.length > 0) {
         setActivities(prev => [...prev, ...data.activities]);
         setOffset(offset + PAGE_SIZE);
@@ -183,7 +184,7 @@ export default function ActivityLogScreen() {
     const entityName = activity.details?.service_name || activity.details?.name || '';
     const entityType = activity.entity_type.charAt(0).toUpperCase() + activity.entity_type.slice(1);
     const textColor = getTextColor(activity.action);
-    
+
     switch (activity.action) {
       case 'create':
         return { text: `Created ${entityType} "${entityName}"`, color: textColor };
@@ -206,41 +207,41 @@ export default function ActivityLogScreen() {
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
+
     if (diffInSeconds < 60) {
       return 'just now';
     }
-    
+
     const diffInMinutes = Math.floor(diffInSeconds / 60);
     if (diffInMinutes < 60) {
       return `${diffInMinutes} ${diffInMinutes === 1 ? 'min' : 'mins'} ago`;
     }
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) {
       return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
     }
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) {
       return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'} ago`;
     }
-    
+
     const diffInWeeks = Math.floor(diffInDays / 7);
     if (diffInWeeks < 4) {
       return `${diffInWeeks} ${diffInWeeks === 1 ? 'week' : 'weeks'} ago`;
     }
-    
+
     const diffInMonths = Math.floor(diffInDays / 30);
     if (diffInMonths < 12) {
       return `${diffInMonths} ${diffInMonths === 1 ? 'month' : 'months'} ago`;
     }
-    
+
     const diffInYears = Math.floor(diffInDays / 365);
     return `${diffInYears} ${diffInYears === 1 ? 'year' : 'years'} ago`;
   };
 
-  const filteredActivities = activities.filter(activity => 
+  const filteredActivities = activities.filter(activity =>
     selectedFilter === 'all' || activity.action === selectedFilter
   );
 
@@ -278,7 +279,7 @@ export default function ActivityLogScreen() {
 
   const renderFooter = () => {
     if (!loadingMore) return null;
-    
+
     return (
       <View style={styles.footerLoader}>
         <ActivityIndicator size="small" color="#4158D0" />
@@ -290,9 +291,14 @@ export default function ActivityLogScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4158D0" />
-          <Text style={styles.loadingText}>Loading activities...</Text>
+        <View style={styles.container}>
+          <LinearGradient
+            colors={['#4158D0', '#C850C0']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.headerGradient}
+          />
+          <CustomLoader visible={true} />
         </View>
       </SafeAreaView>
     );
@@ -306,17 +312,17 @@ export default function ActivityLogScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.headerGradient}
       />
-      
+
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Activity Log</Text>
-        <TouchableOpacity 
-          style={styles.filterButton} 
+        <TouchableOpacity
+          style={styles.filterButton}
           onPress={() => setShowFilterMenu(true)}
         >
           <Filter size={24} color="#fff" />
@@ -329,7 +335,7 @@ export default function ActivityLogScreen() {
         animationType="fade"
         onRequestClose={() => setShowFilterMenu(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setShowFilterMenu(false)}
@@ -410,10 +416,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 150,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    height: 160,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

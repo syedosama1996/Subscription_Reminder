@@ -33,15 +33,16 @@ const webStorage = {
   },
 };
 
-// Get environment variables using Expo Constants
+// Get environment variables
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Missing Supabase configuration. Please check your environment variables.');
+  console.error('Missing Supabase configuration. Please check your .env file.');
+  throw new Error('Missing Supabase configuration');
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: Platform.OS === 'web' ? webStorage : ExpoSecureStoreAdapter,
     autoRefreshToken: true,

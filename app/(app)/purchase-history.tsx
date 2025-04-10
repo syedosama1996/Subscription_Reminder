@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { History, Filter, Calendar, CreditCard, ArrowLeft, IndianRupee } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getSubscriptions, Subscription } from '../../lib/subscriptions';
 import { router } from 'expo-router';
+import CustomLoader from '@/components/CustomLoader';
 
 export default function PurchaseHistoryScreen() {
   const { user } = useAuth();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadSubscriptions();
@@ -26,13 +28,32 @@ export default function PurchaseHistoryScreen() {
       const data = await getSubscriptions(user.id, {
         status: ['active', 'expired', 'expiring_soon', 'past']
       });
-      setSubscriptions(data || []);
+      
+      // Sort subscriptions by purchase date in descending order (newest first)
+      const sortedData = [...(data || [])].sort((a, b) => {
+        const dateA = a.purchase_date ? new Date(a.purchase_date).getTime() : 0;
+        const dateB = b.purchase_date ? new Date(b.purchase_date).getTime() : 0;
+        return dateB - dateA; // Descending order (newest first)
+      });
+      
+      setSubscriptions(sortedData);
     } catch (err) {
       setError('Failed to load subscriptions');
     } finally {
       setLoading(false);
     }
   };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await loadSubscriptions();
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   const renderSubscriptionItem = ({ item }: { item: Subscription }) => (
     <View style={styles.purchaseCard}>
@@ -75,7 +96,21 @@ export default function PurchaseHistoryScreen() {
       </View>
     </View>
   );
-
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
+          <LinearGradient
+            colors={['#4158D0', '#C850C0']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.headerGradient}
+          />
+          <CustomLoader visible={true} />
+        </View>
+      </SafeAreaView>
+    );
+  }
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -95,11 +130,8 @@ export default function PurchaseHistoryScreen() {
         <Text style={styles.title}>Purchase History</Text>
         <View style={styles.placeholder} />
       </View>
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4158D0" />
-        </View>
-      ) : error ? (
+      
+      { error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadSubscriptions}>
@@ -118,6 +150,17 @@ export default function PurchaseHistoryScreen() {
           keyExtractor={item => item.id || ''}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#4158D0']}
+              tintColor="#4158D0"
+              title="Pull to refresh"
+              titleColor="#4158D0"
+              progressViewOffset={20}
+            />
+          }
         />
       )}
     </SafeAreaView>
@@ -128,6 +171,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backButton: {
     width: 40,
@@ -142,9 +190,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 150,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    height: 160,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   placeholder: {
     width: 40,
@@ -274,11 +322,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4158D0',
     marginLeft: 8,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   errorContainer: {
     flex: 1,

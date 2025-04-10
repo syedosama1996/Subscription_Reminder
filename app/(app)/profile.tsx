@@ -228,8 +228,8 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     height: 330,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerContent: {
     alignItems: 'center',
