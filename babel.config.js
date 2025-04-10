@@ -4,15 +4,7 @@ module.exports = function (api) {
     presets: ['babel-preset-expo'],
     plugins: [
       '@babel/plugin-transform-export-namespace-from',
-      'react-native-reanimated/plugin',
-      ['module:react-native-dotenv', {
-        moduleName: '@env',
-        path: '.env',
-        blacklist: null,
-        whitelist: null,
-        safe: false,
-        allowUndefined: true
-      }]
+      'react-native-reanimated/plugin'
     ],
   };
 };
