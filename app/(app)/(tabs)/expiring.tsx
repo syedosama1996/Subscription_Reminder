@@ -36,10 +36,16 @@ export default function ExpiringSubscriptionsScreen() {
 
       const expiringSubscriptions = data?.filter(sub => {
         const expiryDate = new Date(sub.expiry_date);
-        return expiryDate <= thirtyDaysFromNow && expiryDate >= today && sub.is_active;
+        return expiryDate <= thirtyDaysFromNow;
       }) || [];
 
-      setSubscriptions(expiringSubscriptions);
+      const sortedSubscriptions = expiringSubscriptions.sort((a, b) => {
+        const dateA = new Date(a.last_updated_at || a.created_at).getTime();
+        const dateB = new Date(b.last_updated_at || b.created_at).getTime();
+        return dateB - dateA;
+      });
+
+      setSubscriptions(sortedSubscriptions);
     } catch (err) {
       setError('Failed to load expiring subscriptions');
     } finally {
@@ -91,9 +97,9 @@ export default function ExpiringSubscriptionsScreen() {
         ) : subscriptions.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Clock size={48} color="#95a5a6" style={styles.emptyIcon} />
-            <Text style={styles.emptyTitle}>No Expiring Subscriptions</Text>
+            <Text style={styles.emptyTitle}>No Expired or Expiring Subscriptions</Text>
             <Text style={styles.emptySubtitle}>
-              None of your active subscriptions are expiring soon
+              None of your subscriptions are expired or expiring in the next 30 days
             </Text>
           </View>
         ) : (

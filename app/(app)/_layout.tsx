@@ -18,7 +18,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DrawerContentComponentProps as DrawerContentComponentPropsType } from '@react-navigation/drawer';
-import { useUserActivity } from '../../lib/hooks/useUserActivity';
 import { Ionicons } from '@expo/vector-icons';
 
 function CustomDrawerContent(props: DrawerContentComponentPropsType) {
@@ -124,8 +123,7 @@ export default function AppLayout() {
   const router = useRouter();
   const [initialRoute, setInitialRoute] = useState<string>('/(tabs)');
 
-  // Initialize user activity tracking
-  useUserActivity();
+
 
   useEffect(() => {
     if (user) {

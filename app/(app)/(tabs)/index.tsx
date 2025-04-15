@@ -93,17 +93,10 @@ export default function HomeScreen() {
       
       // Filter only active subscriptions (is_active === true)
       const activeSubscriptions = data?.filter(sub => sub.is_active === true) || [];
-      
-      // Sort by created_at in descending order (newest first)
-      const sortedSubscriptions = activeSubscriptions.sort((a, b) => {
-        const dateA = new Date(a.created_at).getTime();
-        const dateB = new Date(b.created_at).getTime();
-        return dateB - dateA;
-      });
-      
-      setSubscriptions(sortedSubscriptions);
-      setFilteredSubscriptions(sortedSubscriptions);
-    
+      console.log(activeSubscriptions, 'activeSubscriptions');
+      // Use the server-sorted data directly
+      setSubscriptions(activeSubscriptions);
+      setFilteredSubscriptions(activeSubscriptions);
       
     } catch (err: any) {
       console.error('Error loading data:', err);

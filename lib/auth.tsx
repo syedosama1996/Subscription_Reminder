@@ -56,7 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // If one flag is true but the other isn't, reset both
       if ((biometricEnabled === 'true' && !hasCredentials) || 
           (biometricEnabled !== 'true' && hasCredentials)) {
-        console.log('Inconsistent biometric state detected, resetting...');
         await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
         await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
         setIsBiometricEnabled(false);
@@ -87,24 +86,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        console.log('Session updated');
         setSession(session);
         setUser(session.user);
       } else {
         setSession(null);
         setUser(null);
-        console.log('Session expired');
-        // Show toast when session expires automatically
-        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-          Toast.show({
-            type: 'error',
-            text1: 'Your session is expire please login again',
-            position: 'top',
-            visibilityTime: 3000,
-            autoHide: true,
-            topOffset: 30,
-          });
-        }
       }
       setLoading(false);
     });
@@ -119,7 +105,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
-      console.log('Sign up attempt for email:', email);
       
       // First check if the email already exists in profiles
       const { data: existingUser, error: checkError } = await supabase
@@ -265,7 +250,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Log successful sign in
-      console.log('Sign in successful for user:', data.user.id);
 
       // Log sign in activity
       await ActivityLogger.log({
@@ -328,10 +312,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('Sign in attempt with user ID:', userId);
-      
-      // Get the user's email from the profiles table
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('email')
@@ -347,8 +327,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('No email found for user ID:', userId);
         throw new Error('No email found for user');
       }
-      
-      console.log('Found email for user ID:', userData.email);
       
       // Try to sign in with the email
       return signIn(userData.email, password);
@@ -368,8 +346,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Biometric authentication is not supported on this device');
       }
       
-      console.log('Enabling biometric authentication...');
-      
       // Authenticate with biometrics first
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Authenticate to enable fingerprint login',
@@ -380,21 +356,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Biometric authentication failed');
       }
       
-      console.log('Biometric authentication successful, storing credentials...');
-      
       // Store credentials securely
       await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify({ email, password }));
       await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, 'true');
       
       // Verify credentials were stored
       const storedCredentials = await SecureStore.getItemAsync(CREDENTIALS_KEY);
-      console.log('Credentials stored successfully:', !!storedCredentials);
       
       setIsBiometricEnabled(true);
       
       Alert.alert('Success', 'Fingerprint login has been enabled');
     } catch (error: any) {
-      console.error('Error enabling biometric:', error);
       setError(error.message || 'Failed to enable fingerprint login');
       throw error;
     }
@@ -405,9 +377,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isBiometricSupported || !isBiometricEnabled) {
         throw new Error('Biometric authentication is not enabled');
       }
-      
-      console.log('Attempting biometric sign in...');
-      
       // Authenticate with biometrics
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Authenticate to login',
@@ -418,7 +387,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Biometric authentication failed');
       }
       
-      console.log('Biometric authentication successful, retrieving credentials...');
       
       // Retrieve stored credentials
       const credentialsStr = await SecureStore.getItemAsync(CREDENTIALS_KEY);
@@ -428,7 +396,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No stored credentials found');
       }
       
-      console.log('Credentials retrieved successfully');
       
       const credentials = JSON.parse(credentialsStr);
       
@@ -443,11 +410,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const resetBiometric = async () => {
     try {
-      console.log('Resetting biometric authentication...');
       await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
       await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
       setIsBiometricEnabled(false);
-      console.log('Biometric authentication reset successfully');
     } catch (error) {
       console.error('Error resetting biometric:', error);
       throw error;

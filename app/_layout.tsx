@@ -8,11 +8,12 @@ import { SecurityProvider } from '../lib/security';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+import { registerForPushNotificationsAsync, setupSubscriptionNotifications, setupNotificationListener } from '../lib/notifications';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+const RootLayout = () => {
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Regular': Inter_400Regular,
     'Inter-Medium': Inter_500Medium,
@@ -26,15 +27,41 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
+  // Initialize notifications
+  useEffect(() => {
+    async function setupNotifications() {
+      try {
+        // Register for push notifications
+        await registerForPushNotificationsAsync();
+        
+        // Set up subscription notifications
+        const subscriptionSub = setupSubscriptionNotifications();
+        
+        // Set up notification listener
+        const notificationSub = setupNotificationListener();
+
+        // Cleanup subscriptions on unmount
+        return () => {
+          subscriptionSub.unsubscribe();
+          notificationSub.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Error setting up notifications:', error);
+      }
+    }
+
+    setupNotifications();
+  }, []);
+
   if (!fontsLoaded && !fontError) {
     return null;
   }
 
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <AuthProvider>
-          <SecurityProvider>
+    <AuthProvider>
+      <SecurityProvider>
+        <SafeAreaProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -43,9 +70,11 @@ export default function RootLayout() {
             </Stack>
             <StatusBar style="auto" />
             <Toast />
-          </SecurityProvider>
-        </AuthProvider>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </SecurityProvider>
+    </AuthProvider>
   );
-}
+};
+
+export default RootLayout;

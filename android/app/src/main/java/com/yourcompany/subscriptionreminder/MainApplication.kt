@@ -1,4 +1,4 @@
-package com.subscriptionreminder
+package com.yourcompany.subscriptionreminder
 
 import android.app.Application
 import android.content.res.Configuration
