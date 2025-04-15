@@ -101,31 +101,131 @@ export async function scheduleExpiryNotification(
   const triggerDate = new Date(expiryDate);
   triggerDate.setDate(triggerDate.getDate() - daysBefore);
 
+  // If the trigger date is in the past, don't schedule the notification
+  if (triggerDate < new Date()) {
+    console.log(`Not scheduling notification for ${subscriptionName} as the trigger date is in the past`);
+    return;
+  }
+
   const title = 'Subscription Expiring Soon';
-  const body = `${subscriptionName} will expire in ${daysBefore} days`;
+  const body = `Your subscription "${subscriptionName}" will expire in ${daysBefore} days. Please renew it.`;
 
-  // Show toast notification
-  Toast.show({
-    type: 'warning',
-    text1: title,
-    text2: body,
-    position: 'top',
-    visibilityTime: 4000,
-    autoHide: true,
-    topOffset: 50,
-  });
+  // Don't show toast for future notifications
+  // Only scheduled for future date
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      data: { subscriptionName, expiryDate: expiryDate.toISOString() },
-    },
-    trigger: {
-      type: 'date',
-      date: triggerDate,
-    } as Notifications.NotificationTriggerInput,
-  });
+  try {
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data: { 
+          subscriptionName, 
+          expiryDate: expiryDate.toISOString(),
+          type: 'expiry_reminder',
+          daysBefore 
+        },
+      },
+      trigger: {
+        type: 'date',
+        date: triggerDate,
+      } as Notifications.NotificationTriggerInput,
+    });
+    
+    console.log(`Scheduled notification for ${subscriptionName}, ${daysBefore} days before expiry: ${notificationId}`);
+    return notificationId;
+  } catch (error) {
+    console.error('Error scheduling expiry notification:', error);
+  }
+}
+
+// Schedule notifications for subscription based on reminders
+export async function setupExpiryReminders(subscription: any) {
+  try {
+    // Cancel any existing notifications for this subscription
+    await cancelExistingReminders(subscription.id);
+
+    if (!subscription.is_active) {
+      console.log(`Subscription ${subscription.service_name} is inactive, not setting up reminders`);
+      return;
+    }
+    
+    const expiryDate = new Date(subscription.expiry_date);
+    
+    // If there are specific reminders for this subscription, use those
+    if (subscription.reminders && subscription.reminders.length > 0) {
+      for (const reminder of subscription.reminders) {
+        if (reminder.enabled) {
+          await scheduleExpiryNotification(
+            subscription.service_name,
+            expiryDate,
+            reminder.days_before
+          );
+        }
+      }
+    } else {
+      // Default reminders if none specified
+      await scheduleExpiryNotification(subscription.service_name, expiryDate, 30);
+      await scheduleExpiryNotification(subscription.service_name, expiryDate, 15);
+      await scheduleExpiryNotification(subscription.service_name, expiryDate, 7);
+      await scheduleExpiryNotification(subscription.service_name, expiryDate, 1);
+    }
+
+    // Also schedule a notification for the day of expiry
+    const expiryTitle = 'Subscription Expired';
+    const expiryBody = `Your subscription "${subscription.service_name}" has expired today. Please renew it now.`;
+    
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: expiryTitle,
+        body: expiryBody,
+        data: { 
+          subscriptionName: subscription.service_name, 
+          expiryDate: expiryDate.toISOString(),
+          type: 'expiry_notification'
+        },
+      },
+      trigger: {
+        type: 'date',
+        date: expiryDate,
+      } as Notifications.NotificationTriggerInput,
+    });
+    
+  } catch (error) {
+    console.error('Error setting up expiry reminders:', error);
+  }
+}
+
+// Cancel existing reminders for a subscription
+async function cancelExistingReminders(subscriptionId: string) {
+  try {
+    const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+    
+    for (const notification of scheduledNotifications) {
+      if (
+        notification.content?.data?.subscriptionId === subscriptionId ||
+        (notification.content?.data?.type === 'expiry_reminder' && 
+         notification.content?.data?.subscriptionName === subscriptionId)
+      ) {
+        await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+      }
+    }
+  } catch (error) {
+    console.error('Error canceling existing reminders:', error);
+  }
+}
+
+// Check all subscriptions and set up reminders
+export async function setupAllExpiryReminders(subscriptions: any[]) {
+  if (!subscriptions || subscriptions.length === 0) {
+    console.log('No subscriptions to set up reminders for');
+    return;
+  }
+
+  console.log(`Setting up reminders for ${subscriptions.length} subscriptions`);
+  
+  for (const subscription of subscriptions) {
+    await setupExpiryReminders(subscription);
+  }
 }
 
 // Listen for subscription changes from Supabase
