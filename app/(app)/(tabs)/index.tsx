@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  RefreshControl, 
-  ActivityIndicator, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  RefreshControl,
+  ActivityIndicator,
+  TouchableOpacity,
   Platform,
   Alert,
   ScrollView,
@@ -14,12 +14,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../lib/auth';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { useNavigation, DrawerNavigationProp } from '@react-navigation/native';
+import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
-import { 
-  getSubscriptions, 
-  getCategories, 
+import {
+  getSubscriptions,
+  getCategories,
   Subscription,
   toggleSubscriptionStatus,
   deleteMultipleSubscriptions,
@@ -40,7 +39,7 @@ import CustomLoader from '../../../components/CustomLoader';
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const navigation = useNavigation<DrawerNavigationProp<any>>();
+  const navigation = useNavigation();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [filteredSubscriptions, setFilteredSubscriptions] = useState<Subscription[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -68,36 +67,38 @@ export default function HomeScreen() {
 
   const loadData = async () => {
     if (!user) return;
-    
+
     try {
       setError(null);
       setLoading(true);
-      
+
       // Load categories
       const categoriesData = await getCategories(user.id);
-      setCategories(categoriesData || []);
-      
-      // Create filter object
-      const filter: SubscriptionFilter = {};
-      
-      if (selectedCategories.length > 0) {
-        filter.categories = selectedCategories;
-      }
-      
-      if (selectedStatuses.length > 0) {
-        filter.status = selectedStatuses as any[];
-      }
       
       // Load subscriptions with filters
-      const data = await getSubscriptions(user.id, filter);
-      
+      const data = await getSubscriptions(user.id);
       // Filter only active subscriptions (is_active === true)
       const activeSubscriptions = data?.filter(sub => sub.is_active === true) || [];
-      console.log(activeSubscriptions, 'activeSubscriptions');
-      // Use the server-sorted data directly
+
+      // Count subscriptions per category
+      const categoryCounts = activeSubscriptions.reduce((acc, sub) => {
+        if (sub.category_id) {
+          acc[sub.category_id] = (acc[sub.category_id] || 0) + 1;
+        }
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Sort categories by subscription count (descending)
+      const sortedCategories = categoriesData?.sort((a, b) => {
+        const countA = categoryCounts[a.id!] || 0;
+        const countB = categoryCounts[b.id!] || 0;
+        return countB - countA;
+      }) || [];
+
+      setCategories(sortedCategories);
       setSubscriptions(activeSubscriptions);
       setFilteredSubscriptions(activeSubscriptions);
-      
+
     } catch (err: any) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
@@ -127,7 +128,7 @@ export default function HomeScreen() {
     if (searchQuery.trim() === '') {
       setFilteredSubscriptions(subscriptions);
     } else {
-      const filtered = subscriptions.filter(sub => 
+      const filtered = subscriptions.filter(sub =>
         sub.service_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (sub.domain_name && sub.domain_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (sub.vendor && sub.vendor.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -136,69 +137,46 @@ export default function HomeScreen() {
     }
   }, [searchQuery, subscriptions]);
 
-  // Group subscriptions by expiry status
-  const groupSubscriptions = () => {
-    const today = new Date();
-    
-    const expired = filteredSubscriptions.filter(sub => {
-      const expiryDate = new Date(sub.expiry_date);
-      return expiryDate < today && sub.is_active !== false;
-    });
-    
-    const expiringSoon = filteredSubscriptions.filter(sub => {
-      const expiryDate = new Date(sub.expiry_date);
-      const diffTime = expiryDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays >= 0 && diffDays <= 30 && expiryDate >= today && sub.is_active !== false;
-    });
-    
-    const active = filteredSubscriptions.filter(sub => {
-      const expiryDate = new Date(sub.expiry_date);
-      const diffTime = expiryDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays > 30 && sub.is_active !== false;
-    });
-    
-    return { expired, expiringSoon, active };
-  };
-
-  const { expired, expiringSoon, active } = groupSubscriptions();
-
-  const renderSectionHeader = (title: string, count: number, color: string) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={[styles.countBadge, { backgroundColor: color }]}>
-        <Text style={styles.countText}>{count}</Text>
-      </View>
-    </View>
-  );
-
   const handleToggleSubscriptionStatus = async (id: string, isActive: boolean) => {
     if (!user) return;
-    
+
     try {
-      setToggleLoading(true);
+      // Update the local state immediately for better UX
+      setSubscriptions(prevSubscriptions => 
+        prevSubscriptions.map(sub => 
+          sub.id === id ? { ...sub, is_active: isActive } : sub
+        )
+      );
+      setFilteredSubscriptions(prevSubscriptions => 
+        prevSubscriptions.map(sub => 
+          sub.id === id ? { ...sub, is_active: isActive } : sub
+        )
+      );
+      
+      // Then make the API call
       await toggleSubscriptionStatus(id, isActive, user.id);
-      await loadData(); // Reload data after toggle
+      
+      // Reload data to ensure consistency without showing loader
+      await loadData();
     } catch (error) {
       console.error('Error toggling subscription status:', error);
+      // Revert the local state on error
+      await loadData();
       Alert.alert('Error', 'Failed to update subscription status');
-    } finally {
-      setToggleLoading(false);
     }
   };
 
   const handleBulkToggleStatus = async (isActive: boolean) => {
     if (!user || selectedSubscriptions.length === 0) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Update each selected subscription
       for (const id of selectedSubscriptions) {
         await toggleSubscriptionStatus(id, isActive, user.id);
       }
-      
+
       // Reset selection mode and reload data
       setSelectionMode(false);
       setSelectedSubscriptions([]);
@@ -213,20 +191,20 @@ export default function HomeScreen() {
 
   const handleBulkDelete = async () => {
     if (!user || selectedSubscriptions.length === 0) return;
-    
+
     Alert.alert(
       'Delete Subscriptions',
       `Are you sure you want to delete ${selectedSubscriptions.length} subscription(s)? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
               setLoading(true);
               await deleteMultipleSubscriptions(selectedSubscriptions, user.id);
-              
+
               // Reset selection mode and reload data
               setSelectionMode(false);
               setSelectedSubscriptions([]);
@@ -248,17 +226,17 @@ export default function HomeScreen() {
       Alert.alert('Export not available', 'Exporting is not available on web platform');
       return;
     }
-    
+
     try {
       setExporting(true);
-      
+
       // Generate CSV content
       const csvContent = exportSubscriptionsToCSV(subscriptions);
-      
+
       // Create a temporary file
       const fileUri = `${FileSystem.documentDirectory}subscriptions_${new Date().toISOString().split('T')[0]}.csv`;
       await FileSystem.writeAsStringAsync(fileUri, csvContent);
-      
+
       // Share the file
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri);
@@ -288,15 +266,15 @@ export default function HomeScreen() {
 
   const handleCategoryPress = (categoryId: string | null) => {
     setActiveCategory(activeCategory === categoryId ? null : categoryId);
-    
+
     // Debug log to check subscription structure
-    
+
     // Filter existing subscriptions instead of reloading
     if (categoryId === null) {
       setFilteredSubscriptions(subscriptions);
     } else {
       const filtered = subscriptions.filter(sub => {
-    
+
         return sub.category_id === categoryId;
       });
       setFilteredSubscriptions(filtered);
@@ -320,8 +298,8 @@ export default function HomeScreen() {
   const renderEmptyState = () => {
     const hasNoSubscriptions = subscriptions.length === 0;
     const hasNoFilteredResults = filteredSubscriptions.length === 0 && subscriptions.length > 0;
-    
-    
+
+
     return (
       <View style={[styles.emptyContainer, { flex: 1, justifyContent: 'center' }]}>
         <Text style={styles.emptyTitle}>
@@ -332,13 +310,13 @@ export default function HomeScreen() {
             ? "You haven't added any subscriptions yet."
             : "No subscriptions match your search or filters."}
         </Text>
-        <TouchableOpacity 
-                style={styles.addFirstButton}
-                onPress={() => router.push('/add')}
-              >
-                <Plus size={20} color="#fff" style={styles.addFirstIcon} />
-                <Text style={styles.addFirstText}>Add Your First Subscription</Text>
-              </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.addFirstButton}
+          onPress={() => router.push('/add')}
+        >
+          <Plus size={20} color="#fff" style={styles.addFirstIcon} />
+          <Text style={styles.addFirstText}>Add Your First Subscription</Text>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -351,7 +329,7 @@ export default function HomeScreen() {
       if (categoryIndex !== -1) {
         // Calculate the scroll position
         const scrollPosition = categoryIndex * 88; // 80px width + 8px margin
-        
+
         // Use setTimeout to ensure the scroll happens after the render
         setTimeout(() => {
           categoriesScrollViewRef.current?.scrollTo({
@@ -400,7 +378,7 @@ export default function HomeScreen() {
         {/* Header Section */}
         <View style={styles.headerContainer}>
           <View style={styles.header}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.menuButton}
               onPress={() => navigation.toggleDrawer()}
             >
@@ -409,13 +387,13 @@ export default function HomeScreen() {
             <View style={styles.headerActions}>
               {!selectionMode ? (
                 <>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.iconButton}
                     onPress={() => setSelectionMode(true)}
                   >
                     <CheckSquare size={22} color="#fff" />
                   </TouchableOpacity>
-            
+
 
                   {/* <TouchableOpacity 
                   style={styles.iconButton}
@@ -434,13 +412,13 @@ export default function HomeScreen() {
                 </>
               ) : (
                 <>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.iconButton}
                     onPress={handleMarkAll}
                   >
                     <CheckCircle2 size={22} color="#fff" />
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.iconButton}
                     onPress={handleRemoveAll}
                   >
@@ -450,7 +428,7 @@ export default function HomeScreen() {
               )}
             </View>
           </View>
-          
+
           <View style={styles.searchContainer}>
             <View style={styles.searchBar}>
               <Search size={20} color="#7f8c8d" style={styles.searchIcon} />
@@ -466,11 +444,13 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
           </View>
-
-          <Text style={styles.title}>Active Subscriptions</Text>
+          <View>
+            <Text style={styles.title}>Active Subscriptions</Text>
         </View>
+        {/* <Text style={styles.title}>Active Subscriptions</Text> */}
+    </View>
 
-        {/* Main Content Section */}
+        {/* Main Content Section */ }
         <View style={styles.mainContent}>
           {/* Categories Tabs */}
           {categories.length > 0 && (
@@ -497,42 +477,65 @@ export default function HomeScreen() {
                       end={{ x: 1, y: 1 }}
                       style={[styles.categoryTabContent]}
                     >
-                      <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>All</Text>
+                      <View style={styles.categoryContent}>
+                        <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>All</Text>
+                        <View style={[styles.badge, styles.activeBadge]}>
+                          <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptions.length}</Text>
+                        </View>
+                      </View>
                     </LinearGradient>
                   ) : (
                     <View style={styles.categoryTabContent}>
-                      <Text style={styles.categoryTabText}>All</Text>
+                      <View style={styles.categoryContent}>
+                        <Text style={styles.categoryTabText}>All</Text>
+                        <View style={styles.badge}>
+                          <Text style={styles.badgeText}>{subscriptions.length}</Text>
+                        </View>
+                      </View>
                     </View>
                   )}
                 </TouchableOpacity>
                 
-                {categories.map(category => (
-                  <TouchableOpacity
-                    key={category.id}
-                    onPress={() => handleCategoryPress(category.id!)}
-                    style={[
-                      styles.categoryTab,
-                      activeCategory === category.id && styles.activeCategoryTab
-                    ]}
-                  >
-                    {activeCategory === category.id ? (
-                      <LinearGradient
-                        colors={['#4158D0', '#C850C0']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={[styles.categoryTabContent]}
-                      >
-                        <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>
-                          {category.name}
-                        </Text>
-                      </LinearGradient>
-                    ) : (
-                      <View style={styles.categoryTabContent}>
-                        <Text style={styles.categoryTabText}>{category.name}</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                ))}
+                {categories.map(category => {
+                  const subscriptionCount = subscriptions.filter(sub => sub.category_id === category.id).length;
+                  return (
+                    <TouchableOpacity
+                      key={category.id}
+                      onPress={() => handleCategoryPress(category.id!)}
+                      style={[
+                        styles.categoryTab,
+                        activeCategory === category.id && styles.activeCategoryTab
+                      ]}
+                    >
+                      {activeCategory === category.id ? (
+                        <LinearGradient
+                          colors={['#4158D0', '#C850C0']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={[styles.categoryTabContent]}
+                        >
+                          <View style={styles.categoryContent}>
+                            <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>
+                              {category.name}
+                            </Text>
+                            <View style={[styles.badge, styles.activeBadge]}>
+                              <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptionCount}</Text>
+                            </View>
+                          </View>
+                        </LinearGradient>
+                      ) : (
+                        <View style={styles.categoryTabContent}>
+                          <View style={styles.categoryContent}>
+                            <Text style={styles.categoryTabText}>{category.name}</Text>
+                            <View style={styles.badge}>
+                              <Text style={styles.badgeText}>{subscriptionCount}</Text>
+                            </View>
+                          </View>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
             </View>
           )}
@@ -542,23 +545,19 @@ export default function HomeScreen() {
             renderEmptyState()
           ) : (
             <FlatList
-              data={[
-                ...active.map(sub => ({ type: 'subscription', data: sub })),
-                ...expiringSoon.map(sub => ({ type: 'subscription', data: sub })),
-                ...expired.map(sub => ({ type: 'subscription', data: sub })),
-              ]}
+              data={filteredSubscriptions}
               keyExtractor={(item, index) => 
-                `subscription-${item.data.id}-${index}`
+                `subscription-${item.id}-${index}`
               }
               renderItem={({ item }) => (
                 <SubscriptionCard 
-                  subscription={item.data} 
-                  onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.data.id!, isActive)}
+                  subscription={item}
+                  onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id!, isActive)}
                   selectionMode={selectionMode}
-                  selected={selectedSubscriptions.includes(item.data.id!)}
-                  onToggleSelection={() => toggleSubscriptionSelection(item.data.id!)}
+                  selected={selectedSubscriptions.includes(item.id!)}
+                  onToggleSelection={() => toggleSubscriptionSelection(item.id!)}
                   disabled={toggleLoading}
-                  onPress={() => router.push(`/subscription/${item.data.id}`)}
+                  onPress={() => router.push(`/subscription/${item.id}`)}
                   onRefresh={loadData}
                 />
               )}
@@ -581,7 +580,14 @@ export default function HomeScreen() {
         </View>
 
         <CustomLoader visible={toggleLoading} />
-      </SafeAreaView>
+        
+        <BulkActionBar
+          selectedCount={selectedSubscriptions.length}
+          onCancel={handleCancelSelection}
+          onDelete={handleBulkDelete}
+          onToggleStatus={handleBulkToggleStatus}
+        />
+      </SafeAreaView >
       
       <FilterModal
         visible={filterModalVisible}
@@ -593,14 +599,7 @@ export default function HomeScreen() {
         onSelectStatuses={setSelectedStatuses}
         onRefresh={loadData}
       />
-      
-      <BulkActionBar
-        selectedCount={selectedSubscriptions.length}
-        onCancel={handleCancelSelection}
-        onDelete={handleBulkDelete}
-        onToggleStatus={handleBulkToggleStatus}
-      />
-    </View>
+    </View >
   );
 }
 
@@ -621,9 +620,10 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
+    paddingBottom: 80,
   },
   headerContainer: {
-    paddingBottom: 16,
+    paddingBottom: 25,
   },
   header: {
     flexDirection: 'row',
@@ -687,11 +687,12 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: '#fff',
     paddingHorizontal: 20,
-    marginBottom: 12,
+    marginTop: -4,
+    // paddingTop: 12,
   },
   mainContent: {
     flex: 1,
-    marginTop: Platform.OS === 'ios' ? 0 : 20,
+    marginTop: Platform.OS === 'ios' ? 5 : 5,
 
   },
   categoriesWrapper: {
@@ -699,10 +700,12 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     height: 40,
+    marginTop: 12,
+    marginBottom: 12,
   },
   categoriesScrollContent: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
+    paddingHorizontal: 4,
     alignItems: 'center',
     gap: 10,
   },
@@ -712,7 +715,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e6e6f0',
     minWidth: 80,
     height: 36,
-    marginHorizontal: 4,
+    marginHorizontal: 3,
   },
   categoryTabContent: {
     width: '100%',
@@ -720,20 +723,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
-  activeCategoryTab: {
-    backgroundColor: 'transparent',
+  categoryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
-  activeCategoryTabContent: {
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  badge: {
+    backgroundColor: 'rgba(65, 88, 208, 0.15)',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  badgeText: {
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 12,
+    color: '#4158D0',
+  },
+  activeBadgeText: {
+    color: '#fff',
   },
   categoryTabText: {
     fontFamily: 'Inter-Medium',
@@ -747,8 +763,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 100,
+    marginTop: 18,
   },
   loadingContainer: {
     flex: 1,
@@ -841,5 +856,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontFamily: 'Inter-Medium',
+  },
+  activeCategoryTab: {
+    // Add definition for the missing style
+    // Minimal style, as gradient is applied internally
   },
 });

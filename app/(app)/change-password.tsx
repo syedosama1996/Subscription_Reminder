@@ -123,73 +123,79 @@ export default function ChangePasswordScreen() {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Current Password</Text>
-            <View style={styles.inputWrapper}>
-              <Shield size={20} color="#4158D0" style={styles.inputIcon} />
-              <Input
-                value={currentPassword}
-                onChangeText={setCurrentPassword}
-                secureTextEntry={!showCurrentPassword}
-                style={styles.input}
-                placeholder="Enter your current password"
-              />
-              <TouchableOpacity 
-                onPress={() => setShowCurrentPassword(!showCurrentPassword)}
-                style={styles.eyeIcon}
-              >
-                {showCurrentPassword ? (
-                  <EyeOff size={20} color="#4158D0" />
-                ) : (
-                  <Eye size={20} color="#4158D0" />
-                )}
-              </TouchableOpacity>
+            <View style={styles.inputRow}>
+              {/* <Shield size={20} color="#7f8c8d" style={styles.inputIcon} /> */}
+              <View style={styles.inputWrapper}>
+                <Input
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  secureTextEntry={!showCurrentPassword}
+                  placeholder="Enter your current password"
+                  containerStyle={styles.input}
+                />
+                <TouchableOpacity 
+                  onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                  style={styles.eyeIcon}
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff size={20} color="#7f8c8d" />
+                  ) : (
+                    <Eye size={20} color="#7f8c8d" />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>New Password</Text>
-            <View style={styles.inputWrapper}>
-              <Shield size={20} color="#4158D0" style={styles.inputIcon} />
-              <Input
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry={!showNewPassword}
-                style={styles.input}
-                placeholder="Enter your new password"
-              />
-              <TouchableOpacity 
-                onPress={() => setShowNewPassword(!showNewPassword)}
-                style={styles.eyeIcon}
-              >
-                {showNewPassword ? (
-                  <EyeOff size={20} color="#4158D0" />
-                ) : (
-                  <Eye size={20} color="#4158D0" />
-                )}
-              </TouchableOpacity>
+            <View style={styles.inputRow}>
+              {/* <Shield size={20} color="#7f8c8d" style={styles.inputIcon} /> */}
+              <View style={styles.inputWrapper}>
+                <Input
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry={!showNewPassword}
+                  placeholder="Enter your new password"
+                  containerStyle={styles.input}
+                />
+                <TouchableOpacity 
+                  onPress={() => setShowNewPassword(!showNewPassword)}
+                  style={styles.eyeIcon}
+                >
+                  {showNewPassword ? (
+                    <EyeOff size={20} color="#7f8c8d" />
+                  ) : (
+                    <Eye size={20} color="#7f8c8d" />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Confirm New Password</Text>
-            <View style={styles.inputWrapper}>
-              <Shield size={20} color="#4158D0" style={styles.inputIcon} />
-              <Input
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showConfirmPassword}
-                style={styles.input}
-                placeholder="Confirm your new password"
-              />
-              <TouchableOpacity 
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={styles.eyeIcon}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff size={20} color="#4158D0" />
-                ) : (
-                  <Eye size={20} color="#4158D0" />
-                )}
-              </TouchableOpacity>
+            <View style={styles.inputRow}>
+              {/* <Shield size={20} color="#7f8c8d" style={styles.inputIcon} /> */}
+              <View style={styles.inputWrapper}>
+                <Input
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  placeholder="Confirm your new password"
+                  containerStyle={styles.input}
+                />
+                <TouchableOpacity 
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={styles.eyeIcon}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} color="#7f8c8d" />
+                  ) : (
+                    <Eye size={20} color="#7f8c8d" />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
@@ -276,7 +282,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 4,
   },
-  inputWrapper: {
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
@@ -290,21 +296,35 @@ const styles = StyleSheet.create({
     elevation: 2,
     height: 56,
   },
+  inputWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
   inputIcon: {
     marginLeft: 16,
+    marginRight: 12,
   },
   input: {
     flex: 1,
-    height: 56,
-    paddingHorizontal: 16,
     fontSize: 16,
     color: '#2c3e50',
+    marginBottom: 0,
   },
   eyeIcon: {
-    padding: 16,
+    position: 'absolute',
+    right: 12,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    padding: 12,
   },
   button: {
     marginTop: 30,
     marginBottom: 20,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#4158D0',
   },
 }); 

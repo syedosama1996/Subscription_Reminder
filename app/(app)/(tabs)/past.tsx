@@ -16,7 +16,7 @@ import SubscriptionCard from '../../../components/SubscriptionCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { History } from 'lucide-react-native';
 import CustomLoader from '../../../components/CustomLoader';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 
 export default function PastSubscriptionsScreen() {
   const { user } = useAuth();
@@ -24,7 +24,6 @@ export default function PastSubscriptionsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [toggleLoading, setToggleLoading] = useState(false);
 
   const loadData = async () => {
     if (!user) return;
@@ -72,14 +71,23 @@ export default function PastSubscriptionsScreen() {
     if (!user) return;
 
     try {
-      setToggleLoading(true);
+      // Update the local state immediately for better UX
+      setSubscriptions(prevSubscriptions => 
+        prevSubscriptions.map(sub => 
+          sub.id === id ? { ...sub, is_active: isActive } : sub
+        )
+      );
+      
+      // Then make the API call
       await toggleSubscriptionStatus(id, isActive, user.id);
-      await loadData(); // Reload data after toggle
+      
+      // Reload data to ensure consistency without showing loader
+      await loadData();
     } catch (error) {
       console.error('Error toggling subscription status:', error);
+      // Revert the local state on error
+      await loadData();
       Alert.alert('Error', 'Failed to update subscription status');
-    } finally {
-      setToggleLoading(false);
     }
   };
   if (loading) {
@@ -130,7 +138,6 @@ export default function PastSubscriptionsScreen() {
               <SubscriptionCard
                 subscription={item}
                 onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id, isActive)}
-                disabled={toggleLoading}
               />
             )}
             contentContainerStyle={styles.listContent}
@@ -144,8 +151,6 @@ export default function PastSubscriptionsScreen() {
             }
           />
         )}
-
-        <CustomLoader visible={toggleLoading} />
       </SafeAreaView>
     </View>
   );
@@ -167,6 +172,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    paddingBottom: 80,
   },
   loadingContainer: {
     flex: 1,

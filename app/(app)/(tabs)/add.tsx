@@ -124,13 +124,6 @@ export default function AddSubscriptionScreen() {
           });
         }
       }
-
-      // Navigate back to home
-      Alert.alert(
-        'Success',
-        'Subscription added successfully',
-        [{ text: 'OK', onPress: () => router.push('/') }]
-      );
     } catch (err: any) {
       console.error('Error adding subscription:', err);
       setError(err.message || 'Failed to add subscription');

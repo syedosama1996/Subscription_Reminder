@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { Category, ActivityLog, SubscriptionFilter } from './types';
 import { generateInvoiceForSubscription } from './invoices';
-import { scheduleNotification } from './notifications';
+import { scheduleNotification, setupExpiryReminders } from './notifications';
 // Keep shared functions within this file or import correctly if moved
 // import { createSubscriptionHistory, logActivity } from './sharedSubscriptionFunctions'; 
 
@@ -115,6 +115,9 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
         'New Subscription Added',
         `${newSubscription.service_name} has been added to your subscriptions`
       );
+
+      // Set up expiry reminders for new subscription
+      await setupExpiryReminders(newSubscription);
 
       await logActivity({
         user_id: userId,
@@ -246,6 +249,9 @@ export const updateSubscription = async (id: string, subscription: Partial<Subsc
 
     if (error) throw error;
 
+    // Set up expiry reminders after update
+    await setupExpiryReminders(data);
+
     // Log activity
     await logActivity({
       user_id: userId,
@@ -287,6 +293,11 @@ export const toggleSubscriptionStatus = async (id: string, isActive: boolean, us
 
     if (error) throw error;
 
+    // Set up expiry reminders after status change
+    if (isActive) {
+      await setupExpiryReminders(data);
+    }
+
     // Create notification
     await scheduleNotification(
       `Subscription ${isActive ? 'Activated' : 'Deactivated'}`,
@@ -312,6 +323,7 @@ export const toggleSubscriptionStatus = async (id: string, isActive: boolean, us
 // Delete a subscription
 export const deleteSubscription = async (id: string, userId: string) => {
   try {
+    console.log(`Attempting to delete subscription: ${id}`);
     // Get subscription details before deleting for activity log
     const { data: subscription } = await supabase
       .from('subscriptions')
@@ -319,19 +331,10 @@ export const deleteSubscription = async (id: string, userId: string) => {
       .eq('id', id)
       .single();
 
-    // Delete related records in the correct order to handle foreign key constraints
-    // 1. First delete related invoices
-    const { error: invoiceError } = await supabase
-      .from('invoices')
-      .delete()
-      .eq('subscription_id', id);
-
-    if (invoiceError) {
-      console.error('Error deleting related invoices:', invoiceError);
-      throw invoiceError;
-    }
-
-    // 2. Delete related reminders
+    // Delete related records (Invoices handled by ON DELETE CASCADE)
+    
+    // 1. Delete related reminders
+    console.log(`Deleting reminders related to subscription: ${id}`);
     const { error: reminderError } = await supabase
       .from('reminders')
       .delete()
@@ -340,9 +343,12 @@ export const deleteSubscription = async (id: string, userId: string) => {
     if (reminderError) {
       console.error('Error deleting related reminders:', reminderError);
       throw reminderError;
+    } else {
+      console.log(`Successfully deleted reminders related to subscription: ${id}`);
     }
 
-    // 3. Delete subscription history
+    // 2. Delete subscription history
+    console.log(`Deleting history related to subscription: ${id}`);
     const { error: historyError } = await supabase
       .from('subscription_history')
       .delete()
@@ -351,15 +357,23 @@ export const deleteSubscription = async (id: string, userId: string) => {
     if (historyError) {
       console.error('Error deleting subscription history:', historyError);
       throw historyError;
+    } else {
+      console.log(`Successfully deleted history related to subscription: ${id}`);
     }
 
-    // 4. Finally delete the subscription
+    // 3. Finally delete the subscription (Database handles invoices)
+    console.log(`Deleting subscription: ${id}`);
     const { error } = await supabase
       .from('subscriptions')
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error deleting subscription itself:', error); 
+      throw error;
+    } else {
+      console.log(`Successfully deleted subscription: ${id}`);
+    }
 
     // Create notification for deleted subscription
     if (subscription) {
@@ -393,19 +407,9 @@ export const deleteMultipleSubscriptions = async (ids: string[], userId: string)
       .select('id, service_name')
       .in('id', ids);
 
-    // Delete related records in the correct order to handle foreign key constraints
-    // 1. First delete related invoices
-    const { error: invoiceError } = await supabase
-      .from('invoices')
-      .delete()
-      .in('subscription_id', ids);
-
-    if (invoiceError) {
-      console.error('Error deleting related invoices:', invoiceError);
-      throw invoiceError;
-    }
-
-    // 2. Delete related reminders
+    // Delete related records (Invoices handled by ON DELETE CASCADE)
+    
+    // 1. Delete related reminders
     const { error: reminderError } = await supabase
       .from('reminders')
       .delete()
@@ -413,10 +417,10 @@ export const deleteMultipleSubscriptions = async (ids: string[], userId: string)
 
     if (reminderError) {
       console.error('Error deleting related reminders:', reminderError);
-      throw reminderError;
+      // Potentially continue or throw, depending on desired behavior
     }
 
-    // 3. Delete subscription history
+    // 2. Delete subscription history
     const { error: historyError } = await supabase
       .from('subscription_history')
       .delete()
@@ -424,10 +428,10 @@ export const deleteMultipleSubscriptions = async (ids: string[], userId: string)
 
     if (historyError) {
       console.error('Error deleting subscription history:', historyError);
-      throw historyError;
+      // Potentially continue or throw
     }
 
-    // 4. Finally delete the subscriptions
+    // 3. Finally delete the subscriptions (Database handles invoices)
     const { error } = await supabase
       .from('subscriptions')
       .delete()
@@ -642,6 +646,9 @@ export const renewSubscription = async (
       `${existingSubscription.service_name} has been renewed until ${new Date(renewalData.expiry_date).toLocaleDateString()}`
     );
 
+    // Set up expiry reminders after renewal
+    await setupExpiryReminders(finalSubscription);
+
     await logActivity({
       user_id: userId,
       action: 'renew',
@@ -847,7 +854,8 @@ export const exportSubscriptionsToCSV = (subscriptions: Subscription[]): string 
 export const logActivity = async (log: ActivityLog) => {
   try {
     // For subscription-related activities, ensure we have the correct user_id
-    if (log.entity_type === 'subscription' && log.entity_id) {
+    if (log.entity_type === 'subscription' && log.entity_id && log.action !== 'delete') {
+      // Only look up the subscription if this is not a deletion action
       try {
         const { data: subscription, error } = await supabase
           .from('subscriptions')

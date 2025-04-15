@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    paddingBottom: Platform.OS === 'ios' ? 90 : 100,
   },
   infoContainer: {
     flexDirection: 'row',

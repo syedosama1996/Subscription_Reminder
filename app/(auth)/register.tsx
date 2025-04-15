@@ -106,44 +106,48 @@ export default function RegisterScreen() {
 
             <View style={styles.inputContainer}>
               <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <Input
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                containerStyle={styles.input}
-              />
-              <TouchableOpacity 
-                style={styles.passwordToggle}
-                onPress={togglePasswordVisibility}
-              >
-                {showPassword ? (
-                  <EyeOff size={20} color="#7f8c8d" />
-                ) : (
-                  <Eye size={20} color="#7f8c8d" />
-                )}
-              </TouchableOpacity>
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  containerStyle={styles.input}
+                />
+                <TouchableOpacity 
+                  onPress={togglePasswordVisibility}
+                  style={styles.eyeIcon}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color="#7f8c8d" />
+                  ) : (
+                    <Eye size={20} color="#7f8c8d" />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.inputContainer}>
               <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <Input
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showConfirmPassword}
-                containerStyle={styles.input}
-              />
-              <TouchableOpacity 
-                style={styles.passwordToggle}
-                onPress={toggleConfirmPasswordVisibility}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff size={20} color="#7f8c8d" />
-                ) : (
-                  <Eye size={20} color="#7f8c8d" />
-                )}
-              </TouchableOpacity>
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  containerStyle={styles.input}
+                />
+                <TouchableOpacity 
+                  onPress={toggleConfirmPasswordVisibility}
+                  style={styles.eyeIcon}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} color="#7f8c8d" />
+                  ) : (
+                    <Eye size={20} color="#7f8c8d" />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <Button
@@ -252,16 +256,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  inputWrapper: {
+    flex: 1,
+    position: 'relative',
+  },
   inputIcon: {
     marginRight: 12,
   },
   input: {
-    flex: 1,
     marginBottom: 0,
+    flex: 1,
   },
-  passwordToggle: {
-    padding: 8,
-    marginLeft: 8,
+  eyeIcon: {
+    position: 'absolute',
+    right: 12,
+    top: 14,
+    padding: 4,
   },
   button: {
     marginTop: 8,

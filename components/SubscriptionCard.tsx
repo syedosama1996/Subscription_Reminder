@@ -84,13 +84,17 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   };
 
   // Add a wrapper for onToggleStatus to refresh the screen after toggling
-  const handleToggleStatus = (isActive: boolean) => {
-    if (onToggleStatus) {
-      onToggleStatus(isActive);
-      // Call the refresh callback after a short delay to allow the toggle to complete
-      setTimeout(() => {
-        onRefresh?.();
-      }, 500);
+  const handleToggleStatus = async (isActive: boolean) => {
+    if (onToggleStatus && !disabled) {
+      try {
+        await onToggleStatus(isActive);
+        // Call the refresh callback without delay
+        if (onRefresh) {
+          onRefresh();
+        }
+      } catch (error) {
+        console.error('Error toggling subscription status:', error);
+      }
     }
   };
 
@@ -100,6 +104,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       onPress={handlePress}
       onLongPress={handleLongPress}
       disabled={disabled}
+      activeOpacity={0.6}
     >
       {Platform.OS === 'ios' ? (
         <BlurView intensity={80} tint="light" style={[

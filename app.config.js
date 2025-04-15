@@ -18,11 +18,17 @@ module.exports = {
     ],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.subscriptionreminder"
+      bundleIdentifier: "com.yourcompany.subscriptionreminder",
+      buildNumber: "1.0.0",
+      infoPlist: {
+        NSCameraUsageDescription: "This app uses the camera to scan QR codes",
+        NSPhotoLibraryUsageDescription: "This app uses the photo library to select images",
+        NSPhotoLibraryAddUsageDescription: "This app uses the photo library to save images"
+      }
     },
     android: {
       icon: "./assets/images/icon.png",
-      package: "com.subscriptionreminder",
+      package: "com.yourcompany.subscriptionreminder",
       versionCode: 1,
       adaptiveIcon: {
         foregroundImage: "./assets/images/icon.png",
@@ -52,6 +58,13 @@ module.exports = {
         "expo-router",
         {
           origin: "https://yourapp.com"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          icon: "./assets/images/icon.png",
+          color: "#ffffff"
         }
       ]
     ],
