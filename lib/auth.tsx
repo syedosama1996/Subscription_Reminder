@@ -13,7 +13,7 @@ type AuthContextType = {
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, shouldTriggerBiometric?: boolean) => Promise<void>;
   signInWithId: (userId: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   error: string | null;
@@ -199,7 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, shouldTriggerBiometric: boolean = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -238,7 +238,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // If the user exists in profiles but not in auth, we need to recreate the auth user
         if (error.message === 'Invalid login credentials' && userData) {
           throw new Error('Invalid login credentials.');
-          
         }
         
         throw error;
@@ -249,7 +248,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No user data returned');
       }
 
-      // Log successful sign in
+      // Only trigger biometric if explicitly requested
+      if (shouldTriggerBiometric && isBiometricEnabled) {
+        await signInWithBiometric();
+      }
 
       // Log sign in activity
       await ActivityLogger.log({

@@ -51,7 +51,7 @@ export async function registerForPushNotificationsAsync() {
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
+      // console.log('Failed to get push token for push notification!');
       return;
     }
     try {
@@ -103,7 +103,7 @@ export async function scheduleExpiryNotification(
 
   // If the trigger date is in the past, don't schedule the notification
   if (triggerDate < new Date()) {
-    console.log(`Not scheduling notification for ${subscriptionName} as the trigger date is in the past`);
+    // console.log(`Not scheduling notification for ${subscriptionName} as the trigger date is in the past`);
     return;
   }
 
@@ -131,7 +131,6 @@ export async function scheduleExpiryNotification(
       } as Notifications.NotificationTriggerInput,
     });
     
-    console.log(`Scheduled notification for ${subscriptionName}, ${daysBefore} days before expiry: ${notificationId}`);
     return notificationId;
   } catch (error) {
     console.error('Error scheduling expiry notification:', error);
@@ -145,7 +144,7 @@ export async function setupExpiryReminders(subscription: any) {
     await cancelExistingReminders(subscription.id);
 
     if (!subscription.is_active) {
-      console.log(`Subscription ${subscription.service_name} is inactive, not setting up reminders`);
+      // console.log(`Subscription ${subscription.service_name} is inactive, not setting up reminders`);
       return;
     }
     
@@ -217,11 +216,10 @@ async function cancelExistingReminders(subscriptionId: string) {
 // Check all subscriptions and set up reminders
 export async function setupAllExpiryReminders(subscriptions: any[]) {
   if (!subscriptions || subscriptions.length === 0) {
-    console.log('No subscriptions to set up reminders for');
+    // console.log('No subscriptions to set up reminders for');
     return;
   }
 
-  console.log(`Setting up reminders for ${subscriptions.length} subscriptions`);
   
   for (const subscription of subscriptions) {
     await setupExpiryReminders(subscription);

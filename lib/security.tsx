@@ -13,20 +13,15 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { session } = useAuth();
 
-  useEffect(() => {
-    if (session) {
-      checkBiometrics();
-    }
-  }, [session]);
-
   const checkBiometrics = async () => {
     const hasHardware = await LocalAuthentication.hasHardwareAsync();
     const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
     if (hasHardware && isEnrolled) {
-      await authenticate();
+      return await authenticate();
     } else {
       setIsAuthenticated(true);
+      return true;
     }
   };
 

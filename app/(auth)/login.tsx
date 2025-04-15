@@ -17,19 +17,24 @@ export default function LoginScreen() {
   const [showResetOption, setShowResetOption] = useState(false);
 
   useEffect(() => {
-    // Check if biometric is supported and enabled
-    if (isBiometricSupported && isBiometricEnabled) {
-      setShowBiometricOption(true);
-      setShowResetOption(true);
-    } else if (isBiometricSupported) {
-      setShowResetOption(false);
+    // Reset states first
+    setShowBiometricOption(false);
+    setShowResetOption(false);
+
+    // Then set based on conditions
+    if (isBiometricSupported) {
+      if (isBiometricEnabled) {
+        setShowBiometricOption(true);
+        setShowResetOption(true);
+      }
     }
   }, [isBiometricSupported, isBiometricEnabled]);
 
   const handleLogin = async () => {
     if (!email || !password) return;
     try {
-      await signIn(email, password);
+      // Sign in without triggering biometric
+      await signIn(email, password, false); // Pass false to prevent biometric prompt
       router.replace('/(app)/(tabs)');
     } catch (error) {
       // Error is already handled by the auth context
@@ -38,6 +43,7 @@ export default function LoginScreen() {
 
   const handleBiometricLogin = async () => {
     try {
+      // Only trigger biometric when explicitly requested
       await signInWithBiometric();
       router.replace('/(app)/(tabs)');
     } catch (error) {
@@ -54,7 +60,7 @@ export default function LoginScreen() {
     
     try {
       // First try to sign in to verify credentials
-      await signIn(email, password);
+      await signIn(email, password, false); // Pass false to prevent biometric prompt
       
       // If sign in is successful, enable biometric
       await enableBiometric(email, password);
@@ -157,36 +163,35 @@ export default function LoginScreen() {
               {loading && <ActivityIndicator color="#fff" />}
             </Button>
 
-            {isBiometricSupported && !isBiometricEnabled && (
-              <TouchableOpacity 
-                style={styles.biometricButton}
-                onPress={handleEnableBiometric}
-                disabled={!email || !password || loading}
-              >
-                <Fingerprint size={20} color="#4158D0" style={styles.biometricIcon} />
-                <Text style={styles.biometricText}>Enable Fingerprint Login</Text>
-              </TouchableOpacity>
-            )}
-
-            {showBiometricOption && (
-              <TouchableOpacity 
-                style={styles.biometricButton}
-                onPress={handleBiometricLogin}
-                disabled={loading}
-              >
-                <Fingerprint size={20} color="#4158D0" style={styles.biometricIcon} />
-                <Text style={styles.biometricText}>Login with Fingerprint</Text>
-              </TouchableOpacity>
-            )}
-
-            {showResetOption && (
-              <TouchableOpacity 
-                style={styles.resetButton}
-                onPress={handleResetBiometric}
-                disabled={loading}
-              >
-                <Text style={styles.resetText}>Reset Fingerprint Login</Text>
-              </TouchableOpacity>
+            {!loading && isBiometricSupported && (
+              <>
+                {!isBiometricEnabled ? (
+                  <TouchableOpacity 
+                    style={styles.biometricButton}
+                    onPress={handleEnableBiometric}
+                    disabled={!email || !password}
+                  >
+                    <Fingerprint size={20} color="#4158D0" style={styles.biometricIcon} />
+                    <Text style={styles.biometricText}>Enable Fingerprint Login</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <>
+                    <TouchableOpacity 
+                      style={styles.biometricButton}
+                      onPress={handleBiometricLogin}
+                    >
+                      <Fingerprint size={20} color="#4158D0" style={styles.biometricIcon} />
+                      <Text style={styles.biometricText}>Login with Fingerprint</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.resetButton}
+                      onPress={handleResetBiometric}
+                    >
+                      <Text style={styles.resetText}>Reset Fingerprint Login</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </>
             )}
 
             <View style={styles.footer}>

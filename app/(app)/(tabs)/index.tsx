@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    paddingBottom: 80,
+    paddingBottom: Platform.OS === 'android' ? 60 : 80,
   },
   headerContainer: {
     paddingBottom: 25,
@@ -687,12 +687,12 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: '#fff',
     paddingHorizontal: 20,
-    marginTop: -4,
+    marginTop: Platform.OS === 'ios' ? -4 : 4,
     // paddingTop: 12,
   },
   mainContent: {
     flex: 1,
-    marginTop: Platform.OS === 'ios' ? 5 : 5,
+    marginTop: Platform.OS === 'ios' ? 5 : 15,
 
   },
   categoriesWrapper: {
@@ -764,6 +764,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 20,
     marginTop: 18,
+    paddingBottom: Platform.OS === 'android' ? 30 : 20,
   },
   loadingContainer: {
     flex: 1,
