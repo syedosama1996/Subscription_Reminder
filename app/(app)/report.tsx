@@ -111,18 +111,13 @@ export default function ReportScreen() {
   const loadReportData = async () => {
     try {
       setLoading(true);
-      console.log('Loading report data for user:', user?.id);
-      console.log('Date range:', dateRange.label, dateRange.startDate, dateRange.endDate);
 
       // Get subscriptions
       const subscriptions = await getSubscriptions(user?.id || '');
-      console.log('Subscriptions loaded:', subscriptions?.length);
       const activeSubscriptions = subscriptions?.filter(sub => sub.is_active) || [];
-      console.log('Active subscriptions:', activeSubscriptions.length);
 
       // Get invoices
       const invoices = await getUserInvoices(user?.id || '');
-      console.log('Invoices loaded:', invoices?.length);
 
       // Filter invoices by date range
       const filteredInvoices = invoices.filter(inv => {
@@ -130,7 +125,6 @@ export default function ReportScreen() {
         const invoiceDate = new Date(inv.created_at);
         return invoiceDate >= dateRange.startDate && invoiceDate <= dateRange.endDate;
       });
-      console.log('Filtered invoices:', filteredInvoices.length);
 
       // Calculate stats
       const totalSpent = filteredInvoices.reduce((sum, inv) => sum + inv.total_amount, 0);
@@ -151,13 +145,6 @@ export default function ReportScreen() {
       const topCategory = Object.entries(categoryCounts)
         .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || 'N/A';
 
-      console.log('Stats calculated:', {
-        totalSpent,
-        activeSubscriptions: activeSubscriptions.length,
-        monthlyAverage,
-        topCategory
-      });
-
       setStats({
         totalSpent,
         activeSubscriptions: activeSubscriptions.length,
@@ -170,7 +157,6 @@ export default function ReportScreen() {
         name,
         count
       }));
-      console.log('Category chart data:', categoryChartData);
       setCategoryData(categoryChartData);
 
       // Prepare monthly trend data - Use a Map to preserve order and handle missing months if needed
@@ -206,7 +192,6 @@ export default function ReportScreen() {
         month,
         amount
       }));
-      console.log('Monthly chart data:', monthlyChartData);
       setMonthlyData(monthlyChartData);
 
     } catch (error) {
@@ -406,14 +391,12 @@ export default function ReportScreen() {
           directory: 'docs' // Or another valid directory name
         };
 
-        console.log('Generating PDF with base64 option...');
         const pdfResult = await RNHTMLtoPDF.convert(options);
 
         if (!pdfResult.base64) {
             throw new Error('Failed to generate PDF base64 content.');
         }
 
-        console.log('PDF base64 generated, writing to temporary file:', tempFilePath);
         // Write the base64 content to the temporary file
         await FileSystem.writeAsStringAsync(tempFilePath, pdfResult.base64, { encoding: FileSystem.EncodingType.Base64 });
         fileUri = tempFilePath; // Use the URI of the file we just wrote
@@ -448,8 +431,6 @@ export default function ReportScreen() {
         if (format === 'pdf') mimeType = 'application/pdf';
         else if (format === 'csv') mimeType = 'text/csv';
         else if (format === 'png') mimeType = 'image/png';
-
-        console.log(`Attempting to share file from URI: ${fileUri} with MIME type: ${mimeType}`);
 
         if (!(await Sharing.isAvailableAsync())) {
             Alert.alert('Sharing Not Available', 'Sharing functionality is not available on this device.');

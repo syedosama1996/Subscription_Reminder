@@ -110,14 +110,6 @@ export class ActivityLogger {
         throw error;
       }
 
-      
-      if (data && data.length > 0) {
-        console.log('First activity date:', new Date(data[0].created_at).toLocaleString());
-        console.log('Last activity date:', new Date(data[data.length - 1].created_at).toLocaleString());
-      } else {
-        console.log('No activities found');
-      }
-
       return {
         activities: data || [],
         totalCount: count || 0,

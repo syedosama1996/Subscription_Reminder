@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +6,8 @@ import {
   FlatList, 
   ActivityIndicator, 
   RefreshControl,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../lib/auth';
@@ -15,10 +16,12 @@ import SubscriptionCard from '../../../components/SubscriptionCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Clock } from 'lucide-react-native';
 import CustomLoader from '../../../components/CustomLoader';
+import { Subscription } from '../../../lib/subscriptions';
+import { useFocusEffect } from 'expo-router';
 
 export default function ExpiringSubscriptionsScreen() {
   const { user } = useAuth();
-  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,40 +32,73 @@ export default function ExpiringSubscriptionsScreen() {
     try {
       setLoading(true);
       setError(null);
-      const data = await getSubscriptions(user.id);
+      const allSubscriptions = await getSubscriptions(user.id);
+
+      if (!allSubscriptions) {
+        setSubscriptions([]);
+        return;
+      }
+
       const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const thirtyDaysFromNow = new Date(today);
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-      const expiringSubscriptions = data?.filter(sub => {
+      const relevantSubscriptions = allSubscriptions.filter(sub => {
+        if (!sub.expiry_date) return false;
         const expiryDate = new Date(sub.expiry_date);
-        return expiryDate <= thirtyDaysFromNow;
-      }) || [];
+        expiryDate.setHours(0, 0, 0, 0);
+        
+        return expiryDate < today || (expiryDate >= today && expiryDate <= thirtyDaysFromNow);
+      });
 
-      const sortedSubscriptions = expiringSubscriptions.sort((a, b) => {
-        const dateA = new Date(a.last_updated_at || a.created_at).getTime();
-        const dateB = new Date(b.last_updated_at || b.created_at).getTime();
-        return dateB - dateA;
+      const sortedSubscriptions = relevantSubscriptions.sort((a, b) => {
+        const dateA_created = a.created_at ? new Date(a.created_at) : new Date(0);
+        const dateB_created = b.created_at ? new Date(b.created_at) : new Date(0);
+        
+        if (dateA_created.getTime() !== dateB_created.getTime()) {
+          return dateB_created.getTime() - dateA_created.getTime();
+        }
+
+        const dateA_expiry = new Date(a.expiry_date);
+        dateA_expiry.setHours(0, 0, 0, 0);
+        const dateB_expiry = new Date(b.expiry_date);
+        dateB_expiry.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const isAExpired = dateA_expiry < today;
+        const isBExpired = dateB_expiry < today;
+
+        if (isAExpired && !isBExpired) return -1;
+        if (!isAExpired && isBExpired) return 1;
+
+        return dateA_expiry.getTime() - dateB_expiry.getTime();
       });
 
       setSubscriptions(sortedSubscriptions);
     } catch (err) {
-      setError('Failed to load expiring subscriptions');
+      console.error("Error loading expiring/expired subscriptions:", err);
+      setError('Failed to load subscriptions');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
+      loadExpiringSubscriptions();
+    }, [user])
+  );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
     loadExpiringSubscriptions();
   }, [user]);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadExpiringSubscriptions();
-  };
-
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <View style={styles.container}>
         <LinearGradient
@@ -87,7 +123,7 @@ export default function ExpiringSubscriptionsScreen() {
       
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
-          <Text style={styles.title}>Expire Subscriptions</Text>
+          <Text style={styles.title}>Expired & Expiring</Text>
         </View>
 
         {error ? (
@@ -97,9 +133,9 @@ export default function ExpiringSubscriptionsScreen() {
         ) : subscriptions.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Clock size={48} color="#95a5a6" style={styles.emptyIcon} />
-            <Text style={styles.emptyTitle}>No Expired or Expiring Subscriptions</Text>
+            <Text style={styles.emptyTitle}>No Expired or Soon Expiring</Text>
             <Text style={styles.emptySubtitle}>
-              None of your subscriptions are expired or expiring in the next 30 days
+              You have no subscriptions that have expired or are expiring within the next 30 days.
             </Text>
           </View>
         ) : (
@@ -107,9 +143,10 @@ export default function ExpiringSubscriptionsScreen() {
             data={subscriptions}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <SubscriptionCard 
+              <SubscriptionCard
                 subscription={item}
                 onToggleStatus={null}
+                simpleExpiryDisplay={true}
               />
             )}
             contentContainerStyle={styles.listContent}
@@ -145,6 +182,7 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
+    paddingBottom: Platform.OS === 'android' ? 0 : 0,
   },
   header: {
     paddingHorizontal: 20,
@@ -167,7 +205,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: Platform.OS === 'android' ? 90 : 100,
   },
   errorContainer: {
     margin: 20,

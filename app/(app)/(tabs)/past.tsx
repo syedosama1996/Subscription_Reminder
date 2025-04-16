@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../lib/auth';
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingBottom: 80,
+    paddingBottom: Platform.OS === 'android' ? 60 : 80,
   },
   loadingContainer: {
     flex: 1,

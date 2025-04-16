@@ -5,6 +5,7 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import { SplashScreen } from 'expo-router';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { SecurityProvider } from '../lib/security';
+import { SessionProvider } from '../lib/session';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -61,7 +62,6 @@ const InnerLayout = () => {
       try {
         const subscriptions = await getSubscriptions(user.id);
         if (subscriptions && subscriptions.length > 0) {
-          console.log(`Setting up expiry reminders for ${subscriptions.length} subscriptions`);
           await setupAllExpiryReminders(subscriptions);
         }
       } catch (error) {
@@ -96,7 +96,9 @@ const RootLayout = () => {
   return (
     <AuthProvider>
       <SecurityProvider>
-        <InnerLayout /> 
+        <SessionProvider>
+          <InnerLayout />
+        </SessionProvider>
       </SecurityProvider>
     </AuthProvider>
   );

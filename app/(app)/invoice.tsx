@@ -446,7 +446,6 @@ export default function InvoiceScreen() {
     try {
       const html = generateInvoiceHtml(selectedInvoice, user?.email);
       const { uri } = await Print.printToFileAsync({ html });
-      console.log('File has been saved to:', uri);
       await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
     } catch (error) {
       console.error('Error generating or sharing PDF:', error);

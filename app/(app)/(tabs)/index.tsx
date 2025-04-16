@@ -77,10 +77,18 @@ export default function HomeScreen() {
       
       // Load subscriptions with filters
       const data = await getSubscriptions(user.id);
-      // Filter only active subscriptions (is_active === true)
-      const activeSubscriptions = data?.filter(sub => sub.is_active === true) || [];
+      
+      // Filter only active subscriptions (is_active === true and not expired)
+      const activeSubscriptions = data?.filter(sub => {
+        if (!sub.expiry_date) return sub.is_active === true; // If no expiry date, just check is_active
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize today's date
+        const expiryDate = new Date(sub.expiry_date);
+        expiryDate.setHours(0, 0, 0, 0); // Normalize expiry date
+        return sub.is_active === true && expiryDate >= today;
+      }) || [];
 
-      // Count subscriptions per category
+      // Count subscriptions per category (based on the truly active ones)
       const categoryCounts = activeSubscriptions.reduce((acc, sub) => {
         if (sub.category_id) {
           acc[sub.category_id] = (acc[sub.category_id] || 0) + 1;

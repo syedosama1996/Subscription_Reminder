@@ -63,15 +63,7 @@ export default function SettingsScreen() {
               </View>
               <View style={styles.menuArrow} />
             </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <CreditCard size={20} color="#4158D0" style={styles.menuIcon} />
-              <View style={styles.menuContent}>
-                <Text style={styles.menuText}>Subscription Plan</Text>
-                <Text style={styles.menuValue}>Premium</Text>
-              </View>
-              <View style={styles.menuArrow} />
-            </TouchableOpacity>
+          
           </View>
 
           <View style={styles.section}>
@@ -99,26 +91,7 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Security</Text>
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <Lock size={20} color="#4158D0" style={styles.menuIcon} />
-              <View style={styles.menuContent}>
-                <Text style={styles.menuText}>Two-Factor Authentication</Text>
-                <Text style={styles.menuValue}>Disabled</Text>
-              </View>
-              <View style={styles.menuArrow} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <Shield size={20} color="#4158D0" style={styles.menuIcon} />
-              <View style={styles.menuContent}>
-                <Text style={styles.menuText}>Privacy Settings</Text>
-              </View>
-              <View style={styles.menuArrow} />
-            </TouchableOpacity>
-          </View>
+    
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Support</Text>

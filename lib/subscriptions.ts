@@ -323,8 +323,6 @@ export const toggleSubscriptionStatus = async (id: string, isActive: boolean, us
 // Delete a subscription
 export const deleteSubscription = async (id: string, userId: string) => {
   try {
-    console.log(`Attempting to delete subscription: ${id}`);
-    // Get subscription details before deleting for activity log
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('service_name')
@@ -334,7 +332,6 @@ export const deleteSubscription = async (id: string, userId: string) => {
     // Delete related records (Invoices handled by ON DELETE CASCADE)
     
     // 1. Delete related reminders
-    console.log(`Deleting reminders related to subscription: ${id}`);
     const { error: reminderError } = await supabase
       .from('reminders')
       .delete()
@@ -348,7 +345,6 @@ export const deleteSubscription = async (id: string, userId: string) => {
     }
 
     // 2. Delete subscription history
-    console.log(`Deleting history related to subscription: ${id}`);
     const { error: historyError } = await supabase
       .from('subscription_history')
       .delete()
@@ -362,7 +358,6 @@ export const deleteSubscription = async (id: string, userId: string) => {
     }
 
     // 3. Finally delete the subscription (Database handles invoices)
-    console.log(`Deleting subscription: ${id}`);
     const { error } = await supabase
       .from('subscriptions')
       .delete()
@@ -478,6 +473,27 @@ export const createReminder = async (reminder: Reminder) => {
   } catch (error) {
     console.error('Error creating reminder:', error);
     throw error;
+  }
+};
+
+// Get reminders for a specific subscription
+export const getRemindersForSubscription = async (subscriptionId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('reminders')
+      .select('*')
+      .eq('subscription_id', subscriptionId);
+
+    if (error) {
+      console.error(`Error fetching reminders for subscription ${subscriptionId}:`, error);
+      throw error;
+    }
+    return { data, error: null }; // Return data and null error on success
+  } catch (error) {
+    console.error(`Catch block: Error fetching reminders for subscription ${subscriptionId}:`, error);
+    // Ensure the return type matches the expected { data, error } structure even in catch block
+    // The actual error is already logged above.
+    return { data: null, error: error instanceof Error ? error : new Error('Failed to fetch reminders') }; 
   }
 };
 

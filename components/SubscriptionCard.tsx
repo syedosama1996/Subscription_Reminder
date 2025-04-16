@@ -17,6 +17,7 @@ interface SubscriptionCardProps {
   disabled?: boolean;
   onPress?: () => void;
   onRefresh?: () => void;
+  simpleExpiryDisplay?: boolean;
 }
 
 const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
@@ -27,7 +28,8 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   onToggleSelection,
   disabled,
   onPress,
-  onRefresh
+  onRefresh,
+  simpleExpiryDisplay
 }) => {
   const router = useRouter();
   
@@ -166,10 +168,12 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                   {subscription.is_active === false 
                     ? 'Inactive'
                     : days < 0 
-                      ? 'Expired' 
-                      : days === 0 
-                        ? 'Expires today' 
-                        : `${days} days left`}
+                      ? 'Expired'
+                      : simpleExpiryDisplay
+                        ? `${days} days left`
+                        : days === 0 
+                          ? 'Expired'
+                          : `${days} days left`}
                 </Text>
               </View>
             </View>
@@ -236,10 +240,12 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                   {subscription.is_active === false 
                     ? 'Inactive'
                     : days < 0 
-                      ? 'Expired' 
-                      : days === 0 
-                        ? 'Expires today' 
-                        : `${days} days left`}
+                      ? 'Expired'
+                      : simpleExpiryDisplay
+                        ? `${days} days left`
+                        : days === 0 
+                          ? 'Expires today'
+                          : `${days} days left`}
                 </Text>
               </View>
             </View>

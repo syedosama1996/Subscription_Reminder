@@ -151,7 +151,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No user data returned');
       }
       
-      console.log('User created in Auth:', data.user.id);
       
       // Create a profile record for the user if it doesn't exist
       if (!existingUser) {
@@ -188,7 +187,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
       
-      console.log('Sign up successful for user:', data.user.id);
 
     } catch (error: any) {
       console.error('Sign up error:', error);
