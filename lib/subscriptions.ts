@@ -116,9 +116,6 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
         `${newSubscription.service_name} has been added to your subscriptions`
       );
 
-      // Set up expiry reminders for new subscription
-      await setupExpiryReminders(newSubscription);
-
       await logActivity({
         user_id: userId,
         action: 'create',
@@ -248,11 +245,7 @@ export const updateSubscription = async (id: string, subscription: Partial<Subsc
       .single();
 
     if (error) throw error;
-
-    // Set up expiry reminders after update
-    await setupExpiryReminders(data);
-
-    // Log activity
+    
     await logActivity({
       user_id: userId,
       action: 'update',
@@ -293,18 +286,12 @@ export const toggleSubscriptionStatus = async (id: string, isActive: boolean, us
 
     if (error) throw error;
 
-    // Set up expiry reminders after status change
-    if (isActive) {
-      await setupExpiryReminders(data);
-    }
-
     // Create notification
     await scheduleNotification(
       `Subscription ${isActive ? 'Activated' : 'Deactivated'}`,
       `${subscription.service_name} has been ${isActive ? 'activated' : 'deactivated'}`
     );
 
-    // Log activity
     await logActivity({
       user_id: userId,
       action: isActive ? 'activate' : 'deactivate',
@@ -661,9 +648,6 @@ export const renewSubscription = async (
       'Subscription Renewed',
       `${existingSubscription.service_name} has been renewed until ${new Date(renewalData.expiry_date).toLocaleDateString()}`
     );
-
-    // Set up expiry reminders after renewal
-    await setupExpiryReminders(finalSubscription);
 
     await logActivity({
       user_id: userId,

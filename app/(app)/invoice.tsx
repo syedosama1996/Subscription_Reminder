@@ -568,7 +568,21 @@ export default function InvoiceScreen() {
       </Modal>
     );
   };
-
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
+          <LinearGradient
+            colors={['#4158D0', '#C850C0']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.headerGradient}
+          />
+          <CustomLoader visible={true} />
+        </View>
+      </SafeAreaView>
+    );
+  }
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -588,17 +602,7 @@ export default function InvoiceScreen() {
         <Text style={styles.title}>Invoices</Text>
         <View style={styles.placeholder} />
       </View>
-      {loading ? (
-         <View style={styles.container}>
-         <LinearGradient
-           colors={['#4158D0', '#C850C0']}
-           start={{ x: 0, y: 0 }}
-           end={{ x: 1, y: 1 }}
-           style={styles.headerGradient}
-         />
-         <CustomLoader visible={true} />
-       </View>
-      ) : (
+
         <FlatList
           data={invoices}
           renderItem={renderInvoiceItem}
@@ -612,7 +616,6 @@ export default function InvoiceScreen() {
             </View>
           }
         />
-      )}
 
       {renderInvoiceDetails()}
     </SafeAreaView>
