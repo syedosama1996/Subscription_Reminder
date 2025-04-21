@@ -13,12 +13,15 @@ import {
   FileText,
   BarChart2,
   Activity,
-  History
+  History,
+  Store,
+  ShoppingCart
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DrawerContentComponentProps as DrawerContentComponentPropsType } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
+import ModeSwitcher from '../../components/ModeSwitcher';
 
 function CustomDrawerContent(props: DrawerContentComponentPropsType) {
   const { user, signOut } = useAuth();
@@ -29,7 +32,7 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
     props.navigation.navigate('index');
   };
 
-  const menuItems = [
+  const buyerMenuItems = [
     {
       icon: <User size={24} color="#4158D0" />,
       label: 'Profile',
@@ -39,16 +42,6 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
       icon: <FileText size={24} color="#4158D0" />,
       label: 'Invoice',
       onPress: () => router.push('/(app)/invoice')
-    },
-    {
-      icon: <BarChart2 size={24} color="#4158D0" />,
-      label: 'Report',
-      onPress: () => router.push('/(app)/report')
-    },
-    {
-      icon: <Activity size={24} color="#4158D0" />,
-      label: 'Activity Log',
-      onPress: () => router.push('/(app)/activity-log')
     },
     {
       icon: <History size={24} color="#4158D0" />,
@@ -62,59 +55,70 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
     }
   ];
 
+  const sellerMenuItems = [
+    {
+      icon: <User size={24} color="#4158D0" />,
+      label: 'Profile',
+      onPress: () => router.push('/(app)/seller/profile')
+    },
+    {
+      icon: <Store size={24} color="#4158D0" />,
+      label: 'Products',
+      onPress: () => router.push('/(app)/seller/products')
+    },
+    {
+      icon: <BarChart2 size={24} color="#4158D0" />,
+      label: 'Sales Analytics',
+      onPress: () => router.push('/(app)/seller/analytics')
+    },
+    {
+      icon: <FileText size={24} color="#4158D0" />,
+      label: 'Orders',
+      onPress: () => router.push('/(app)/seller/orders')
+    },
+    {
+      icon: <Settings size={24} color="#4158D0" />,
+      label: 'Settings',
+      onPress: () => router.push('/(app)/seller/settings')
+    }
+  ];
+
+  const menuItems = user?.role === 'seller' ? sellerMenuItems : buyerMenuItems;
+
   return (
-    <View style={styles.drawerContainer}>
-      <View style={styles.headerContainer}>
-        <LinearGradient
-          colors={['#4158D0', '#C850C0']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.drawerHeader}
-        >
-          <View style={styles.profileSection}>
-            <View style={styles.profileHeader}>
-              <View style={styles.avatarContainer}>
-                <Text style={styles.avatarText}>{user?.email?.[0].toUpperCase()}</Text>
-              </View>
-              <View style={styles.profileInfo}>
-                <Text numberOfLines={1} style={styles.emailText}>
-                  <Text>{user?.email?.split('@')[0]}</Text>
-                  <Text style={styles.emailDomain}>@{user?.email?.split('@')[1]}</Text>
-                </Text>
-          
-              </View>
-            </View>
-          </View>
-        </LinearGradient>
+    <SafeAreaView style={styles.drawerContainer}>
+      <View style={styles.drawerHeader}>
+        <Image
+          source={{ uri: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?q=80&w=200&auto=format&fit=crop' }}
+          style={styles.profileImage}
+        />
+        <Text style={styles.userName}>{user?.email}</Text>
+        <Text style={styles.userRole}>{user?.role === 'seller' ? 'Seller' : 'Buyer'}</Text>
       </View>
 
       <View style={styles.menuContainer}>
         {menuItems.map((item, index) => (
           <TouchableOpacity
             key={index}
-            style={[styles.menuItem, { backgroundColor: '#F8F9FA' }]}
+            style={styles.menuItem}
             onPress={item.onPress}
           >
-            <View style={styles.menuIconContainer}>
-              {item.icon}
-            </View>
-            <Text style={styles.menuItemText}>{item.label}</Text>
-            <View style={styles.menuArrow} />
+            {item.icon}
+            <Text style={styles.menuText}>{item.label}</Text>
           </TouchableOpacity>
         ))}
+      </View>
 
+      <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.menuItem, styles.signOutButton]}
+          style={styles.logoutButton}
           onPress={handleSignOut}
         >
-          <View style={styles.menuIconContainer}>
-            <Ionicons name="log-out-outline" size={24} color="black" />
-          </View>
-          <Text style={[styles.menuItemText, styles.signOutText]}>Sign Out</Text>
-          <View style={[styles.menuArrow, styles.signOutArrow]} />
+          <LogOut size={24} color="#ff4444" />
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -123,11 +127,9 @@ export default function AppLayout() {
   const router = useRouter();
   const [initialRoute, setInitialRoute] = useState<string>('/(tabs)');
 
-
-
   useEffect(() => {
     if (user) {
-      setInitialRoute('/(tabs)');
+      setInitialRoute(user.role === 'seller' ? '/(seller)' : '/(tabs)');
     } else {
       setInitialRoute('/login');
     }
@@ -139,7 +141,12 @@ export default function AppLayout() {
     <Drawer
       drawerContent={(props: DrawerContentComponentPropsType) => <CustomDrawerContent {...props} />}
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        header: () => (
+          <SafeAreaView style={styles.header}>
+            <ModeSwitcher />
+          </SafeAreaView>
+        ),
         drawerStyle: {
           backgroundColor: '#fff',
           width: 320,
@@ -154,6 +161,12 @@ export default function AppLayout() {
           drawerLabel: 'Home',
         }}
       />
+      <Drawer.Screen
+        name="(seller)"
+        options={{
+          drawerLabel: 'Seller Dashboard',
+        }}
+      />
     </Drawer>
   );
 }
@@ -163,98 +176,62 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  headerContainer: {
-    overflow: 'hidden',
-    paddingBottom: 20,
-  },
   drawerHeader: {
-    paddingTop: Platform.OS === 'ios' ? 40 : 35,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  profileSection: {
-    padding: 25,
-  },
-  profileHeader: {
-    flexDirection: 'row',
+    padding: 20,
     alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  profileInfo: {
-    flex: 1,
-    marginLeft: 12,
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 10,
   },
-  avatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
-  avatarText: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: '#fff',
-  },
-  emailText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 4,
-  },
-  emailDomain: {
-    opacity: 0.8,
-    color: '#fff',
-  },
-  viewProfileText: {
-    fontFamily: 'Inter-Regular',
+  userRole: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#666',
+    marginTop: 5,
   },
   menuContainer: {
     flex: 1,
-    paddingTop: 12,
-    paddingHorizontal: 16,
+    padding: 20,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    marginVertical: 4,
-    borderRadius: 12,
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
   },
-  menuIconContainer: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuItemText: {
-    flex: 1,
-    fontFamily: 'Inter-Medium',
+  menuText: {
     fontSize: 16,
-    color: '#2c3e50',
-    marginLeft: 12,
+    color: '#333',
+    marginLeft: 15,
   },
-  menuArrow: {
-    width: 8,
-    height: 8,
-    borderTopWidth: 2,
-    borderRightWidth: 2,
-    borderColor: '#95a5a6',
-    transform: [{ rotate: '45deg' }],
+  footer: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
   },
-  signOutButton: {
-    marginTop: 'auto',
-    marginBottom: 20,
-    backgroundColor: '#FFF5F5',
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderRadius: 10,
   },
-  signOutText: {
-    color: '#e74c3c',
+  logoutText: {
+    fontSize: 16,
+    color: '#ff4444',
+    marginLeft: 15,
   },
-  signOutArrow: {
-    borderColor: '#e74c3c',
+  header: {
+    backgroundColor: '#fff',
+    paddingTop: Platform.OS === 'ios' ? 0 : 20,
   },
 });

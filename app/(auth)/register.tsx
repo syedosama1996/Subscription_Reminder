@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
-import { Lock, Mail, Eye, EyeOff } from 'lucide-react-native';
+import { Lock, Mail, Eye, EyeOff, Store, ShoppingCart, Check, ArrowRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RegisterScreen() {
@@ -16,6 +16,19 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'buyer' | 'seller'>('buyer');
+  const [slideAnim] = useState(new Animated.Value(0));
+
+  const handleRoleSelect = (role: 'buyer' | 'seller') => {
+    setSelectedRole(role);
+    // Add slide animation
+    Animated.spring(slideAnim, {
+      toValue: role === 'buyer' ? 0 : 1,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 7,
+    }).start();
+  };
 
   const handleRegister = async () => {
     // Reset validation error
@@ -39,24 +52,16 @@ export default function RegisterScreen() {
     
     try {
       // Proceed with registration
-      await signUp(email, password);
+      await signUp(email, password, selectedRole);
       
       // Add a small delay to ensure auth state is updated
       setTimeout(() => {
-        // Navigate to home screen after successful signup
-        router.replace('/(app)/(tabs)');
+        // Navigate to appropriate screen based on role
+        router.replace(selectedRole === 'seller' ? '/(app)/(seller)' : '/(app)/(tabs)');
       }, 500);
     } catch (error) {
       // Error is already handled by the auth context
     }
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
@@ -86,22 +91,71 @@ export default function RegisterScreen() {
           <View style={styles.formContainer}>
             <Text style={styles.formTitle}>Create Account</Text>
             
-            {(error || validationError) && (
+            {/* Role Selection */}
+            <View style={styles.roleSelectionContainer}>
+              <View style={styles.roleTabs}>
+                <TouchableOpacity
+                  style={[
+                    styles.roleTab,
+                    selectedRole === 'buyer' && styles.activeRoleTab,
+                  ]}
+                  onPress={() => handleRoleSelect('buyer')}
+                >
+                  <LinearGradient
+                    colors={selectedRole === 'buyer' ? ['#4158D0', '#C850C0'] : ['transparent', 'transparent']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.roleTabGradient}
+                  >
+                    <ShoppingCart size={24} color={selectedRole === 'buyer' ? '#fff' : '#7f8c8d'} />
+                    <Text style={[
+                      styles.roleTabText,
+                      selectedRole === 'buyer' && styles.activeRoleTabText
+                    ]}>Buyer</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.roleTab,
+                    selectedRole === 'seller' && styles.activeRoleTab,
+                  ]}
+                  onPress={() => handleRoleSelect('seller')}
+                >
+                  <LinearGradient
+                    colors={selectedRole === 'seller' ? ['#C850C0', '#FFCC70'] : ['transparent', 'transparent']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.roleTabGradient}
+                  >
+                    <Store size={24} color={selectedRole === 'seller' ? '#fff' : '#7f8c8d'} />
+                    <Text style={[
+                      styles.roleTabText,
+                      selectedRole === 'seller' && styles.activeRoleTabText
+                    ]}>Seller</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {error && (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error || validationError}</Text>
+                <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
 
             <View style={styles.inputContainer}>
               <Mail size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <Input
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                containerStyle={styles.input}
-              />
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  containerStyle={styles.input}
+                />
+              </View>
             </View>
 
             <View style={styles.inputContainer}>
@@ -115,7 +169,7 @@ export default function RegisterScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPress={togglePasswordVisibility}
+                  onPress={() => setShowPassword(!showPassword)}
                   style={styles.eyeIcon}
                 >
                   {showPassword ? (
@@ -138,7 +192,7 @@ export default function RegisterScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPress={toggleConfirmPasswordVisibility}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                   style={styles.eyeIcon}
                 >
                   {showConfirmPassword ? (
@@ -149,6 +203,10 @@ export default function RegisterScreen() {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {validationError && (
+              <Text style={styles.errorText}>{validationError}</Text>
+            )}
 
             <Button
               title={loading ? "" : "Register"}
@@ -238,6 +296,94 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
   },
+  roleSelectionContainer: {
+    marginBottom: 24,
+  },
+  roleTabs: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 20,
+  },
+  roleTab: {
+    flex: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  roleTabGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+  },
+  activeRoleTab: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  roleTabText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 16,
+    color: '#7f8c8d',
+    marginLeft: 8,
+  },
+  activeRoleTabText: {
+    color: '#fff',
+  },
+  roleContent: {
+    flexDirection: 'row',
+    width: '200%',
+  },
+  roleCard: {
+    width: '50%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  roleIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(65, 88, 208, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  roleCardTitle: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 20,
+    color: '#333',
+    marginBottom: 8,
+  },
+  roleCardDescription: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 14,
+    color: '#7f8c8d',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  roleFeatures: {
+    gap: 12,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  featureText: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 8,
+  },
   errorContainer: {
     backgroundColor: 'rgba(231, 76, 60, 0.1)',
     borderRadius: 12,
@@ -267,12 +413,6 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     flex: 1,
   },
-  eyeIcon: {
-    position: 'absolute',
-    right: 12,
-    top: 14,
-    padding: 4,
-  },
   button: {
     marginTop: 8,
     height: 56,
@@ -292,5 +432,11 @@ const styles = StyleSheet.create({
   footerLink: {
     fontFamily: 'Inter-Medium',
     color: '#4158D0',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 12,
+    top: 14,
+    padding: 4,
   },
 });
