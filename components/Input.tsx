@@ -6,7 +6,8 @@ import {
   StyleSheet, 
   TextInputProps,
   ViewStyle,
-  TextStyle
+  TextStyle,
+  TouchableWithoutFeedback
 } from 'react-native';
 
 interface InputProps extends TextInputProps {
@@ -14,7 +15,7 @@ interface InputProps extends TextInputProps {
   error?: string;
   containerStyle?: ViewStyle;
   labelStyle?: TextStyle;
-  inputStyle?: ViewStyle;
+  inputStyle?: TextStyle;
   errorStyle?: TextStyle;
   multiline?: boolean;
   numberOfLines?: number;
@@ -34,20 +35,22 @@ const Input = forwardRef<TextInput, InputProps>(({
   return (
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
-      <TextInput
-        ref={ref}
-        style={[
-          styles.input,
-          error && styles.inputError,
-          multiline && styles.multilineInput,
-          inputStyle
-        ]}
-        placeholderTextColor="#95a5a6"
-        multiline={multiline}
-        numberOfLines={numberOfLines}
-        textAlignVertical={multiline ? 'top' : 'center'}
-        {...props}
-      />
+      <TouchableWithoutFeedback>
+        <TextInput
+          ref={ref}
+          style={[
+            styles.input,
+            error && styles.inputError,
+            multiline && styles.multilineInput,
+            inputStyle
+          ]}
+          placeholderTextColor="#95a5a6"
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+          textAlignVertical={multiline ? 'top' : 'center'}
+          {...props}
+        />
+      </TouchableWithoutFeedback>
       {error && <Text style={[styles.error, errorStyle]}>{error}</Text>}
     </View>
   );

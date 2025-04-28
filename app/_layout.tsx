@@ -29,7 +29,7 @@ const InnerLayout = () => {
     'Inter-Bold': Inter_700Bold,
   });
 
-  const { user } = useAuth(); // Now this is called within AuthProvider context
+  const { user } = useAuth();
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
@@ -76,31 +76,33 @@ const InnerLayout = () => {
   }
 
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(app)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style="auto" />
-        <Toast />
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(app)" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+      </Stack>
+      <StatusBar style="auto" />
+      <Toast />
+    </>
   );
 };
 
 // RootLayout now only sets up providers
 const RootLayout = () => {
   return (
-    <AuthProvider>
-      <SecurityProvider>
-        <SessionProvider>
-          <InnerLayout />
-        </SessionProvider>
-      </SecurityProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <SecurityProvider>
+            <SessionProvider>
+              <InnerLayout />
+            </SessionProvider>
+          </SecurityProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 };
 

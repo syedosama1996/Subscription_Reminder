@@ -1,13 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import { Category } from '../lib/types';
 
-type CategoryBadgeProps = {
+interface CategoryBadgeProps {
   category: Category;
-  onPress?: () => void;
+  onPressIn?: () => void;
   selected?: boolean;
-  style?: any;
-};
+  style?: StyleProp<ViewStyle>;
+}
 
 const DEFAULT_COLORS = [
   '#4158D0', // Blue
@@ -22,7 +22,7 @@ const DEFAULT_COLORS = [
   '#e67e22', // Dark Orange
 ];
 
-export default function CategoryBadge({ category, onPress, selected = false, style }: CategoryBadgeProps) {
+export default function CategoryBadge({ category, onPressIn, selected = false, style }: CategoryBadgeProps) {
   // Use the category's color or a default color based on the name
   const getColor = () => {
     if (category.color) return category.color;
@@ -34,32 +34,26 @@ export default function CategoryBadge({ category, onPress, selected = false, sty
 
   const color = getColor();
   
-  const Component = onPress ? TouchableOpacity : View;
+  const Component = onPressIn ? TouchableOpacity : View;
   
   return (
     <Component 
       style={[
-        styles.badge, 
-        { backgroundColor: selected ? color : `${color}20` },
+        styles.container,
+        { backgroundColor: category.color },
+        selected && styles.selected,
         style
       ]}
-      onPress={onPress}
+      onPressIn={onPressIn}
+      activeOpacity={0.7}
     >
-      <Text 
-        style={[
-          styles.text, 
-          { color: selected ? '#fff' : color }
-        ]}
-        numberOfLines={1}
-      >
-        {category.name}
-      </Text>
+      <Text style={styles.text}>{category.name}</Text>
     </Component>
   );
 }
 
 const styles = StyleSheet.create({
-  badge: {
+  container: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -69,5 +63,8 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: 'Inter-Medium',
     fontSize: 14,
+  },
+  selected: {
+    backgroundColor: '#fff',
   },
 });

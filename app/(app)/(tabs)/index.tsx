@@ -78,6 +78,8 @@ export default function HomeScreen() {
       // Load subscriptions with filters
       const data = await getSubscriptions(user.id);
       
+      console.log('Raw Subscriptions Data:', data?.length);
+      
       // Filter only active subscriptions (is_active === true and not expired)
       const activeSubscriptions = data?.filter(sub => {
         if (!sub.expiry_date) return sub.is_active === true; // If no expiry date, just check is_active
@@ -88,8 +90,32 @@ export default function HomeScreen() {
         return sub.is_active === true && expiryDate >= today;
       }) || [];
 
+      console.log('Active Subscriptions:', activeSubscriptions.length);
+
+      // Apply status filters if selected
+      let filteredByStatus = activeSubscriptions;
+      if (selectedStatuses.includes('expiring_soon')) {
+        filteredByStatus = activeSubscriptions.filter(sub => {
+          if (!sub.expiry_date) return false;
+          const today = new Date();
+          const expiryDate = new Date(sub.expiry_date);
+          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+        });
+        console.log('Expiring Soon Filtered:', filteredByStatus.length);
+      }
+
+      // Apply category filters if selected
+      let filteredByCategory = filteredByStatus;
+      if (selectedCategories.length > 0) {
+        filteredByCategory = filteredByStatus.filter(sub => 
+          selectedCategories.includes(sub.category_id || '')
+        );
+        console.log('Category Filtered:', filteredByCategory.length);
+      }
+
       // Count subscriptions per category (based on the truly active ones)
-      const categoryCounts = activeSubscriptions.reduce((acc, sub) => {
+      const categoryCounts = filteredByCategory.reduce((acc, sub) => {
         if (sub.category_id) {
           acc[sub.category_id] = (acc[sub.category_id] || 0) + 1;
         }
@@ -104,8 +130,8 @@ export default function HomeScreen() {
       }) || [];
 
       setCategories(sortedCategories);
-      setSubscriptions(activeSubscriptions);
-      setFilteredSubscriptions(activeSubscriptions);
+      setSubscriptions(filteredByCategory);
+      setFilteredSubscriptions(filteredByCategory);
 
     } catch (err: any) {
       console.error('Error loading data:', err);
@@ -131,6 +157,30 @@ export default function HomeScreen() {
       setLoading(false);
     }
   }, [user, selectedCategories, selectedStatuses]);
+
+  // Add logging for Expiring Soon filter
+  useEffect(() => {
+    if (selectedStatuses.includes('expiring_soon')) {
+      console.log('Expiring Soon Filter Selected');
+      console.log('Total Subscriptions:', subscriptions.length);
+      console.log('Filtered Subscriptions:', filteredSubscriptions.length);
+      
+      // Log details of expiring soon subscriptions
+      const expiringSoonSubs = filteredSubscriptions.filter(sub => {
+        if (!sub.expiry_date) return false;
+        const today = new Date();
+        const expiryDate = new Date(sub.expiry_date);
+        const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        return daysUntilExpiry <= 30 && daysUntilExpiry > 0; // Subscriptions expiring in next 30 days
+      });
+      
+      console.log('Expiring Soon Subscriptions:', expiringSoonSubs.length);
+      console.log('Expiring Soon Details:', expiringSoonSubs.map(sub => ({
+        service_name: sub.service_name,
+        expiry_date: sub.expiry_date
+      })));
+    }
+  }, [selectedStatuses, subscriptions, filteredSubscriptions]);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {

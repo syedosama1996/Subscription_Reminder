@@ -8,10 +8,9 @@ import {
   ScrollView,
   Platform
 } from 'react-native';
-import { X, Check, Filter } from 'lucide-react-native';
+import { X, Check } from 'lucide-react-native';
 import { Category } from '../lib/types';
 import CategoryBadge from './CategoryBadge';
-import Button from './Button';
 
 type FilterModalProps = {
   visible: boolean;
@@ -27,8 +26,6 @@ type FilterModalProps = {
 const STATUS_OPTIONS = [
   { id: 'active', label: 'Active', color: '#2ecc71' },
   { id: 'expiring_soon', label: 'Expiring Soon', color: '#f39c12' },
-  { id: 'expired', label: 'Expired', color: '#e74c3c' },
-  { id: 'past', label: 'Past/Inactive', color: '#7f8c8d' },
 ];
 
 export default function FilterModal({ 
@@ -72,9 +69,11 @@ export default function FilterModal({
     onSelectStatuses(localSelectedStatuses);
     onClose();
     
-    setTimeout(() => {
-      onRefresh?.();
-    }, 300);
+    if (onRefresh) {
+      setTimeout(() => {
+        onRefresh();
+      }, 100);
+    }
   };
 
   const handleClearFilters = () => {
@@ -84,9 +83,11 @@ export default function FilterModal({
     onSelectStatuses([]);
     onClose();
     
-    setTimeout(() => {
-      onRefresh?.();
-    }, 300);
+    if (onRefresh) {
+      setTimeout(() => {
+        onRefresh();
+      }, 100);
+    }
   };
 
   const hasActiveFilters = localSelectedCategories.length > 0 || localSelectedStatuses.length > 0;
@@ -94,40 +95,44 @@ export default function FilterModal({
   return (
     <Modal
       visible={visible}
-      transparent={true}
       animationType="slide"
+      transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Filter Subscriptions</Text>
             <TouchableOpacity 
-              style={styles.modalCloseButton}
-              onPress={onClose}
+              style={styles.closeButton}
+              onPressIn={onClose}
+              activeOpacity={0.7}
             >
               <X size={24} color="#7f8c8d" />
             </TouchableOpacity>
           </View>
-          
+
           <ScrollView style={styles.modalContent}>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Status</Text>
-              <View style={styles.statusOptions}>
-                {STATUS_OPTIONS.map(status => (
+              <View style={styles.optionsContainer}>
+                {STATUS_OPTIONS.map((status) => (
                   <TouchableOpacity
                     key={status.id}
                     style={[
-                      styles.statusOption,
-                      localSelectedStatuses.includes(status.id) && { 
-                        backgroundColor: `${status.color}20`,
-                        borderColor: status.color
-                      }
+                      styles.option,
+                      localSelectedStatuses.includes(status.id) && styles.selectedOption
                     ]}
-                    onPress={() => toggleStatus(status.id)}
+                    onPressIn={() => toggleStatus(status.id)}
+                    activeOpacity={0.7}
                   >
                     <View style={[styles.statusDot, { backgroundColor: status.color }]} />
-                    <Text style={styles.statusLabel}>{status.label}</Text>
+                    <Text style={[
+                      styles.optionText,
+                      localSelectedStatuses.includes(status.id) && styles.selectedOptionText
+                    ]}>
+                      {status.label}
+                    </Text>
                     {localSelectedStatuses.includes(status.id) && (
                       <Check size={16} color={status.color} style={styles.checkIcon} />
                     )}
@@ -135,15 +140,16 @@ export default function FilterModal({
                 ))}
               </View>
             </View>
-            
+
             {categories.length > 0 && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Categories</Text>
                 <View style={styles.categoriesContainer}>
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <TouchableOpacity
                       key={category.id}
-                      onPress={() => toggleCategory(category.id!)}
+                      onPressIn={() => toggleCategory(category.id!)}
+                      activeOpacity={0.7}
                     >
                       <CategoryBadge 
                         category={category} 
@@ -155,22 +161,25 @@ export default function FilterModal({
               </View>
             )}
           </ScrollView>
-          
-          <View style={styles.footer}>
+
+          <View style={styles.buttonsContainer}>
             {hasActiveFilters && (
               <TouchableOpacity 
                 style={styles.clearButton}
-                onPress={handleClearFilters}
+                onPressIn={handleClearFilters}
+                activeOpacity={0.7}
               >
                 <Text style={styles.clearButtonText}>Clear All</Text>
               </TouchableOpacity>
             )}
             
-            <Button
-              title="Apply Filters"
-              onPress={handleApplyFilters}
+            <TouchableOpacity 
               style={styles.applyButton}
-            />
+              onPressIn={handleApplyFilters}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.applyButtonText}>Apply Filters</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -179,12 +188,12 @@ export default function FilterModal({
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
-  modalContainer: {
+  modalContent: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -203,7 +212,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#2c3e50',
   },
-  modalCloseButton: {
+  closeButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -211,11 +220,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContent: {
-    padding: 20,
-  },
   section: {
     marginBottom: 24,
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     fontFamily: 'Inter-SemiBold',
@@ -223,10 +230,10 @@ const styles = StyleSheet.create({
     color: '#2c3e50',
     marginBottom: 16,
   },
-  statusOptions: {
+  optionsContainer: {
     flexDirection: 'column',
   },
-  statusOption: {
+  option: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
@@ -236,17 +243,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#dfe4ea',
   },
+  optionText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 16,
+    color: '#2c3e50',
+    flex: 1,
+  },
+  selectedOption: {
+    backgroundColor: 'rgba(65, 88, 208, 0.1)',
+    borderColor: '#4158D0',
+  },
+  selectedOptionText: {
+    fontFamily: 'Inter-SemiBold',
+    color: '#4158D0',
+  },
   statusDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
     marginRight: 12,
-  },
-  statusLabel: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 16,
-    color: '#2c3e50',
-    flex: 1,
   },
   checkIcon: {
     marginLeft: 8,
@@ -254,8 +269,9 @@ const styles = StyleSheet.create({
   categoriesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
   },
-  footer: {
+  buttonsContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
@@ -274,7 +290,19 @@ const styles = StyleSheet.create({
     color: '#e74c3c',
   },
   applyButton: {
-    flex: 1,
-    maxWidth: 200,
+    backgroundColor: '#4158D0',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    shadowColor: '#4158D0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  applyButtonText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 16,
+    color: '#fff',
   },
 });

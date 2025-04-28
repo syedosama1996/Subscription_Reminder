@@ -115,13 +115,14 @@ export default function RegisterScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPress={togglePasswordVisibility}
                   style={styles.eyeIcon}
+                  onPressIn={togglePasswordVisibility}
+                  activeOpacity={0.7}
                 >
                   {showPassword ? (
-                    <EyeOff size={20} color="#7f8c8d" />
+                    <EyeOff size={20} color="#666" />
                   ) : (
-                    <Eye size={20} color="#7f8c8d" />
+                    <Eye size={20} color="#666" />
                   )}
                 </TouchableOpacity>
               </View>
@@ -138,32 +139,34 @@ export default function RegisterScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPress={toggleConfirmPasswordVisibility}
                   style={styles.eyeIcon}
+                  onPressIn={toggleConfirmPasswordVisibility}
+                  activeOpacity={0.7}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff size={20} color="#7f8c8d" />
+                    <EyeOff size={20} color="#666" />
                   ) : (
-                    <Eye size={20} color="#7f8c8d" />
+                    <Eye size={20} color="#666" />
                   )}
                 </TouchableOpacity>
               </View>
             </View>
 
-            <Button
-              title={loading ? "" : "Register"}
-              onPress={handleRegister}
-              loading={loading}
-              disabled={!email || !password || !confirmPassword || loading}
-              style={styles.button}
+            <TouchableOpacity 
+              style={styles.registerButton}
+              onPressIn={handleRegister}
+              activeOpacity={0.7}
             >
-              {loading && <ActivityIndicator color="#fff" />}
-            </Button>
+              <Text style={styles.registerButtonText}>Register</Text>
+            </TouchableOpacity>
 
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account?</Text>
-              <TouchableOpacity onPress={() => router.push('/login')}>
-                <Text style={styles.footerLink}>Login</Text>
+            <View style={styles.loginContainer}>
+              <Text style={styles.loginText}>Already have an account? </Text>
+              <TouchableOpacity 
+                onPressIn={() => router.push('/login')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.loginLink}>Login</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -272,24 +275,39 @@ const styles = StyleSheet.create({
     right: 12,
     top: 14,
     padding: 4,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
-  button: {
+  registerButton: {
     marginTop: 8,
     height: 56,
     borderRadius: 16,
     backgroundColor: '#4158D0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#4158D0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  footer: {
+  registerButtonText: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 18,
+    color: '#fff',
+    textAlign: 'center',
+  },
+  loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 24,
   },
-  footerText: {
+  loginText: {
     fontFamily: 'Inter-Regular',
     color: '#7f8c8d',
     marginRight: 4,
   },
-  footerLink: {
+  loginLink: {
     fontFamily: 'Inter-Medium',
     color: '#4158D0',
   },

@@ -101,74 +101,52 @@ export async function scheduleExpiryNotification(
   daysBefore: number,
   subscriptionId: string
 ) {
+  const now = new Date();
+  const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Modified validation to handle immediate notifications
+  if (daysUntilExpiry <= 0) return null; // Only skip if already expired
+  if (daysBefore < 0) return null; // Only skip if days before is negative
+
+  // For very soon expiring subscriptions, use actual days until expiry
+  const effectiveDaysBefore = Math.min(daysBefore, daysUntilExpiry);
+
+  // Calculate trigger date
   const triggerDate = new Date(expiryDate);
-  triggerDate.setDate(triggerDate.getDate() - daysBefore);
+  triggerDate.setDate(triggerDate.getDate() - effectiveDaysBefore);
 
-  // Add logging here
-  console.log(`[scheduleExpiryNotification] Scheduling for: ${subscriptionName} (ID: ${subscriptionId})`);
-  console.log(`  - Expiry Date: ${expiryDate.toISOString()}`);
-  console.log(`  - Days Before: ${daysBefore}`);
-  console.log(`  - Calculated Trigger Date: ${triggerDate.toISOString()}`);
-
-  // If the trigger date is in the past, don't schedule the notification
-  if (triggerDate < new Date()) {
-    console.log(`  - Trigger date is in the past. Skipping.`);
-    return; // Don't schedule notifications for past dates
+  // If trigger would be in the past, set to 1 minute from now
+  if (triggerDate < now) {
+    triggerDate.setTime(now.getTime() + 60000);
   }
 
-  // Create a unique identifier for this notification
-  const notificationId = `${subscriptionId}_${daysBefore}days`;
-
-  // Check if this exact notification is already scheduled
-  const existingNotifications = await Notifications.getAllScheduledNotificationsAsync();
-  const alreadyScheduled = existingNotifications.some(notification => 
-    notification.identifier === notificationId ||
-    (notification.content?.data?.subscriptionId === subscriptionId &&
-     notification.content?.data?.daysBefore === daysBefore)
-  );
-
-  if (alreadyScheduled) {
-    console.log(`  - Notification already scheduled for ${subscriptionName} (${daysBefore} days). Skipping.`);
-    return;
-  }
-
-  // Ensure daysBefore is non-negative for the message
-  const displayDays = Math.max(0, daysBefore);
-  const title = displayDays === 0 ? 'Subscription Expiring Today' : 'Subscription Expiring Soon';
-  const body = displayDays === 0 
-    ? `Your subscription "${subscriptionName}" expires today. Please renew it.`
-    : `Your subscription "${subscriptionName}" will expire in ${displayDays} ${displayDays === 1 ? 'day' : 'days'}. Please renew it.`;
+  const notificationId = `${subscriptionId}_${effectiveDaysBefore}days`;
 
   try {
     await Notifications.scheduleNotificationAsync({
       identifier: notificationId,
       content: {
-        title,
-        body,
+        title: 'Subscription Expiring Soon',
+        body: `Your subscription "${subscriptionName}" will expire in ${effectiveDaysBefore} ${effectiveDaysBefore === 1 ? 'day' : 'days'}. Please renew it.`,
         data: { 
           subscriptionId,
           subscriptionName, 
           expiryDate: expiryDate.toISOString(),
           type: 'expiry_reminder',
-          daysBefore,
-          notificationId // Include the ID in the data for reference
+          daysBefore: effectiveDaysBefore,
+          notificationId
         },
-        sound: 'default', // Ensure sound plays
+        sound: 'default',
       },
       trigger: {
-        channelId: 'default', // Ensure it uses the created channel on Android
+        channelId: 'default',
         date: triggerDate,
-      } as Notifications.DateTriggerInput, // Use DateTriggerInput type
+      } as Notifications.DateTriggerInput,
     });
     
-    console.log(`  - Successfully scheduled notification with ID: ${notificationId}`);
     return notificationId;
   } catch (error) {
-    console.error(`Error scheduling expiry notification for "${subscriptionName}":`, error);
-    // Log more details about the error if possible
-    if (error instanceof Error) {
-        console.error("Error details:", error.message, error.stack);
-    }
+    console.error(`Error scheduling notification for "${subscriptionName}":`, error);
     throw error;
   }
 }
@@ -194,7 +172,6 @@ async function cleanupOldNotifications() {
       const trigger = notification.trigger as any;
       if (trigger && trigger.date) {
         const triggerDate = new Date(trigger.date);
-        // Remove notifications that are more than 30 days old
         if (triggerDate < now) {
           await Notifications.cancelScheduledNotificationAsync(notification.identifier);
         }
@@ -208,93 +185,86 @@ async function cleanupOldNotifications() {
 // Schedule notifications for subscription based on reminders
 export async function setupExpiryReminders(subscription: any) {
   try {
-    if (!subscription.is_active) {
-      return;
-    }
-    
-    const expiryDate = new Date(subscription.expiry_date);
     const now = new Date();
+    const expiryDate = new Date(subscription.expiry_date);
+    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    // Optional: Check if expiry date is valid
+    // Skip if subscription is inactive or expired
+    if (!subscription.is_active || daysUntilExpiry <= 0) {
+      console.log(`Skipping ${subscription.service_name}: ${!subscription.is_active ? 'Inactive' : 'Expired'}`);
+      return;
+    }
+
+    // Skip if expiry date is invalid
     if (isNaN(expiryDate.getTime())) {
-      console.error(`Invalid expiry date for subscription "${subscription.service_name}". Skipping reminder setup.`);
+      console.error(`Invalid expiry date for subscription "${subscription.service_name}"`);
       return;
     }
 
-    // Only setup reminders if the expiry date is within a reasonable future window (e.g., 60 days)
-    const sixtyDaysFromNow = new Date();
-    sixtyDaysFromNow.setDate(now.getDate() + 60);
-
-    if (expiryDate > sixtyDaysFromNow) {
-      console.log(`[setupExpiryReminders] Skipping "${subscription.service_name}" - expiry date (${expiryDate.toISOString()}) is too far in the future.`);
+    // Skip if expiry is more than 30 days away
+    if (daysUntilExpiry > 30) {
+      console.log(`Skipping ${subscription.service_name}: Too far in future (${daysUntilExpiry} days)`);
       return;
     }
 
-    // Fetch user-defined reminders for this subscription
     const { data: reminders, error: reminderError } = await getRemindersForSubscription(subscription.id);
-
-    if (reminderError) {
-      console.error(`Error fetching reminders for subscription "${subscription.service_name}":`, reminderError);
+    if (reminderError || !reminders || reminders.length === 0) {
+      console.log(`Skipping ${subscription.service_name}: No valid reminders`);
       return;
     }
 
-    if (!reminders || reminders.length === 0) {
+    // Only process enabled reminders that are relevant for the current expiry timeframe
+    const relevantReminders = reminders
+      .filter(r => r.enabled && r.days_before >= 0 && r.days_before <= daysUntilExpiry)
+      .sort((a, b) => b.days_before - a.days_before);
+
+    if (relevantReminders.length === 0) {
+      console.log(`Skipping ${subscription.service_name}: No relevant reminders for timeframe`);
       return;
     }
 
-    // Sort reminders by days_before in descending order (furthest reminder first)
-    const sortedReminders = [...reminders].sort((a, b) => b.days_before - a.days_before);
+    console.log(`Processing ${subscription.service_name}:`);
+    console.log(`- Days until expiry: ${daysUntilExpiry}`);
+    console.log(`- Relevant reminders: ${relevantReminders.map(r => r.days_before).join(', ')} days`);
 
-    // Get all currently scheduled notifications for this subscription
-    const existingNotifications = await Notifications.getAllScheduledNotificationsAsync();
-    const subscriptionNotifications = existingNotifications.filter(
-      notification => notification.content?.data?.subscriptionId === subscription.id
-    );
-
-    console.log(`[setupExpiryReminders] Found ${subscriptionNotifications.length} existing notifications for "${subscription.service_name}"`);
-
-    // Track which days we've already scheduled
     const scheduledDays = new Set();
 
-    // Schedule notifications based on sorted reminders
-    for (const reminder of sortedReminders) {
-      if (!reminder.enabled) {
-        console.log(`Reminder ${reminder.days_before} days before expiry is disabled for "${subscription.service_name}"`);
+    for (const reminder of relevantReminders) {
+      // Skip if reminder is for more days than we have until expiry
+      if (reminder.days_before > daysUntilExpiry) {
+        console.log(`- Skipping ${reminder.days_before} day reminder: Too far for current expiry`);
         continue;
       }
 
-      // Calculate trigger date for this reminder
-      const triggerDate = new Date(expiryDate);
-      triggerDate.setDate(triggerDate.getDate() - reminder.days_before);
-
-      // Skip if trigger date is in the past
-      if (triggerDate < now) {
-        console.log(`Skipping ${reminder.days_before} day reminder for "${subscription.service_name}" - trigger date is in the past`);
-        continue;
-      }
-
-      // Skip if we've already scheduled a notification for this number of days
+      // Skip if we've already scheduled this interval
       if (scheduledDays.has(reminder.days_before)) {
-        console.log(`Skipping duplicate ${reminder.days_before} day reminder for "${subscription.service_name}"`);
+        console.log(`- Skipping ${reminder.days_before} day reminder: Already scheduled`);
         continue;
       }
 
       try {
-        await scheduleExpiryNotification(
+        const notificationId = await scheduleExpiryNotification(
           subscription.service_name,
           expiryDate,
           reminder.days_before,
           subscription.id
         );
-        scheduledDays.add(reminder.days_before);
-      } catch (scheduleError) {
-        console.error(`Failed to schedule reminder (${reminder.days_before} days) for "${subscription.service_name}":`, scheduleError);
+        if (notificationId) {
+          scheduledDays.add(reminder.days_before);
+          console.log(`- Scheduled ${reminder.days_before} day reminder`);
+        }
+      } catch (error) {
+        console.error(`- Failed to schedule ${reminder.days_before} day reminder:`, error);
       }
     }
 
-    console.log(`[setupExpiryReminders] Completed setup for "${subscription.service_name}" - Scheduled ${scheduledDays.size} reminders`);
+    if (scheduledDays.size > 0) {
+      console.log(`Completed ${subscription.service_name}: Scheduled ${scheduledDays.size} reminders`);
+    } else {
+      console.log(`Completed ${subscription.service_name}: No reminders scheduled`);
+    }
   } catch (error) {
-    console.error(`Error in setupExpiryReminders for "${subscription.service_name}":`, error);
+    console.error(`Error in setupExpiryReminders for "${subscription.service_name}"`, error);
     throw error;
   }
 }
@@ -334,74 +304,106 @@ export async function setupAllExpiryReminders(subscriptions: any[]) {
   }
 
   try {
-    console.log("[setupAllExpiryReminders] Starting cleanup of existing notifications...");
+    const now = new Date();
     
-    // Get all currently scheduled notifications
+    // First, cancel ALL existing notifications
+    console.log('\n=== Cleaning up notifications ===');
     const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-    console.log(`[setupAllExpiryReminders] Found ${scheduledNotifications.length} total notifications`);
-    
-    // Cancel all existing expiry reminders
-    let cancelCount = 0;
     for (const notification of scheduledNotifications) {
       try {
-        if (notification.content?.data?.type === 'expiry_reminder') {
-          await Notifications.cancelScheduledNotificationAsync(notification.identifier);
-          cancelCount++;
-          console.log(`  - Cancelled notification: ${notification.content?.data?.subscriptionName} (${notification.content?.data?.daysBefore} days)`);
-        }
-      } catch (cancelError) {
-        console.error(`  - Failed to cancel notification ${notification.identifier}:`, cancelError);
+        await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+      } catch (error) {
+        console.error('Failed to cancel notification:', error);
       }
     }
-    console.log(`[setupAllExpiryReminders] Cancelled ${cancelCount} existing reminders`);
+    console.log('Cancelled all existing notifications');
 
-    // Sort subscriptions by expiry date (soonest first)
-    const sortedSubscriptions = [...subscriptions].sort((a, b) => {
-      const dateA = new Date(a.expiry_date);
-      const dateB = new Date(b.expiry_date);
-      if (isNaN(dateA.getTime())) return 1;
-      if (isNaN(dateB.getTime())) return -1;
-      return dateA.getTime() - dateB.getTime();
+    // Filter subscriptions that are active and expiring within 30 days
+    const relevantSubscriptions = subscriptions.filter(sub => {
+      if (!sub || !sub.is_active) return false;
+      
+      const expiryDate = new Date(sub.expiry_date);
+      const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
     });
 
-    console.log(`[setupAllExpiryReminders] Processing ${sortedSubscriptions.length} subscriptions...`);
+    console.log(`\n=== Processing ${relevantSubscriptions.length} relevant subscriptions ===`);
     
-    // Process subscriptions in batches to avoid overwhelming the system
-    const batchSize = 3; // Reduced batch size for better control
-    let successCount = 0;
-    let failureCount = 0;
-    
-    for (let i = 0; i < sortedSubscriptions.length; i += batchSize) {
-      const batch = sortedSubscriptions.slice(i, i + batchSize);
-      console.log(`[setupAllExpiryReminders] Processing batch ${Math.floor(i/batchSize) + 1}...`);
+    // Process each relevant subscription
+    for (const subscription of relevantSubscriptions) {
+      const expiryDate = new Date(subscription.expiry_date);
+      const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       
-      const batchPromises = batch.map(async (subscription) => {
-        if (!subscription || !subscription.id || !subscription.service_name || !subscription.expiry_date) {
-          console.warn("Skipping subscription due to missing essential data:", subscription);
-          failureCount++;
-          return;
-        }
+      console.log(`\nProcessing ${subscription.service_name}:`);
+      console.log(`- Days until expiry: ${daysUntilExpiry}`);
+
+      // Get reminders for this subscription
+      const { data: reminders, error: reminderError } = await getRemindersForSubscription(subscription.id);
+      
+      // Create default reminder if no valid reminders exist
+      if (reminderError || !reminders || reminders.length === 0) {
+        console.log(`- No custom reminders found, using default reminder`);
         try {
-          await setupExpiryReminders(subscription);
-          successCount++;
+          // For subscriptions expiring very soon, use the actual days until expiry
+          const defaultDaysBefore = Math.max(daysUntilExpiry, 1); // Ensure at least 1 day
+          const notificationId = await scheduleExpiryNotification(
+            subscription.service_name,
+            expiryDate,
+            defaultDaysBefore,
+            subscription.id
+          );
+          if (notificationId) {
+            console.log(`  - Scheduled default reminder for ${daysUntilExpiry} days until expiry`);
+          }
         } catch (error) {
-          console.error(`Failed setup for subscription ${subscription.service_name} (ID: ${subscription.id}) in batch:`, error);
-          failureCount++;
+          console.error(`  - Failed to schedule default reminder:`, error);
         }
-      });
+        continue;
+      }
 
-      // Wait for the current batch to complete
-      await Promise.all(batchPromises);
+      // Filter for enabled reminders that make sense for the remaining time
+      const validReminders = reminders
+        .filter(r => r.enabled && r.days_before > 0 && r.days_before <= daysUntilExpiry)
+        .sort((a, b) => b.days_before - a.days_before);
 
-      // Add a delay between batches
-      if (i + batchSize < sortedSubscriptions.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Increased delay to 1 second
+      if (validReminders.length === 0) {
+        console.log(`- Skipping: No valid reminders for current timeframe`);
+        continue;
+      }
+
+      console.log(`- Valid reminders: ${validReminders.map(r => r.days_before).join(', ')} days`);
+      
+      // Schedule notifications for valid reminders
+      for (const reminder of validReminders) {
+        try {
+          const notificationId = await scheduleExpiryNotification(
+            subscription.service_name,
+            expiryDate,
+            reminder.days_before,
+            subscription.id
+          );
+          if (notificationId) {
+            console.log(`  - Scheduled ${reminder.days_before} day reminder`);
+          }
+        } catch (error) {
+          console.error(`  - Failed to schedule ${reminder.days_before} day reminder:`, error);
+        }
       }
     }
 
-    console.log(`[setupAllExpiryReminders] Complete. Success: ${successCount}, Failures: ${failureCount}`);
+    // Verify final notifications
+    const finalNotifications = await Notifications.getAllScheduledNotificationsAsync();
+    console.log('\n=== Final Scheduled Notifications ===');
+    finalNotifications.forEach(notification => {
+      const data = notification.content?.data;
+      if (data?.type === 'expiry_reminder') {
+        console.log(`- ${data.subscriptionName}: ${data.daysBefore} days before ${new Date(data.expiryDate).toLocaleDateString()}`);
+      }
+    });
+
   } catch (error) {
-    console.error('[setupAllExpiryReminders] Fatal error:', error);
+    console.error('Fatal error in setupAllExpiryReminders:', error);
     throw error;
   }
 }

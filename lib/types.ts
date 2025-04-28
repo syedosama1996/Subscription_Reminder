@@ -23,3 +23,10 @@ export type SubscriptionFilter = {
   categories?: string[];
   search?: string;
 };
+
+export interface Reminder {
+  id: string;
+  subscription_id: string;
+  days_before: number;
+  enabled: boolean;
+}

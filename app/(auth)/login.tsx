@@ -141,63 +141,81 @@ export default function LoginScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPress={() => setShowPassword(!showPassword)}
                   style={styles.eyeIcon}
+                  onPressIn={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff size={20} color="#7f8c8d" />
+                    <EyeOff size={20} color="#666" />
                   ) : (
-                    <Eye size={20} color="#7f8c8d" />
+                    <Eye size={20} color="#666" />
                   )}
                 </TouchableOpacity>
               </View>
             </View>
 
-            <Button
-              title={loading ? "" : "Login"}
-              onPress={handleLogin}
-              loading={loading}
-              disabled={!email || !password || loading}
-              style={styles.button}
+            <TouchableOpacity 
+              style={styles.loginButton}
+              onPressIn={handleLogin}
+              activeOpacity={0.7}
+              disabled={loading}
             >
-              {loading && <ActivityIndicator color="#fff" />}
-            </Button>
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.loginButtonText}>Login</Text>
+              )}
+            </TouchableOpacity>
 
             {!loading && isBiometricSupported && (
               <>
                 {!isBiometricEnabled ? (
                   <TouchableOpacity 
                     style={styles.biometricButton}
-                    onPress={handleEnableBiometric}
-                    disabled={!email || !password}
+                    onPressIn={handleEnableBiometric}
+                    activeOpacity={0.7}
+                    disabled={loading}
                   >
-                    <Fingerprint size={20} color="#4158D0" style={styles.biometricIcon} />
-                    <Text style={styles.biometricText}>Enable Fingerprint Login</Text>
+                    {loading ? (
+                      <ActivityIndicator color="#4158D0" size="small" />
+                    ) : (
+                      <Text style={styles.biometricButtonText}>Enable Biometric Login</Text>
+                    )}
                   </TouchableOpacity>
                 ) : (
                   <>
                     <TouchableOpacity 
                       style={styles.biometricButton}
-                      onPress={handleBiometricLogin}
+                      onPressIn={handleBiometricLogin}
+                      activeOpacity={0.7}
+                      disabled={loading}
                     >
-                      <Fingerprint size={20} color="#4158D0" style={styles.biometricIcon} />
-                      <Text style={styles.biometricText}>Login with Fingerprint</Text>
+                      {loading ? (
+                        <ActivityIndicator color="#4158D0" size="small" />
+                      ) : (
+                        <Text style={styles.biometricButtonText}>Login with Biometric</Text>
+                      )}
                     </TouchableOpacity>
                     <TouchableOpacity 
-                      style={styles.resetButton}
-                      onPress={handleResetBiometric}
+                      style={styles.resetBiometricButton}
+                      onPressIn={handleResetBiometric}
+                      activeOpacity={0.7}
+                      disabled={loading}
                     >
-                      <Text style={styles.resetText}>Reset Fingerprint Login</Text>
+                      {loading ? (
+                        <ActivityIndicator color="#7f8c8d" size="small" />
+                      ) : (
+                        <Text style={styles.resetBiometricButtonText}>Reset Biometric</Text>
+                      )}
                     </TouchableOpacity>
                   </>
                 )}
               </>
             )}
 
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account?</Text>
-              <TouchableOpacity onPress={() => router.push('/register')}>
-                <Text style={styles.footerLink}>Register</Text>
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>Don't have an account? </Text>
+              <TouchableOpacity onPressIn={() => router.push('/register')}>
+                <Text style={styles.registerLink}>Register</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -301,11 +319,24 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     flex: 1,
   },
-  button: {
+  loginButton: {
     marginTop: 8,
     height: 56,
     borderRadius: 16,
     backgroundColor: '#4158D0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#4158D0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  loginButtonText: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 18,
+    color: '#fff',
+    textAlign: 'center',
   },
   biometricButton: {
     flexDirection: 'row',
@@ -315,38 +346,40 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     backgroundColor: 'rgba(65, 88, 208, 0.1)',
+    // shadowColor: '#4158D0',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
+    // elevation: 2,
   },
-  biometricIcon: {
-    marginRight: 8,
-  },
-  biometricText: {
+  biometricButtonText: {
     fontFamily: 'Inter-Medium',
     color: '#4158D0',
     fontSize: 16,
   },
-  resetButton: {
+  resetBiometricButton: {
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
     padding: 8,
   },
-  resetText: {
+  resetBiometricButtonText: {
     fontFamily: 'Inter-Regular',
     color: '#7f8c8d',
     fontSize: 14,
     textDecorationLine: 'underline',
   },
-  footer: {
+  registerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 24,
   },
-  footerText: {
+  registerText: {
     fontFamily: 'Inter-Regular',
     color: '#7f8c8d',
     marginRight: 4,
   },
-  footerLink: {
+  registerLink: {
     fontFamily: 'Inter-Medium',
     color: '#4158D0',
   },
@@ -355,5 +388,7 @@ const styles = StyleSheet.create({
     right: 12,
     top: 14,
     padding: 4,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
 });
