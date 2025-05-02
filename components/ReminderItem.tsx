@@ -57,7 +57,7 @@ export default function ReminderItem({ reminder, onUpdate }: ReminderItemProps) 
       
       <TouchableOpacity 
         style={styles.deleteButton} 
-        onPress={handleDelete}
+        onPressIn={handleDelete}
         disabled={isDeleting}
       >
         <Trash2 size={18} color="#e74c3c" />

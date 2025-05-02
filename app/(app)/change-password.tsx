@@ -105,7 +105,7 @@ export default function ChangePasswordScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPressIn={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
@@ -134,7 +134,7 @@ export default function ChangePasswordScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                  onPressIn={() => setShowCurrentPassword(!showCurrentPassword)}
                   style={styles.eyeIcon}
                 >
                   {showCurrentPassword ? (
@@ -160,7 +160,7 @@ export default function ChangePasswordScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPress={() => setShowNewPassword(!showNewPassword)}
+                  onPressIn={() => setShowNewPassword(!showNewPassword)}
                   style={styles.eyeIcon}
                 >
                   {showNewPassword ? (
@@ -186,7 +186,7 @@ export default function ChangePasswordScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  onPressIn={() => setShowConfirmPassword(!showConfirmPassword)}
                   style={styles.eyeIcon}
                 >
                   {showConfirmPassword ? (
@@ -201,7 +201,7 @@ export default function ChangePasswordScreen() {
 
           <Button
             title="Change Password"
-            onPress={handleChangePassword}
+            onPressIn={handleChangePassword}
             loading={loading}
             style={styles.button}
           />
@@ -273,7 +273,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   inputContainer: {
-    marginBottom: 24,
+    marginBottom: 12,
+    marginTop: 12,
   },
   label: {
     fontSize: 14,

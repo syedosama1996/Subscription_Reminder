@@ -328,7 +328,7 @@ export default function SubscriptionDetailScreen() {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPressIn={() => router.back()}
           >
             <ArrowLeft size={24} color="#2c3e50" />
           </TouchableOpacity>
@@ -338,7 +338,7 @@ export default function SubscriptionDetailScreen() {
           <Text style={styles.errorText}>{error || 'Subscription not found'}</Text>
           <Button 
             title="Go Back" 
-            onPress={() => router.back()} 
+            onPressIn={() => router.back()} 
             style={styles.errorButton}
           />
         </View>
@@ -351,7 +351,7 @@ export default function SubscriptionDetailScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPressIn={() => router.back()}
         >
           <ArrowLeft size={24} color="#2c3e50" />
         </TouchableOpacity>
@@ -361,13 +361,13 @@ export default function SubscriptionDetailScreen() {
             <>
               <TouchableOpacity 
                 style={[styles.actionButton, styles.cancelButton]}
-                onPress={handleCancelEdit}
+                onPressIn={handleCancelEdit}
               >
                 <X size={22} color="#e74c3c" />
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.actionButton, styles.saveButton]}
-                onPress={handleSaveEdit}
+                onPressIn={handleSaveEdit}
               >
                 <Check size={22} color="#2ecc71" />
               </TouchableOpacity>
@@ -376,13 +376,13 @@ export default function SubscriptionDetailScreen() {
             <>
               <TouchableOpacity 
                 style={styles.actionButton}
-                onPress={handleDelete}
+                onPressIn={handleDelete}
               >
                 <Trash2 size={22} color="#e74c3c" />
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.actionButton}
-                onPress={handleEdit}
+                onPressIn={handleEdit}
               >
                 <Edit size={22} color="#3498db" />
               </TouchableOpacity>
@@ -587,7 +587,7 @@ export default function SubscriptionDetailScreen() {
                   <Text style={styles.detailValue}>{subscription.password ? '••••••••' : 'N/A'}</Text>
                   {subscription.password && (
                     <TouchableOpacity 
-                      onPress={() => Alert.alert('Password', subscription.password)}
+                    onPressIn={() => Alert.alert('Password', subscription.password)}
                       style={styles.showPasswordButton}
                     >
                       <Text style={styles.showPasswordText}>Show</Text>
@@ -631,7 +631,7 @@ export default function SubscriptionDetailScreen() {
         
         <TouchableOpacity 
           style={styles.historyButton}
-          onPress={handleViewHistory}
+          onPressIn={handleViewHistory}
         >
           <History size={18} color="#3498db" style={{ marginRight: 8 }} />
           <Text style={styles.historyButtonText}>View Purchase History</Text>
@@ -640,7 +640,7 @@ export default function SubscriptionDetailScreen() {
         <View style={styles.buttonContainer}>
           <Button
             title="Renew Subscription"
-            onPress={handleRenewSubscription}
+            onPressIn={handleRenewSubscription}
             style={styles.renewButton}
           />
         </View>
@@ -659,7 +659,7 @@ export default function SubscriptionDetailScreen() {
               <Text style={styles.modalTitle}>Renew Subscription</Text>
               <TouchableOpacity 
                 style={styles.modalCloseButton}
-                onPress={() => setRenewModalVisible(false)}
+                onPressIn={() => setRenewModalVisible(false)}
               >
                 <X size={24} color="#7f8c8d" />
               </TouchableOpacity>
@@ -672,7 +672,7 @@ export default function SubscriptionDetailScreen() {
                     styles.vendorToggleButton, 
                     renewalData.sameVendor && styles.vendorToggleButtonActive
                   ]}
-                  onPress={() => setRenewalData({...renewalData, sameVendor: true})}
+                  onPressIn={() => setRenewalData({...renewalData, sameVendor: true})}
                 >
                   <Text style={[
                     styles.vendorToggleText,
@@ -684,7 +684,7 @@ export default function SubscriptionDetailScreen() {
                     styles.vendorToggleButton, 
                     !renewalData.sameVendor && styles.vendorToggleButtonActive
                   ]}
-                  onPress={() => setRenewalData({...renewalData, sameVendor: false})}
+                  onPressIn={() => setRenewalData({...renewalData, sameVendor: false})}
                 >
                   <Text style={[
                     styles.vendorToggleText,
@@ -733,7 +733,7 @@ export default function SubscriptionDetailScreen() {
                   <Text style={styles.modalLabel}>Purchase Date</Text>
                   <TouchableOpacity 
                     style={styles.modalDateButton}
-                    onPress={() => setShowRenewPurchaseDatePicker(true)}
+                    onPressIn={() => setShowRenewPurchaseDatePicker(true)}
                   >
                     <Calendar size={20} color="#4158D0" style={styles.modalDateIcon} />
                     <Text style={styles.modalDateText}>
@@ -744,7 +744,7 @@ export default function SubscriptionDetailScreen() {
                   <Text style={styles.modalLabel}>Expiry Date</Text>
                   <TouchableOpacity 
                     style={styles.modalDateButton}
-                    onPress={() => setShowRenewExpiryDatePicker(true)}
+                    onPressIn={() => setShowRenewExpiryDatePicker(true)}
                   >
                     <Calendar size={20} color="#4158D0" style={styles.modalDateIcon} />
                     <Text style={styles.modalDateText}>
@@ -800,7 +800,7 @@ export default function SubscriptionDetailScreen() {
               
               <Button
                 title="Renew Subscription"
-                onPress={handleSaveRenewal}
+                onPressIn={handleSaveRenewal}
                 style={styles.modalButton}
               />
             </ScrollView>
@@ -821,7 +821,7 @@ export default function SubscriptionDetailScreen() {
               <Text style={styles.modalTitle}>Purchase History</Text>
               <TouchableOpacity 
                 style={styles.modalCloseButton}
-                onPress={() => setHistoryModalVisible(false)}
+                onPressIn={() => setHistoryModalVisible(false)}
               >
                 <X size={24} color="#7f8c8d" />
               </TouchableOpacity>

@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert, TextInput, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
-import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { Lock, Mail, Eye, EyeOff, Fingerprint } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,212 +15,207 @@ export default function LoginScreen() {
   const [showBiometricOption, setShowBiometricOption] = useState(false);
   const [showResetOption, setShowResetOption] = useState(false);
 
-  useEffect(() => {
-    // Reset states first
-    setShowBiometricOption(false);
-    setShowResetOption(false);
+  const emailInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
 
-    // Then set based on conditions
-    if (isBiometricSupported) {
-      if (isBiometricEnabled) {
-        setShowBiometricOption(true);
-        setShowResetOption(true);
-      }
-    }
+  useEffect(() => {
+    setShowBiometricOption(isBiometricSupported && isBiometricEnabled);
+    setShowResetOption(isBiometricEnabled);
   }, [isBiometricSupported, isBiometricEnabled]);
 
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+    emailInputRef.current?.blur();
+    passwordInputRef.current?.blur();
+  };
+
   const handleLogin = async () => {
+    dismissKeyboard();
     if (!email || !password) return;
     try {
-      // Sign in without triggering biometric
-      await signIn(email, password, false); // Pass false to prevent biometric prompt
+      await signIn(email, password, false);
       router.replace('/(app)/(tabs)');
     } catch (error) {
-      // Error is already handled by the auth context
+      // Error handled by auth context
     }
   };
 
   const handleBiometricLogin = async () => {
+    dismissKeyboard();
     try {
-      // Only trigger biometric when explicitly requested
       await signInWithBiometric();
       router.replace('/(app)/(tabs)');
     } catch (error) {
-      // Error is already handled by the auth context
+      // Error handled by auth context
     }
   };
 
   const handleEnableBiometric = async () => {
+    dismissKeyboard();
     if (!email || !password) {
-      // Show error that email and password are required
       Alert.alert('Error', 'Please enter your email and password first');
       return;
     }
-    
     try {
-      // First try to sign in to verify credentials
-      await signIn(email, password, false); // Pass false to prevent biometric prompt
-      
-      // If sign in is successful, enable biometric
+      await signIn(email, password, false);
       await enableBiometric(email, password);
-      
-      // Navigate to the app
       router.replace('/(app)/(tabs)');
     } catch (error) {
-      // Error is already handled by the auth context
+      // Error handled by auth context
     }
   };
 
   const handleResetBiometric = async () => {
+    dismissKeyboard();
     try {
       await resetBiometric();
       setShowBiometricOption(false);
       setShowResetOption(false);
       Alert.alert('Success', 'Fingerprint login has been reset');
     } catch (error) {
-      // Error is already handled by the auth context
+      // Error handled by auth context
     }
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0', '#FFCC70']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      />
-      
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.header}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?q=80&w=200&auto=format&fit=crop' }}
-              style={styles.logo}
-            />
-            <Text style={styles.title}>Subscription Reminder</Text>
-            <Text style={styles.subtitle}>Track and manage all your subscriptions</Text>
-          </View>
-
-          <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>Welcome Back</Text>
-            
-            {error && (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-
-            <View style={styles.inputContainer}>
-              <Mail size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <View style={styles.inputWrapper}>
-                <Input
-                  placeholder="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  containerStyle={styles.input}
-                />
-              </View>
+    <TouchableWithoutFeedback onPress={dismissKeyboard}>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#4158D0', '#C850C0', '#FFCC70']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        />
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoidingView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
+        >
+          <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+            <View style={styles.header}>
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?q=80&w=200&auto=format&fit=crop' }}
+                style={styles.logo}
+              />
+              <Text style={styles.title}>Subscription Reminder</Text>
+              <Text style={styles.subtitle}>Track and manage all your subscriptions</Text>
             </View>
 
-            <View style={styles.inputContainer}>
-              <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <View style={styles.inputWrapper}>
-                <Input
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  containerStyle={styles.input}
-                />
-                <TouchableOpacity 
-                  style={styles.eyeIcon}
-                  onPressIn={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#666" />
+            <View style={styles.formContainer}>
+              <Text style={styles.formTitle}>Welcome Back</Text>
+              {error && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              )}
+
+              <View style={styles.inputContainer}>
+                <Mail size={20} color="#7f8c8d" style={styles.inputIcon} />
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    ref={emailInputRef}
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    style={styles.textInput}
+                    placeholderTextColor="#7f8c8d"
+                    returnKeyType="next"
+                    onSubmitEditing={() => passwordInputRef.current?.focus()}
+                    blurOnSubmit={false}
+                    onFocus={() => console.log('Email focused')}
+                    autoCorrect={false}
+                    selectTextOnFocus
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    ref={passwordInputRef}
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    style={styles.textInput}
+                    placeholderTextColor="#7f8c8d"
+                    returnKeyType="done"
+                    onSubmitEditing={handleLogin}
+                    onFocus={() => console.log('Password focused')}
+                    autoCorrect={false}
+                    selectTextOnFocus
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setShowPassword(!showPassword)}
+                    activeOpacity={0.5}
+                  >
+                    {showPassword ? <EyeOff size={20} color="#666" /> : <Eye size={20} color="#666" />}
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.loginButton, loading && styles.disabledButton]}
+                onPress={handleLogin}
+                activeOpacity={0.5}
+                disabled={loading}
+              >
+                {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.loginButtonText}>Login</Text>}
+              </TouchableOpacity>
+
+              {!loading && isBiometricSupported && (
+                <>
+                  {!isBiometricEnabled ? (
+                    <TouchableOpacity
+                      style={[styles.biometricButton, loading && styles.disabledButton]}
+                      onPress={handleEnableBiometric}
+                      activeOpacity={0.5}
+                      disabled={loading}
+                    >
+                      {loading ? <ActivityIndicator color="#4158D0" size="small" /> : <Text style={styles.biometricButtonText}>Enable Biometric Login</Text>}
+                    </TouchableOpacity>
                   ) : (
-                    <Eye size={20} color="#666" />
+                    <>
+                      <TouchableOpacity
+                        style={[styles.biometricButton, loading && styles.disabledButton]}
+                        onPress={handleBiometricLogin}
+                        activeOpacity={0.5}
+                        disabled={loading}
+                      >
+                        {loading ? <ActivityIndicator color="#4158D0" size="small" /> : <Text style={styles.biometricButtonText}>Login with Biometric</Text>}
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.resetBiometricButton, loading && styles.disabledButton]}
+                        onPress={handleResetBiometric}
+                        activeOpacity={0.5}
+                        disabled={loading}
+                      >
+                        {loading ? <ActivityIndicator color="#7f8c8d" size="small" /> : <Text style={styles.resetBiometricButtonText}>Reset Biometric</Text>}
+                      </TouchableOpacity>
+                    </>
                   )}
+                </>
+              )}
+
+              <View style={styles.registerContainer}>
+                <Text style={styles.registerText}>Don't have an account? </Text>
+                <TouchableOpacity
+                  style={styles.registerLinkTouchable}
+                  onPress={() => router.push('/register')}
+                  activeOpacity={0.5}
+                >
+                  <Text style={styles.registerLink}>Register</Text>
                 </TouchableOpacity>
               </View>
             </View>
-
-            <TouchableOpacity 
-              style={styles.loginButton}
-              onPressIn={handleLogin}
-              activeOpacity={0.7}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.loginButtonText}>Login</Text>
-              )}
-            </TouchableOpacity>
-
-            {!loading && isBiometricSupported && (
-              <>
-                {!isBiometricEnabled ? (
-                  <TouchableOpacity 
-                    style={styles.biometricButton}
-                    onPressIn={handleEnableBiometric}
-                    activeOpacity={0.7}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <ActivityIndicator color="#4158D0" size="small" />
-                    ) : (
-                      <Text style={styles.biometricButtonText}>Enable Biometric Login</Text>
-                    )}
-                  </TouchableOpacity>
-                ) : (
-                  <>
-                    <TouchableOpacity 
-                      style={styles.biometricButton}
-                      onPressIn={handleBiometricLogin}
-                      activeOpacity={0.7}
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <ActivityIndicator color="#4158D0" size="small" />
-                      ) : (
-                        <Text style={styles.biometricButtonText}>Login with Biometric</Text>
-                      )}
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={styles.resetBiometricButton}
-                      onPressIn={handleResetBiometric}
-                      activeOpacity={0.7}
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <ActivityIndicator color="#7f8c8d" size="small" />
-                      ) : (
-                        <Text style={styles.resetBiometricButtonText}>Reset Biometric</Text>
-                      )}
-                    </TouchableOpacity>
-                  </>
-                )}
-              </>
-            )}
-
-            <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>Don't have an account? </Text>
-              <TouchableOpacity onPressIn={() => router.push('/register')}>
-                <Text style={styles.registerLink}>Register</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -247,148 +241,120 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 30,
   },
   logo: {
     width: 100,
     height: 100,
-    borderRadius: 30,
-    marginBottom: 16,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 10,
+    marginBottom: 10,
   },
   title: {
-    fontFamily: 'Inter-Bold',
     fontSize: 28,
+    fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 10,
   },
   subtitle: {
-    fontFamily: 'Inter-Regular',
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
+    color: '#fff',
+    marginTop: 5,
   },
   formContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 24,
-    padding: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
-    backdropFilter: 'blur(10px)',
+    width: '100%',
+    marginTop: 30,
   },
   formTitle: {
-    fontFamily: 'Inter-Bold',
     fontSize: 24,
-    color: '#333',
-    marginBottom: 24,
+    fontWeight: 'bold',
+    color: '#4158D0',
     textAlign: 'center',
+    marginBottom: 15,
   },
   errorContainer: {
-    backgroundColor: 'rgba(231, 76, 60, 0.1)',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#e74c3c',
+    backgroundColor: '#f8d7da',
+    padding: 10,
+    marginBottom: 20,
+    borderRadius: 5,
   },
   errorText: {
-    fontFamily: 'Inter-Regular',
-    color: '#e74c3c',
+    color: '#721c24',
     fontSize: 14,
+    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    marginBottom: 20,
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   inputWrapper: {
     flex: 1,
-    position: 'relative',
   },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    marginBottom: 0,
+  textInput: {
+    fontSize: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
     flex: 1,
   },
+  eyeIcon: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+  },
   loginButton: {
-    marginTop: 8,
-    height: 56,
-    borderRadius: 16,
     backgroundColor: '#4158D0',
-    justifyContent: 'center',
+    paddingVertical: 15,
+    borderRadius: 5,
     alignItems: 'center',
-    shadowColor: '#4158D0',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    marginBottom: 20,
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   loginButtonText: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
     color: '#fff',
-    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   biometricButton: {
-    flexDirection: 'row',
+    backgroundColor: '#7f8c8d',
+    paddingVertical: 15,
+    borderRadius: 5,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 16,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(65, 88, 208, 0.1)',
-    // shadowColor: '#4158D0',
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 4,
-    // elevation: 2,
+    marginBottom: 20,
   },
   biometricButtonText: {
-    fontFamily: 'Inter-Medium',
-    color: '#4158D0',
+    color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
   },
   resetBiometricButton: {
+    backgroundColor: '#e74c3c',
+    paddingVertical: 15,
+    borderRadius: 5,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-    padding: 8,
+    marginBottom: 20,
   },
   resetBiometricButtonText: {
-    fontFamily: 'Inter-Regular',
-    color: '#7f8c8d',
-    fontSize: 14,
-    textDecorationLine: 'underline',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   registerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 24,
   },
   registerText: {
-    fontFamily: 'Inter-Regular',
+    fontSize: 16,
     color: '#7f8c8d',
-    marginRight: 4,
   },
+  registerLinkTouchable: {},
   registerLink: {
-    fontFamily: 'Inter-Medium',
     color: '#4158D0',
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: 12,
-    top: 14,
-    padding: 4,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    fontWeight: 'bold',
   },
 });

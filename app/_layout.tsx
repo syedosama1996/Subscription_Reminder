@@ -16,6 +16,13 @@ import {
   setupAllExpiryReminders
 } from '../lib/notifications';
 import { getSubscriptions } from '../lib/subscriptions';
+import { LogBox, View } from 'react-native';
+
+// Ignore specific warnings that might be related to gesture handling
+LogBox.ignoreLogs([
+  'Gesture handler is not attached to a native view',
+  'Non-serializable values were found in the navigation state',
+]);
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -33,26 +40,33 @@ const InnerLayout = () => {
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
+      // Add slight delay to ensure UI is properly initialized
+      setTimeout(() => {
+        SplashScreen.hideAsync();
+      }, 100);
     }
   }, [fontsLoaded, fontError]);
 
   // Initialize notifications
   useEffect(() => {
+    let subscriptionSub, notificationSub;
+    
     async function setupNotifications() {
       try {
         await registerForPushNotificationsAsync();
-        const subscriptionSub = setupSubscriptionNotifications();
-        const notificationSub = setupNotificationListener();
-        return () => {
-          subscriptionSub?.unsubscribe();
-          notificationSub?.unsubscribe();
-        };
+        subscriptionSub = setupSubscriptionNotifications();
+        notificationSub = setupNotificationListener();
       } catch (error) {
         console.error('Error setting up notifications:', error);
       }
     }
+    
     setupNotifications();
+    
+    return () => {
+      if (subscriptionSub?.unsubscribe) subscriptionSub.unsubscribe();
+      if (notificationSub?.unsubscribe) notificationSub.unsubscribe();
+    };
   }, []);
 
   // Set up expiry reminders when user is logged in
@@ -76,7 +90,7 @@ const InnerLayout = () => {
   }
 
   return (
-    <>
+    <View style={{ flexGrow: 1 }}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -84,15 +98,15 @@ const InnerLayout = () => {
         <Stack.Screen name="+not-found" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
-      <Toast />
-    </>
+      <Toast topOffset={50} />
+    </View>
   );
 };
 
 // RootLayout now only sets up providers
 const RootLayout = () => {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flexGrow: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
           <SecurityProvider>

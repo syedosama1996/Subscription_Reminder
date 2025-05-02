@@ -257,7 +257,7 @@ export default function AddSubscriptionScreen() {
                     <Text style={styles.dateLabel}>Purchase Date</Text>
                     <TouchableOpacity 
                       style={styles.dateButton}
-                      onPress={() => setShowPurchaseDatePicker(true)}
+                      onPressIn={() => setShowPurchaseDatePicker(true)}
                     >
                       <Calendar size={20} color="#4158D0" style={styles.dateIcon} />
                       <Text style={styles.dateText}>{formatDate(purchaseDate)}</Text>
@@ -268,7 +268,7 @@ export default function AddSubscriptionScreen() {
                     <Text style={styles.dateLabel}>Expiry Date</Text>
                     <TouchableOpacity 
                       style={styles.dateButton}
-                      onPress={() => setShowExpiryDatePicker(true)}
+                      onPressIn={() => setShowExpiryDatePicker(true)}
                     >
                       <Calendar size={20} color="#4158D0" style={styles.dateIcon} />
                       <Text style={styles.dateText}>{formatDate(expiryDate)}</Text>
@@ -399,7 +399,7 @@ export default function AddSubscriptionScreen() {
                   <Text style={styles.reminderText}>days before</Text>
                   <TouchableOpacity
                     style={styles.reminderDeleteButton}
-                    onPress={() => handleRemoveReminder(index)}
+                    onPressIn={() => handleRemoveReminder(index)}
                   >
                     <X size={18} color="#e74c3c" />
                   </TouchableOpacity>
@@ -409,14 +409,14 @@ export default function AddSubscriptionScreen() {
               <Button
                 title="Add Another Reminder"
                 variant="outline"
-                onPress={handleAddReminder}
+                onPressIn={handleAddReminder}
                 style={styles.addReminderButton}
               />
             </View>
 
             <Button
               title="Save Subscription"
-              onPress={handleSubmit}
+              onPressIn={handleSubmit}
               loading={loading}
               style={styles.submitButton}
             />

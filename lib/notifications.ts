@@ -307,7 +307,6 @@ export async function setupAllExpiryReminders(subscriptions: any[]) {
     const now = new Date();
     
     // First, cancel ALL existing notifications
-    console.log('\n=== Cleaning up notifications ===');
     const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
     for (const notification of scheduledNotifications) {
       try {
@@ -316,7 +315,6 @@ export async function setupAllExpiryReminders(subscriptions: any[]) {
         console.error('Failed to cancel notification:', error);
       }
     }
-    console.log('Cancelled all existing notifications');
 
     // Filter subscriptions that are active and expiring within 30 days
     const relevantSubscriptions = subscriptions.filter(sub => {
@@ -328,7 +326,6 @@ export async function setupAllExpiryReminders(subscriptions: any[]) {
       return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
     });
 
-    console.log(`\n=== Processing ${relevantSubscriptions.length} relevant subscriptions ===`);
     
     // Process each relevant subscription
     for (const subscription of relevantSubscriptions) {
@@ -354,7 +351,6 @@ export async function setupAllExpiryReminders(subscriptions: any[]) {
             subscription.id
           );
           if (notificationId) {
-            console.log(`  - Scheduled default reminder for ${daysUntilExpiry} days until expiry`);
           }
         } catch (error) {
           console.error(`  - Failed to schedule default reminder:`, error);
@@ -394,11 +390,9 @@ export async function setupAllExpiryReminders(subscriptions: any[]) {
 
     // Verify final notifications
     const finalNotifications = await Notifications.getAllScheduledNotificationsAsync();
-    console.log('\n=== Final Scheduled Notifications ===');
     finalNotifications.forEach(notification => {
       const data = notification.content?.data;
       if (data?.type === 'expiry_reminder') {
-        console.log(`- ${data.subscriptionName}: ${data.daysBefore} days before ${new Date(data.expiryDate).toLocaleDateString()}`);
       }
     });
 

@@ -4,7 +4,7 @@ import { useAuth } from './auth';
 import Toast from 'react-native-toast-message';
 import { router, usePathname } from 'expo-router';
 
-const SESSION_TIMEOUT = 60 * 1000; // 30 seconds in milliseconds
+const SESSION_TIMEOUT = 600 * 1000; // 30 seconds in milliseconds
 
 // Auth screens that should not trigger session timeout
 const AUTH_SCREENS = ['/(auth)/login', '/(auth)/register'];

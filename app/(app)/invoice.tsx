@@ -397,7 +397,7 @@ export default function InvoiceScreen() {
     return (
       <TouchableOpacity 
         style={styles.invoiceCardImproved}
-        onPress={() => openInvoiceDetails(item)}
+        onPressIn={() => openInvoiceDetails(item)}
       >
         <View style={styles.invoiceCardHeader}>
           <View style={styles.invoiceCardTitleContainer}>
@@ -431,7 +431,7 @@ export default function InvoiceScreen() {
         </View>
 
          <View style={styles.invoiceCardFooter}>
-            <TouchableOpacity style={styles.viewDetailsButton} onPress={() => openInvoiceDetails(item)} >
+            <TouchableOpacity style={styles.viewDetailsButton} onPressIn={() => openInvoiceDetails(item)} >
               <Text style={styles.viewDetailsButtonText}>View Details</Text>
             </TouchableOpacity>
         </View>
@@ -542,13 +542,13 @@ export default function InvoiceScreen() {
               <View style={styles.modalActionsImproved}>
                 <TouchableOpacity 
                   style={[styles.modalButtonImproved, styles.closeButtonImproved]}
-                  onPress={() => setModalVisible(false)}
+                  onPressIn={() => setModalVisible(false)}
                 >
                   <Text style={[styles.modalButtonTextImproved, styles.closeButtonTextImproved]}>Close</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={[styles.modalButtonImproved, styles.downloadPdfButtonImproved]}
-                  onPress={handleDownloadPdf}
+                  onPressIn={handleDownloadPdf}
                   disabled={pdfLoading}
                 >
                   {pdfLoading ? (
@@ -595,7 +595,7 @@ export default function InvoiceScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPressIn={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>

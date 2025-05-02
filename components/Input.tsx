@@ -30,12 +30,21 @@ const Input = forwardRef<TextInput, InputProps>(({
   errorStyle,
   multiline,
   numberOfLines,
+  onPressIn,
   ...props
 }, ref) => {
+  const handlePressIn = () => {
+    console.log('Input pressed');
+    if (ref && 'current' in ref && ref.current) {
+      ref.current.focus();
+    }
+    onPressIn?.();
+  };
+
   return (
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
-      <TouchableWithoutFeedback>
+      <View style={styles.inputWrapper}>
         <TextInput
           ref={ref}
           style={[
@@ -48,9 +57,12 @@ const Input = forwardRef<TextInput, InputProps>(({
           multiline={multiline}
           numberOfLines={numberOfLines}
           textAlignVertical={multiline ? 'top' : 'center'}
+          onPressIn={handlePressIn}
+          editable={true}
+          selectTextOnFocus={true}
           {...props}
         />
-      </TouchableWithoutFeedback>
+      </View>
       {error && <Text style={[styles.error, errorStyle]}>{error}</Text>}
     </View>
   );
@@ -65,6 +77,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 6,
     color: '#2c3e50',
+  },
+  inputWrapper: {
+    position: 'relative',
   },
   input: {
     backgroundColor: '#f5f6fa',

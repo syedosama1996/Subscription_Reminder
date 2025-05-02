@@ -111,13 +111,13 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
           <CategoryBadge category={selectedCategory} selected />
           <TouchableOpacity 
             style={styles.changeButton}
-            onPress={() => setModalVisible(true)}
+            onPressIn={() => setModalVisible(true)}
           >
             <Text style={styles.changeButtonText}>Change</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.clearButton}
-            onPress={handleClearCategory}
+            onPressIn={handleClearCategory}
           >
             <X size={16} color="#7f8c8d" />
           </TouchableOpacity>
@@ -125,7 +125,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
       ) : (
         <TouchableOpacity 
           style={styles.selectButton}
-          onPress={() => setModalVisible(true)}
+          onPressIn={() => setModalVisible(true)}
         >
           <Text style={styles.selectButtonText}>Select Category</Text>
         </TouchableOpacity>
@@ -143,7 +143,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
               <Text style={styles.modalTitle}>Select Category</Text>
               <TouchableOpacity 
                 style={styles.modalCloseButton}
-                onPress={() => {
+                onPressIn={() => {
                   setModalVisible(false);
                   setShowAddForm(false);
                 }}
@@ -177,7 +177,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                             { backgroundColor: color },
                             newCategoryColor === color && styles.selectedColorOption
                           ]}
-                          onPress={() => setNewCategoryColor(color)}
+                          onPressIn={() => setNewCategoryColor(color)}
                         />
                       ))}
                     </View>
@@ -185,7 +185,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                     <View style={styles.addFormButtons}>
                       <TouchableOpacity 
                         style={styles.cancelButton}
-                        onPress={() => {
+                        onPressIn={() => {
                           setShowAddForm(false);
                           setNewCategoryName('');
                           setNewCategoryColor('');
@@ -199,7 +199,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                           styles.saveButton,
                           (!newCategoryName.trim() || addingCategory) && styles.disabledButton
                         ]}
-                        onPress={handleAddCategory}
+                        onPressIn={handleAddCategory}
                         disabled={!newCategoryName.trim() || addingCategory}
                       >
                         {addingCategory ? (
@@ -214,7 +214,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                   <>
                     <TouchableOpacity 
                       style={styles.addCategoryButton}
-                      onPress={() => setShowAddForm(true)}
+                      onPressIn={() => setShowAddForm(true)}
                     >
                       <Plus size={18} color="#4158D0" style={styles.addIcon} />
                       <Text style={styles.addCategoryText}>Add New Category</Text>
@@ -237,7 +237,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                               styles.categoryItem,
                               selectedCategoryId === item.id && styles.selectedCategoryItem
                             ]}
-                            onPress={() => handleSelectCategory(item)}
+                            onPressIn={() => handleSelectCategory(item)}
                           >
                             <CategoryBadge category={item} />
                             {selectedCategoryId === item.id && (

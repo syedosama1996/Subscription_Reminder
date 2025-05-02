@@ -78,7 +78,6 @@ export default function HomeScreen() {
       // Load subscriptions with filters
       const data = await getSubscriptions(user.id);
       
-      console.log('Raw Subscriptions Data:', data?.length);
       
       // Filter only active subscriptions (is_active === true and not expired)
       const activeSubscriptions = data?.filter(sub => {
@@ -90,7 +89,6 @@ export default function HomeScreen() {
         return sub.is_active === true && expiryDate >= today;
       }) || [];
 
-      console.log('Active Subscriptions:', activeSubscriptions.length);
 
       // Apply status filters if selected
       let filteredByStatus = activeSubscriptions;
@@ -102,7 +100,6 @@ export default function HomeScreen() {
           const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
         });
-        console.log('Expiring Soon Filtered:', filteredByStatus.length);
       }
 
       // Apply category filters if selected
@@ -111,7 +108,6 @@ export default function HomeScreen() {
         filteredByCategory = filteredByStatus.filter(sub => 
           selectedCategories.includes(sub.category_id || '')
         );
-        console.log('Category Filtered:', filteredByCategory.length);
       }
 
       // Count subscriptions per category (based on the truly active ones)
@@ -161,10 +157,6 @@ export default function HomeScreen() {
   // Add logging for Expiring Soon filter
   useEffect(() => {
     if (selectedStatuses.includes('expiring_soon')) {
-      console.log('Expiring Soon Filter Selected');
-      console.log('Total Subscriptions:', subscriptions.length);
-      console.log('Filtered Subscriptions:', filteredSubscriptions.length);
-      
       // Log details of expiring soon subscriptions
       const expiringSoonSubs = filteredSubscriptions.filter(sub => {
         if (!sub.expiry_date) return false;
@@ -174,11 +166,6 @@ export default function HomeScreen() {
         return daysUntilExpiry <= 30 && daysUntilExpiry > 0; // Subscriptions expiring in next 30 days
       });
       
-      console.log('Expiring Soon Subscriptions:', expiringSoonSubs.length);
-      console.log('Expiring Soon Details:', expiringSoonSubs.map(sub => ({
-        service_name: sub.service_name,
-        expiry_date: sub.expiry_date
-      })));
     }
   }, [selectedStatuses, subscriptions, filteredSubscriptions]);
 
@@ -370,7 +357,7 @@ export default function HomeScreen() {
         </Text>
         <TouchableOpacity
           style={styles.addFirstButton}
-          onPress={() => router.push('/add')}
+          onPressIn={() => router.push('/add')}
         >
           <Plus size={20} color="#fff" style={styles.addFirstIcon} />
           <Text style={styles.addFirstText}>Add Your First Subscription</Text>
@@ -438,7 +425,7 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.menuButton}
-              onPress={() => navigation.toggleDrawer()}
+              onPressIn={() => navigation.toggleDrawer()}
             >
               <Menu size={24} color="#fff" />
             </TouchableOpacity>
@@ -447,7 +434,7 @@ export default function HomeScreen() {
                 <>
                   <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={() => setSelectionMode(true)}
+                    onPressIn={() => setSelectionMode(true)}
                   >
                     <CheckSquare size={22} color="#fff" />
                   </TouchableOpacity>
@@ -472,13 +459,13 @@ export default function HomeScreen() {
                 <>
                   <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={handleMarkAll}
+                    onPressIn={handleMarkAll}
                   >
                     <CheckCircle2 size={22} color="#fff" />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={handleRemoveAll}
+                    onPressIn={handleRemoveAll}
                   >
                     <XCircle size={22} color="#fff" />
                   </TouchableOpacity>
@@ -497,7 +484,7 @@ export default function HomeScreen() {
                 onChangeText={setSearchQuery}
                 placeholderTextColor="#95a5a6"
               />
-              <TouchableOpacity style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
+              <TouchableOpacity style={styles.filterButton} onPressIn={() => setFilterModalVisible(true)}>
                 <Filter size={20} color="#7f8c8d" />
               </TouchableOpacity>
             </View>
@@ -522,7 +509,7 @@ export default function HomeScreen() {
                 alwaysBounceHorizontal={false}
               >
                 <TouchableOpacity
-                  onPress={() => handleCategoryPress(null)}
+                  onPressIn={() => handleCategoryPress(null)}
                   style={[
                     styles.categoryTab,
                     !activeCategory && styles.activeCategoryTab
@@ -559,7 +546,7 @@ export default function HomeScreen() {
                   return (
                     <TouchableOpacity
                       key={category.id}
-                      onPress={() => handleCategoryPress(category.id!)}
+                      onPressIn={() => handleCategoryPress(category.id!)}
                       style={[
                         styles.categoryTab,
                         activeCategory === category.id && styles.activeCategoryTab
@@ -615,7 +602,7 @@ export default function HomeScreen() {
                   selected={selectedSubscriptions.includes(item.id!)}
                   onToggleSelection={() => toggleSubscriptionSelection(item.id!)}
                   disabled={toggleLoading}
-                  onPress={() => router.push(`/subscription/${item.id}`)}
+                  onPressIn={() => router.push(`/subscription/${item.id}`)}
                   onRefresh={loadData}
                 />
               )}

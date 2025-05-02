@@ -123,7 +123,7 @@ export default function PurchaseHistoryScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPressIn={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
@@ -134,7 +134,7 @@ export default function PurchaseHistoryScreen() {
       { error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadSubscriptions}>
+          <TouchableOpacity style={styles.retryButton} onPressIn={loadSubscriptions}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>

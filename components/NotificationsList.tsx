@@ -62,7 +62,7 @@ export function NotificationsList() {
   const renderItem = ({ item }: { item: Notification }) => (
     <TouchableOpacity
       style={[styles.notificationItem, item.read ? styles.read : styles.unread]}
-      onPress={() => markAsRead(item.id)}
+      onPressIn={() => markAsRead(item.id)}
     >
       <View style={styles.notificationContent}>
         <Text style={styles.title}>{item.title}</Text>

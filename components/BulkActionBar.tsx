@@ -24,7 +24,7 @@ export default function BulkActionBar({
         <Text style={styles.selectedText}>{selectedCount} selected</Text>
         <TouchableOpacity 
           style={styles.cancelButton}
-          onPress={onCancel}
+          onPressIn={onCancel}
         >
           <X size={20} color="#fff" />
         </TouchableOpacity>
@@ -33,7 +33,7 @@ export default function BulkActionBar({
       <View style={styles.actionsContainer}>
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => onToggleStatus(true)}
+          onPressIn={() => onToggleStatus(true)}
         >
           <Power size={20} color="#fff" />
           <Text style={styles.actionText}>Activate</Text>
@@ -41,7 +41,7 @@ export default function BulkActionBar({
         
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => onToggleStatus(false)}
+          onPressIn={() => onToggleStatus(false)}
         >
           <Power size={20} color="#fff" />
           <Text style={styles.actionText}>Deactivate</Text>
@@ -49,7 +49,7 @@ export default function BulkActionBar({
         
         <TouchableOpacity 
           style={[styles.actionButton, styles.deleteButton]}
-          onPress={onDelete}
+          onPressIn={onDelete}
         >
           <Trash2 size={20} color="#fff" />
           <Text style={styles.actionText}>Delete</Text>

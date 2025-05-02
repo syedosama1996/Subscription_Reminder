@@ -15,7 +15,7 @@ interface SubscriptionCardProps {
   selected?: boolean;
   onToggleSelection?: () => void;
   disabled?: boolean;
-  onPress?: () => void;
+  onPressIn?: () => void;
   onRefresh?: () => void;
   simpleExpiryDisplay?: boolean;
 }
@@ -27,7 +27,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   selected,
   onToggleSelection,
   disabled,
-  onPress,
+  onPressIn,
   onRefresh,
   simpleExpiryDisplay
 }) => {
@@ -75,7 +75,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     if (selectionMode) {
       onToggleSelection?.();
     } else {
-      onPress ? onPress() : router.push(`/subscription/${subscription.id}`);
+      onPressIn ? onPressIn() : router.push(`/subscription/${subscription.id}`);
     }
   };
 
@@ -103,7 +103,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   return (
     <TouchableOpacity 
       style={[styles.card, selected && styles.selectedCard]}
-      onPress={handlePress}
+      onPressIn={handlePress}
       onLongPress={handleLongPress}
       disabled={disabled}
       activeOpacity={0.6}
@@ -118,7 +118,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               {selectionMode ? (
                 <TouchableOpacity 
                   style={styles.checkboxContainer}
-                  onPress={onToggleSelection}
+                  onPressIn={onToggleSelection}
                 >
                   {selected ? (
                     <CheckSquare size={22} color="#4158D0" />
@@ -190,7 +190,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               {selectionMode ? (
                 <TouchableOpacity 
                   style={styles.checkboxContainer}
-                  onPress={onToggleSelection}
+                  onPressIn={onToggleSelection}
                 >
                   {selected ? (
                     <CheckSquare size={22} color="#4158D0" />

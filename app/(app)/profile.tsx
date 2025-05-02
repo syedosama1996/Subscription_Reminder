@@ -104,7 +104,7 @@ export default function ProfileScreen() {
         <View style={styles.headerTop}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPressIn={() => router.back()}
           >
             <ArrowLeft size={24} color="#fff" />
           </TouchableOpacity>
@@ -118,7 +118,7 @@ export default function ProfileScreen() {
         <Text style={styles.email}>{user?.email || ''}</Text>
         <TouchableOpacity 
           style={styles.editButton}
-          onPress={() => setIsModalVisible(true)}
+          onPressIn={() => setIsModalVisible(true)}
         >
           <Edit2 size={20} color="#4158D0" />
           <Text style={styles.editButtonText}>Edit Profile</Text>
@@ -166,7 +166,7 @@ export default function ProfileScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Edit Profile</Text>
               <TouchableOpacity 
-                onPress={() => setIsModalVisible(false)}
+                onPressIn={() => setIsModalVisible(false)}
                 style={styles.closeButton}
               >
                 <X size={24} color="#2c3e50" />
@@ -194,13 +194,13 @@ export default function ProfileScreen() {
             <View style={styles.modalFooter}>
               <TouchableOpacity 
                 style={styles.cancelButton}
-                onPress={() => setIsModalVisible(false)}
+                onPressIn={() => setIsModalVisible(false)}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
-                onPress={handleSave}
+                onPressIn={handleSave}
                 disabled={isLoading}
               >
                 {isLoading ? (

@@ -74,7 +74,6 @@ export default function ActivityLogScreen() {
         limit: PAGE_SIZE,
         offset: 0
       });
-
       if (data.activities.length === 0) {
         setActivities([]);
       } else {
@@ -316,14 +315,14 @@ export default function ActivityLogScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPressIn={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Activity Log</Text>
         <TouchableOpacity
           style={styles.filterButton}
-          onPress={() => setShowFilterMenu(true)}
+          onPressIn={() => setShowFilterMenu(true)}
         >
           <Filter size={24} color="#fff" />
         </TouchableOpacity>
@@ -338,7 +337,7 @@ export default function ActivityLogScreen() {
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setShowFilterMenu(false)}
+          onPressIn={() => setShowFilterMenu(false)}
         >
           <View style={styles.filterMenu}>
             {filterOptions.map((option) => (
@@ -348,7 +347,7 @@ export default function ActivityLogScreen() {
                   styles.filterMenuItem,
                   selectedFilter === option.id && styles.filterMenuItemActive
                 ]}
-                onPress={() => handleFilterSelect(option.id)}
+                onPressIn={() => handleFilterSelect(option.id)}
               >
                 <Text style={[
                   styles.filterMenuText,

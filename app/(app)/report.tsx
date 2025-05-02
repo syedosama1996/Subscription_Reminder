@@ -487,7 +487,7 @@ export default function ReportScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPressIn={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
@@ -496,7 +496,7 @@ export default function ReportScreen() {
       
           <TouchableOpacity
             style={[styles.exportButton, exporting && styles.disabledButton]}
-            onPress={() => setIsExportModalVisible(true)}
+            onPressIn={() => setIsExportModalVisible(true)}
             disabled={exporting}
           >
              {exporting ? <ActivityIndicator size="small" color="#fff" /> : <Download size={24} color="#fff" />}
@@ -509,7 +509,7 @@ export default function ReportScreen() {
           <View style={styles.dateRangeSelector}>
             <TouchableOpacity 
               style={styles.dateRangeButton}
-              onPress={() => setIsDateRangeModalVisible(true)}
+              onPressIn={() => setIsDateRangeModalVisible(true)}
             >
               <Calendar size={20} color="#4158D0" />
               <Text style={styles.dateRangeText}>{dateRange.label}</Text>
@@ -655,7 +655,7 @@ export default function ReportScreen() {
                   styles.dateRangeOption,
                   dateRange.label === range.label && styles.selectedDateRangeOption
                 ]}
-                onPress={() => handleDateRangeSelect(range)}
+                onPressIn={() => handleDateRangeSelect(range)}
               >
                 <Text style={[
                   styles.dateRangeOptionText,
@@ -671,7 +671,7 @@ export default function ReportScreen() {
               
               <TouchableOpacity
                 style={styles.customDateButton}
-                onPress={() => setShowStartDatePicker(true)}
+                onPressIn={() => setShowStartDatePicker(true)}
               >
                 <Text style={styles.customDateButtonText}>
                   Start: {formatDate(dateRange.startDate)}
@@ -680,7 +680,7 @@ export default function ReportScreen() {
               
               <TouchableOpacity
                 style={styles.customDateButton}
-                onPress={() => setShowEndDatePicker(true)}
+                onPressIn={() => setShowEndDatePicker(true)}
               >
                 <Text style={styles.customDateButtonText}>
                   End: {formatDate(dateRange.endDate)}
@@ -689,7 +689,7 @@ export default function ReportScreen() {
               
               <TouchableOpacity
                 style={styles.applyCustomDateButton}
-                onPress={() => {
+                onPressIn={() => {
                   setDateRange(prev => ({...prev, label: 'Custom Range'}));
                   setIsDateRangeModalVisible(false);
                 }}
@@ -700,7 +700,7 @@ export default function ReportScreen() {
             
             <TouchableOpacity
               style={styles.modalButtonClose}
-              onPress={() => setIsDateRangeModalVisible(false)}
+              onPressIn={() => setIsDateRangeModalVisible(false)}
             >
               <Text style={styles.modalButtonCloseText}>Cancel</Text>
             </TouchableOpacity>
@@ -740,21 +740,21 @@ export default function ReportScreen() {
             <Text style={styles.modalTitle}>Save Report As:</Text>
             <TouchableOpacity
               style={[styles.modalButton, styles.modalButtonPDF]}
-              onPress={() => handleExport('pdf')}
+              onPressIn={() => handleExport('pdf')}
               disabled={exporting}
             >
                 <Text style={styles.modalButtonText}>PDF Document</Text>
             </TouchableOpacity>
              <TouchableOpacity
               style={[styles.modalButton, styles.modalButtonPNG]}
-              onPress={() => handleExport('png')}
+              onPressIn={() => handleExport('png')}
               disabled={exporting}
             >
                 <Text style={styles.modalButtonText}>PNG Image</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalButton, styles.modalButtonCSV]}
-              onPress={() => handleExport('csv')}
+              onPressIn={() => handleExport('csv')}
               disabled={exporting}
             >
                <Text style={styles.modalButtonText}>CSV Spreadsheet</Text>
@@ -762,7 +762,7 @@ export default function ReportScreen() {
 
             <TouchableOpacity
               style={[styles.modalButton, styles.modalButtonClose]}
-              onPress={() => setIsExportModalVisible(false)}
+              onPressIn={() => setIsExportModalVisible(false)}
             >
               <Text style={styles.modalButtonCloseText}>Cancel</Text>
             </TouchableOpacity>

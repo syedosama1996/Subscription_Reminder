@@ -33,32 +33,32 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
     {
       icon: <User size={24} color="#4158D0" />,
       label: 'Profile',
-      onPress: () => router.push('/(app)/profile')
+      onPressIn: () => router.push('/(app)/profile')
     },
     {
       icon: <FileText size={24} color="#4158D0" />,
       label: 'Invoice',
-      onPress: () => router.push('/(app)/invoice')
+      onPressIn: () => router.push('/(app)/invoice')
     },
     {
       icon: <BarChart2 size={24} color="#4158D0" />,
       label: 'Report',
-      onPress: () => router.push('/(app)/report')
+      onPressIn: () => router.push('/(app)/report')
     },
     {
       icon: <Activity size={24} color="#4158D0" />,
       label: 'Activity Log',
-      onPress: () => router.push('/(app)/activity-log')
+      onPressIn: () => router.push('/(app)/activity-log')
     },
     {
       icon: <History size={24} color="#4158D0" />,
       label: 'Purchase History',
-      onPress: () => router.push('/(app)/purchase-history')
+      onPressIn: () => router.push('/(app)/purchase-history')
     },
     {
       icon: <Settings size={24} color="#4158D0" />,
       label: 'Settings',
-      onPress: () => router.push('/(app)/settings')
+      onPressIn: () => router.push('/(app)/settings')
     }
   ];
 
@@ -93,7 +93,7 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
           <TouchableOpacity
             key={index}
             style={[styles.menuItem, { backgroundColor: '#F8F9FA' }]}
-            onPress={item.onPress}
+            onPressIn={item.onPressIn}
           >
             <View style={styles.menuIconContainer}>
               {item.icon}
@@ -105,7 +105,7 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
 
         <TouchableOpacity
           style={[styles.menuItem, styles.signOutButton]}
-          onPress={handleSignOut}
+          onPressIn={handleSignOut}
         >
           <View style={styles.menuIconContainer}>
             <Ionicons name="log-out-outline" size={24} color="black" />

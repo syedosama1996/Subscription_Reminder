@@ -33,7 +33,7 @@ export default function SettingsScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPressIn={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
@@ -55,7 +55,7 @@ export default function SettingsScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/(app)/change-password')}
+              onPressIn={() => router.push('/(app)/change-password')}
             >
               <Shield size={20} color="#4158D0" style={styles.menuIcon} />
               <View style={styles.menuContent}>
@@ -107,7 +107,7 @@ export default function SettingsScreen() {
 
           <TouchableOpacity 
             style={styles.signOutButton}
-            onPress={handleSignOut}
+            onPressIn={handleSignOut}
           >
             <LogOut size={18} color="#e74c3c" style={{ marginRight: 8 }} />
             <Text style={styles.signOutButtonText}>Sign Out</Text>

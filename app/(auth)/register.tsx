@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, TextInput, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import Input from '../../components/Input';
@@ -16,8 +16,19 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const emailInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
+  const confirmPasswordInputRef = useRef<TextInput>(null);
+
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+    emailInputRef.current?.blur();
+    passwordInputRef.current?.blur();
+    confirmPasswordInputRef.current?.blur();
+  };
 
   const handleRegister = async () => {
+    dismissKeyboard();
     // Reset validation error
     setValidationError(null);
     
@@ -38,12 +49,8 @@ export default function RegisterScreen() {
     }
     
     try {
-      // Proceed with registration
       await signUp(email, password);
-      
-      // Add a small delay to ensure auth state is updated
       setTimeout(() => {
-        // Navigate to home screen after successful signup
         router.replace('/(app)/(tabs)');
       }, 500);
     } catch (error) {
@@ -60,119 +67,145 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0', '#FFCC70']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      />
-      
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.header}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?q=80&w=200&auto=format&fit=crop' }}
-              style={styles.logo}
-            />
-            <Text style={styles.title}>Subscription Reminder</Text>
-            <Text style={styles.subtitle}>Track and manage all your subscriptions</Text>
-          </View>
-
-          <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>Create Account</Text>
-            
-            {(error || validationError) && (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error || validationError}</Text>
-              </View>
-            )}
-
-            <View style={styles.inputContainer}>
-              <Mail size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <Input
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                containerStyle={styles.input}
+    <TouchableWithoutFeedback onPress={dismissKeyboard}>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#4158D0', '#C850C0', '#FFCC70']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        />
+        
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoidingView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
+        >
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.header}>
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?q=80&w=200&auto=format&fit=crop' }}
+                style={styles.logo}
               />
+              <Text style={styles.title}>Subscription Reminder</Text>
+              <Text style={styles.subtitle}>Track and manage all your subscriptions</Text>
             </View>
 
-            <View style={styles.inputContainer}>
-              <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <View style={styles.inputWrapper}>
+            <View style={styles.formContainer}>
+              <Text style={styles.formTitle}>Create Account</Text>
+              
+              {(error || validationError) && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{error || validationError}</Text>
+                </View>
+              )}
+
+              <View style={styles.inputContainer}>
+                <Mail size={20} color="#7f8c8d" style={styles.inputIcon} />
                 <Input
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
                   containerStyle={styles.input}
+                  ref={emailInputRef}
                 />
-                <TouchableOpacity 
-                  style={styles.eyeIcon}
-                  onPressIn={togglePasswordVisibility}
-                  activeOpacity={0.7}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#666" />
-                  ) : (
-                    <Eye size={20} color="#666" />
-                  )}
-                </TouchableOpacity>
               </View>
-            </View>
 
-            <View style={styles.inputContainer}>
-              <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <View style={styles.inputWrapper}>
-                <Input
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showConfirmPassword}
-                  containerStyle={styles.input}
-                />
-                <TouchableOpacity 
-                  style={styles.eyeIcon}
-                  onPressIn={toggleConfirmPasswordVisibility}
-                  activeOpacity={0.7}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff size={20} color="#666" />
-                  ) : (
-                    <Eye size={20} color="#666" />
-                  )}
-                </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
+                <View style={styles.inputWrapper}>
+                  <Input
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    containerStyle={styles.input}
+                    ref={passwordInputRef}
+                  />
+                  <TouchableOpacity 
+                    style={styles.eyeIcon}
+                    onPressIn={() => {
+                      setTimeout(() => {
+                        togglePasswordVisibility();
+                      }, 50);
+                    }}
+                    activeOpacity={0.5}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} color="#666" />
+                    ) : (
+                      <Eye size={20} color="#666" />
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
 
-            <TouchableOpacity 
-              style={styles.registerButton}
-              onPressIn={handleRegister}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.registerButtonText}>Register</Text>
-            </TouchableOpacity>
+              <View style={styles.inputContainer}>
+                <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
+                <View style={styles.inputWrapper}>
+                  <Input
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    containerStyle={styles.input}
+                    ref={confirmPasswordInputRef}
+                  />
+                  <TouchableOpacity 
+                    style={styles.eyeIcon}
+                    onPressIn={() => {
+                      setTimeout(() => {
+                        toggleConfirmPasswordVisibility();
+                      }, 50);
+                    }}
+                    activeOpacity={0.5}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={20} color="#666" />
+                    ) : (
+                      <Eye size={20} color="#666" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
 
-            <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>Already have an account? </Text>
               <TouchableOpacity 
-                onPressIn={() => router.push('/login')}
-                activeOpacity={0.7}
+                style={[styles.registerButton, loading && styles.disabledButton]}
+                onPressIn={() => {
+                  setTimeout(() => {
+                    handleRegister();
+                  }, 50);
+                }}
+                activeOpacity={0.5}
+                disabled={loading}
               >
-                <Text style={styles.loginLink}>Login</Text>
+                <Text style={styles.registerButtonText}>Register</Text>
               </TouchableOpacity>
+
+              <View style={styles.loginContainer}>
+                <Text style={styles.loginText}>Already have an account? </Text>
+                <TouchableOpacity 
+                  style={styles.loginLinkTouchable}
+                  onPressIn={() => {
+                    setTimeout(() => {
+                      router.push('/login');
+                    }, 50);
+                  }}
+                  activeOpacity={0.5}
+                >
+                  <Text style={styles.loginLink}>Login</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -301,6 +334,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 24,
+    marginLeft: 25,
   },
   loginText: {
     fontFamily: 'Inter-Regular',
@@ -310,5 +344,13 @@ const styles = StyleSheet.create({
   loginLink: {
     fontFamily: 'Inter-Medium',
     color: '#4158D0',
+  },
+  loginLinkTouchable: {
+    flex: 1,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 });
