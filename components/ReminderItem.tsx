@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, Switch } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
 import { Reminder, updateReminder, deleteReminder } from '../lib/subscriptions';
-
+import { TouchableOpacity } from 'react-native-gesture-handler';
+  
 type ReminderItemProps = {
   reminder: Reminder;
   onUpdate: () => void;
@@ -57,7 +58,7 @@ export default function ReminderItem({ reminder, onUpdate }: ReminderItemProps) 
       
       <TouchableOpacity 
         style={styles.deleteButton} 
-        onPressIn={handleDelete}
+        onPress={handleDelete}
         disabled={isDeleting}
       >
         <Trash2 size={18} color="#e74c3c" />

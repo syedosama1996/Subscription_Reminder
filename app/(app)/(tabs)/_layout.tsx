@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { Tabs } from 'expo-router';
-import { View, StyleSheet, Platform, Text, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { View, StyleSheet, Platform, Text, Animated, Dimensions } from 'react-native';
 import { Home, Plus, Clock, History } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 const { width } = Dimensions.get('window');
 
@@ -66,7 +67,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
           return (
             <TouchableOpacity
               key={route.key}
-              onPressIn={onPress}
+              onPress={onPress}
               style={[
                 styles.tabItem,
                 isAddButton && styles.addButtonContainer,

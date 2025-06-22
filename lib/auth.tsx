@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import Toast from 'react-native-toast-message';
+import Constants from 'expo-constants';
 
 type AuthContextType = {
   user: User | null;
@@ -29,6 +30,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Keys for secure storage
 const BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
 const CREDENTIALS_KEY = 'auth_credentials';
+
+// Get Supabase configuration
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -68,7 +73,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        if (error) {
+          // Check if it's a configuration error
+          if (error.message.includes('Supabase not configured')) {
+            console.warn('Supabase not configured, skipping auth initialization');
+            setLoading(false);
+            return;
+          }
+          throw error;
+        }
         
         if (session) {
           setSession(session);
@@ -76,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
+        // Don't throw the error, just set loading to false
       } finally {
         setLoading(false);
       }
@@ -85,14 +99,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-      } else {
+      try {
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+        } else {
+          setSession(null);
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Error in auth state change:', error);
+        // If there's an error, assume no session
         setSession(null);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => {
@@ -105,6 +127,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
+      // Check if Supabase is configured
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase is not configured. Please set up your Supabase credentials.');
+      }
       
       // First check if the email already exists in profiles
       const { data: existingUser, error: checkError } = await supabase
@@ -201,6 +227,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       setError(null);
+
+      // Check if Supabase is configured
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase is not configured. Please set up your Supabase credentials.');
+      }
 
       // Log login attempt with email (but not password for security)
       console.log('Login attempt for email:', email);

@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-  TouchableOpacity, 
   Text, 
   StyleSheet, 
   ActivityIndicator,
@@ -9,6 +8,7 @@ import {
   TextStyle,
   View
 } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;

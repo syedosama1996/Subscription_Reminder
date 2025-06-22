@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef } from 'react';
-import { TouchableWithoutFeedback, AppState, AppStateStatus, View } from 'react-native';
+import { AppState, AppStateStatus, View } from 'react-native';
 import { useAuth } from './auth';
 import Toast from 'react-native-toast-message';
 import { router, usePathname } from 'expo-router';
@@ -131,14 +131,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionContext.Provider value={{ resetTimer }}>
-      <View 
-        style={{ flex: 1 }} 
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={resetTimer}
-        onResponderMove={resetTimer}
-        onResponderRelease={resetTimer}
-      >
+      <View style={{ flex: 1 }}>
         {children}
       </View>
     </SessionContext.Provider>

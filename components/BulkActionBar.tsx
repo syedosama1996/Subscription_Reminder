@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { X, Trash2, Power } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
-
+import { TouchableOpacity } from 'react-native-gesture-handler';
 type BulkActionBarProps = {
   selectedCount: number;
   onCancel: () => void;
@@ -24,7 +24,7 @@ export default function BulkActionBar({
         <Text style={styles.selectedText}>{selectedCount} selected</Text>
         <TouchableOpacity 
           style={styles.cancelButton}
-          onPressIn={onCancel}
+          onPress={onCancel}
         >
           <X size={20} color="#fff" />
         </TouchableOpacity>
@@ -33,7 +33,7 @@ export default function BulkActionBar({
       <View style={styles.actionsContainer}>
         <TouchableOpacity 
           style={styles.actionButton}
-          onPressIn={() => onToggleStatus(true)}
+          onPress={() => onToggleStatus(true)}
         >
           <Power size={20} color="#fff" />
           <Text style={styles.actionText}>Activate</Text>
@@ -41,7 +41,7 @@ export default function BulkActionBar({
         
         <TouchableOpacity 
           style={styles.actionButton}
-          onPressIn={() => onToggleStatus(false)}
+          onPress={() => onToggleStatus(false)}
         >
           <Power size={20} color="#fff" />
           <Text style={styles.actionText}>Deactivate</Text>
@@ -49,7 +49,7 @@ export default function BulkActionBar({
         
         <TouchableOpacity 
           style={[styles.actionButton, styles.deleteButton]}
-          onPressIn={onDelete}
+          onPress={onDelete}
         >
           <Trash2 size={20} color="#fff" />
           <Text style={styles.actionText}>Delete</Text>

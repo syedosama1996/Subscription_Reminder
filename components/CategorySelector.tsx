@@ -3,17 +3,20 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  TouchableOpacity, 
   Modal, 
   FlatList,
   TextInput,
-  ActivityIndicator
+  ActivityIndicator,
+  Keyboard,
+  Platform,
+  TouchableOpacity
 } from 'react-native';
 import { Category } from '../lib/types';
 import { getCategories, createCategory } from '../lib/subscriptions';
 import { useAuth } from '../lib/auth';
 import CategoryBadge from './CategoryBadge';
 import { Plus, X, Check } from 'lucide-react-native';
+import { getPlatformConfig } from '../utils/deviceUtils';
 
 type CategorySelectorProps = {
   selectedCategoryId?: string;
@@ -30,6 +33,8 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
   const [addingCategory, setAddingCategory] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+  const platformConfig = getPlatformConfig();
 
   useEffect(() => {
     loadCategories();
@@ -71,6 +76,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
       setNewCategoryName('');
       setNewCategoryColor('');
       setShowAddForm(false);
+      Keyboard.dismiss();
     } catch (error) {
       console.error('Error adding category:', error);
     } finally {
@@ -111,13 +117,22 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
           <CategoryBadge category={selectedCategory} selected />
           <TouchableOpacity 
             style={styles.changeButton}
-            onPressIn={() => setModalVisible(true)}
+            onPress={() => {
+              console.log('Change button pressed');
+              setModalVisible(true);
+            }}
+            activeOpacity={platformConfig.touch.activeOpacity}
+            delayPressIn={platformConfig.touch.delayPressIn}
+            delayPressOut={platformConfig.touch.delayPressOut}
           >
             <Text style={styles.changeButtonText}>Change</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.clearButton}
-            onPressIn={handleClearCategory}
+            onPress={handleClearCategory}
+            activeOpacity={platformConfig.touch.activeOpacity}
+            delayPressIn={platformConfig.touch.delayPressIn}
+            delayPressOut={platformConfig.touch.delayPressOut}
           >
             <X size={16} color="#7f8c8d" />
           </TouchableOpacity>
@@ -125,7 +140,13 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
       ) : (
         <TouchableOpacity 
           style={styles.selectButton}
-          onPressIn={() => setModalVisible(true)}
+          onPress={() => {
+            console.log('Select button pressed');
+            setModalVisible(true);
+          }}
+          activeOpacity={platformConfig.touch.activeOpacity}
+          delayPressIn={platformConfig.touch.delayPressIn}
+          delayPressOut={platformConfig.touch.delayPressOut}
         >
           <Text style={styles.selectButtonText}>Select Category</Text>
         </TouchableOpacity>
@@ -136,6 +157,8 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
         transparent={true}
         animationType="slide"
         onRequestClose={() => setModalVisible(false)}
+        statusBarTranslucent={true}
+        hardwareAccelerated={true}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -143,10 +166,13 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
               <Text style={styles.modalTitle}>Select Category</Text>
               <TouchableOpacity 
                 style={styles.modalCloseButton}
-                onPressIn={() => {
+                onPress={() => {
                   setModalVisible(false);
                   setShowAddForm(false);
                 }}
+                activeOpacity={platformConfig.touch.activeOpacity}
+                delayPressIn={platformConfig.touch.delayPressIn}
+                delayPressOut={platformConfig.touch.delayPressOut}
               >
                 <X size={24} color="#7f8c8d" />
               </TouchableOpacity>
@@ -165,6 +191,17 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                       placeholder="Category name"
                       value={newCategoryName}
                       onChangeText={setNewCategoryName}
+                      autoFocus={true}
+                      returnKeyType="done"
+                      onSubmitEditing={handleAddCategory}
+                      blurOnSubmit={false}
+                      keyboardType="default"
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      editable={true}
+                      selectTextOnFocus={true}
+                      onFocus={() => console.log('TextInput focused')}
+                      onPressIn={() => console.log('TextInput pressed')}
                     />
                     
                     <Text style={styles.colorLabel}>Select Color (Optional)</Text>
@@ -177,7 +214,10 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                             { backgroundColor: color },
                             newCategoryColor === color && styles.selectedColorOption
                           ]}
-                          onPressIn={() => setNewCategoryColor(color)}
+                          onPress={() => setNewCategoryColor(color)}
+                          activeOpacity={platformConfig.touch.activeOpacity}
+                          delayPressIn={platformConfig.touch.delayPressIn}
+                          delayPressOut={platformConfig.touch.delayPressOut}
                         />
                       ))}
                     </View>
@@ -185,11 +225,14 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                     <View style={styles.addFormButtons}>
                       <TouchableOpacity 
                         style={styles.cancelButton}
-                        onPressIn={() => {
+                        onPress={() => {
                           setShowAddForm(false);
                           setNewCategoryName('');
                           setNewCategoryColor('');
                         }}
+                        activeOpacity={platformConfig.touch.activeOpacity}
+                        delayPressIn={platformConfig.touch.delayPressIn}
+                        delayPressOut={platformConfig.touch.delayPressOut}
                       >
                         <Text style={styles.cancelButtonText}>Cancel</Text>
                       </TouchableOpacity>
@@ -199,8 +242,11 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                           styles.saveButton,
                           (!newCategoryName.trim() || addingCategory) && styles.disabledButton
                         ]}
-                        onPressIn={handleAddCategory}
+                        onPress={handleAddCategory}
                         disabled={!newCategoryName.trim() || addingCategory}
+                        activeOpacity={platformConfig.touch.activeOpacity}
+                        delayPressIn={platformConfig.touch.delayPressIn}
+                        delayPressOut={platformConfig.touch.delayPressOut}
                       >
                         {addingCategory ? (
                           <ActivityIndicator size="small" color="#fff" />
@@ -214,7 +260,10 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                   <>
                     <TouchableOpacity 
                       style={styles.addCategoryButton}
-                      onPressIn={() => setShowAddForm(true)}
+                      onPress={() => setShowAddForm(true)}
+                      activeOpacity={platformConfig.touch.activeOpacity}
+                      delayPressIn={platformConfig.touch.delayPressIn}
+                      delayPressOut={platformConfig.touch.delayPressOut}
                     >
                       <Plus size={18} color="#4158D0" style={styles.addIcon} />
                       <Text style={styles.addCategoryText}>Add New Category</Text>
@@ -237,7 +286,10 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                               styles.categoryItem,
                               selectedCategoryId === item.id && styles.selectedCategoryItem
                             ]}
-                            onPressIn={() => handleSelectCategory(item)}
+                            onPress={() => handleSelectCategory(item)}
+                            activeOpacity={platformConfig.touch.activeOpacity}
+                            delayPressIn={platformConfig.touch.delayPressIn}
+                            delayPressOut={platformConfig.touch.delayPressOut}
                           >
                             <CategoryBadge category={item} />
                             {selectedCategoryId === item.id && (

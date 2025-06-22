@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +9,7 @@ import { Shield, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
 import { ActivityLogger } from '../../lib/services/activity-logger';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function ChangePasswordScreen() {
   const { user } = useAuth();
@@ -105,7 +106,7 @@ export default function ChangePasswordScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPressIn={() => router.back()}
+          onPress={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
@@ -134,7 +135,7 @@ export default function ChangePasswordScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPressIn={() => setShowCurrentPassword(!showCurrentPassword)}
+                  onPress={() => setShowCurrentPassword(!showCurrentPassword)}
                   style={styles.eyeIcon}
                 >
                   {showCurrentPassword ? (
@@ -160,7 +161,7 @@ export default function ChangePasswordScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPressIn={() => setShowNewPassword(!showNewPassword)}
+                  onPress={() => setShowNewPassword(!showNewPassword)}
                   style={styles.eyeIcon}
                 >
                   {showNewPassword ? (
@@ -186,7 +187,7 @@ export default function ChangePasswordScreen() {
                   containerStyle={styles.input}
                 />
                 <TouchableOpacity 
-                  onPressIn={() => setShowConfirmPassword(!showConfirmPassword)}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                   style={styles.eyeIcon}
                 >
                   {showConfirmPassword ? (
@@ -201,7 +202,7 @@ export default function ChangePasswordScreen() {
 
           <Button
             title="Change Password"
-            onPressIn={handleChangePassword}
+            onPress={handleChangePassword}
             loading={loading}
             style={styles.button}
           />

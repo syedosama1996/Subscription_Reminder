@@ -4,13 +4,13 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  RefreshControl,
-  ActivityIndicator,
-  TouchableOpacity,
+  RefreshControl, 
   Platform,
   Alert,
   ScrollView,
-  TextInput
+  TextInput,
+  ActivityIndicator,
+  Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../lib/auth';
@@ -28,13 +28,16 @@ import SubscriptionCard from '../../../components/SubscriptionCard';
 import CategoryBadge from '../../../components/CategoryBadge';
 import FilterModal from '../../../components/FilterModal';
 import BulkActionBar from '../../../components/BulkActionBar';
-import { Search, Bell, Plus, Filter, Download, CheckSquare, Menu, CheckCircle2, XCircle } from 'lucide-react-native';
+import { Search, Bell, Plus, Filter, Download, CheckSquare, Menu, CheckCircle2, XCircle, TrendingUp, Calendar, DollarSign, AlertTriangle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Category, SubscriptionFilter } from '../../../lib/types';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import CustomLoader from '../../../components/CustomLoader';
+import { ScrollView as GestureScrollView } from 'react-native-gesture-handler';
+import { setScrolling } from '../../../components/SubscriptionCard';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -357,7 +360,7 @@ export default function HomeScreen() {
         </Text>
         <TouchableOpacity
           style={styles.addFirstButton}
-          onPressIn={() => router.push('/add')}
+          onPress={() => router.push('/add')}
         >
           <Plus size={20} color="#fff" style={styles.addFirstIcon} />
           <Text style={styles.addFirstText}>Add Your First Subscription</Text>
@@ -411,240 +414,253 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      />
-
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header Section */}
-        <View style={styles.headerContainer}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.menuButton}
-              onPressIn={() => navigation.toggleDrawer()}
-            >
-              <Menu size={24} color="#fff" />
-            </TouchableOpacity>
-            <View style={styles.headerActions}>
-              {!selectionMode ? (
-                <>
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPressIn={() => setSelectionMode(true)}
-                  >
-                    <CheckSquare size={22} color="#fff" />
-                  </TouchableOpacity>
-
-
-                  {/* <TouchableOpacity 
-                  style={styles.iconButton}
-                  onPress={handleExportData}
-                  disabled={exporting}
-                >
-                  {exporting ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Download size={22} color="#fff" />
-                  )}
-                </TouchableOpacity> */}
-                  <TouchableOpacity style={styles.iconButton}>
-                    <Bell size={22} color="#fff" />
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPressIn={handleMarkAll}
-                  >
-                    <CheckCircle2 size={22} color="#fff" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPressIn={handleRemoveAll}
-                  >
-                    <XCircle size={22} color="#fff" />
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          </View>
-
-          <View style={styles.searchContainer}>
-            <View style={styles.searchBar}>
-              <Search size={20} color="#7f8c8d" style={styles.searchIcon} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search subscriptions..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholderTextColor="#95a5a6"
-              />
-              <TouchableOpacity style={styles.filterButton} onPressIn={() => setFilterModalVisible(true)}>
-                <Filter size={20} color="#7f8c8d" />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View>
-            <Text style={styles.title}>Active Subscriptions</Text>
-        </View>
-        {/* <Text style={styles.title}>Active Subscriptions</Text> */}
-    </View>
-
-        {/* Main Content Section */ }
-        <View style={styles.mainContent}>
-          {/* Categories Tabs */}
-          {categories.length > 0 && (
-            <View style={styles.categoriesWrapper}>
-              <ScrollView 
-                ref={categoriesScrollViewRef}
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.categoriesContainer}
-                contentContainerStyle={styles.categoriesScrollContent}
-                alwaysBounceHorizontal={false}
-              >
-                <TouchableOpacity
-                  onPressIn={() => handleCategoryPress(null)}
-                  style={[
-                    styles.categoryTab,
-                    !activeCategory && styles.activeCategoryTab
-                  ]}
-                >
-                  {!activeCategory ? (
-                    <LinearGradient
-                      colors={['#4158D0', '#C850C0']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={[styles.categoryTabContent]}
-                    >
-                      <View style={styles.categoryContent}>
-                        <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>All</Text>
-                        <View style={[styles.badge, styles.activeBadge]}>
-                          <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptions.length}</Text>
-                        </View>
-                      </View>
-                    </LinearGradient>
-                  ) : (
-                    <View style={styles.categoryTabContent}>
-                      <View style={styles.categoryContent}>
-                        <Text style={styles.categoryTabText}>All</Text>
-                        <View style={styles.badge}>
-                          <Text style={styles.badgeText}>{subscriptions.length}</Text>
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                </TouchableOpacity>
-                
-                {categories.map(category => {
-                  const subscriptionCount = subscriptions.filter(sub => sub.category_id === category.id).length;
-                  return (
-                    <TouchableOpacity
-                      key={category.id}
-                      onPressIn={() => handleCategoryPress(category.id!)}
-                      style={[
-                        styles.categoryTab,
-                        activeCategory === category.id && styles.activeCategoryTab
-                      ]}
-                    >
-                      {activeCategory === category.id ? (
-                        <LinearGradient
-                          colors={['#4158D0', '#C850C0']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={[styles.categoryTabContent]}
-                        >
-                          <View style={styles.categoryContent}>
-                            <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>
-                              {category.name}
-                            </Text>
-                            <View style={[styles.badge, styles.activeBadge]}>
-                              <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptionCount}</Text>
-                            </View>
-                          </View>
-                        </LinearGradient>
-                      ) : (
-                        <View style={styles.categoryTabContent}>
-                          <View style={styles.categoryContent}>
-                            <Text style={styles.categoryTabText}>{category.name}</Text>
-                            <View style={styles.badge}>
-                              <Text style={styles.badgeText}>{subscriptionCount}</Text>
-                            </View>
-                          </View>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          )}
-
-          {/* Subscriptions List */}
-          {filteredSubscriptions.length === 0 ? (
-            renderEmptyState()
-          ) : (
-            <FlatList
-              data={filteredSubscriptions}
-              keyExtractor={(item, index) => 
-                `subscription-${item.id}-${index}`
-              }
-              renderItem={({ item }) => (
-                <SubscriptionCard 
-                  subscription={item}
-                  onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id!, isActive)}
-                  selectionMode={selectionMode}
-                  selected={selectedSubscriptions.includes(item.id!)}
-                  onToggleSelection={() => toggleSubscriptionSelection(item.id!)}
-                  disabled={toggleLoading}
-                  onPressIn={() => router.push(`/subscription/${item.id}`)}
-                  onRefresh={loadData}
-                />
-              )}
-              contentContainerStyle={styles.listContent}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  colors={['#4158D0']}
-                  tintColor="#4158D0"
-                  progressViewOffset={Platform.OS === 'android' ? 50 : 0}
-                />
-              }
-              showsVerticalScrollIndicator={true}
-              scrollEnabled={true}
-              bounces={true}
-              ListEmptyComponent={renderEmptyState}
-            />
-          )}
-        </View>
-
-        <CustomLoader visible={toggleLoading} />
-        
-        <BulkActionBar
-          selectedCount={selectedSubscriptions.length}
-          onCancel={handleCancelSelection}
-          onDelete={handleBulkDelete}
-          onToggleStatus={handleBulkToggleStatus}
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      onScrollBeginDrag={() => setScrolling(true)}
+      onScrollEndDrag={() => setScrolling(false)}
+      onMomentumScrollBegin={() => setScrolling(true)}
+      onMomentumScrollEnd={() => setScrolling(false)}
+      scrollEventThrottle={16}
+    >
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#4158D0', '#C850C0']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
         />
-      </SafeAreaView >
-      
-      <FilterModal
-        visible={filterModalVisible}
-        onClose={() => setFilterModalVisible(false)}
-        categories={categories}
-        selectedCategories={selectedCategories}
-        onSelectCategories={setSelectedCategories}
-        selectedStatuses={selectedStatuses}
-        onSelectStatuses={setSelectedStatuses}
-        onRefresh={loadData}
-      />
-    </View >
+
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          {/* Header Section */}
+          <View style={styles.headerContainer}>
+            <View style={styles.header}>
+              <TouchableOpacity
+                style={styles.menuButton}
+                onPress={() => navigation.toggleDrawer()}
+              >
+                <Menu size={24} color="#fff" />
+              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                {!selectionMode ? (
+                  <>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      onPress={() => setSelectionMode(true)}
+                    >
+                      <CheckSquare size={22} color="#fff" />
+                    </TouchableOpacity>
+
+
+                    {/* <TouchableOpacity 
+                    style={styles.iconButton}
+                    onPress={handleExportData}
+                    disabled={exporting}
+                  >
+                    {exporting ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Download size={22} color="#fff" />
+                    )}
+                  </TouchableOpacity> */}
+                    <TouchableOpacity style={styles.iconButton}>
+                      <Bell size={22} color="#fff" />
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      onPress={handleMarkAll}
+                    >
+                      <CheckCircle2 size={22} color="#fff" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      onPress={handleRemoveAll}
+                    >
+                      <XCircle size={22} color="#fff" />
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.searchContainer}>
+              <View style={styles.searchBar}>
+                <Search size={20} color="#7f8c8d" style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search subscriptions..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholderTextColor="#95a5a6"
+                />
+                <TouchableOpacity style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
+                  <Filter size={20} color="#7f8c8d" />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View>
+              <Text style={styles.title}>Active Subscriptions</Text>
+          </View>
+          {/* <Text style={styles.title}>Active Subscriptions</Text> */}
+      </View>
+
+          {/* Main Content Section */ }
+          <View style={styles.mainContent}>
+            {/* Touch Test Component */}
+            {/* <TouchTest /> */}
+            
+            {/* Categories Tabs */}
+            {categories.length > 0 && (
+              <View style={styles.categoriesWrapper}>
+                <ScrollView 
+                  ref={categoriesScrollViewRef}
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.categoriesContainer}
+                  contentContainerStyle={styles.categoriesScrollContent}
+                  alwaysBounceHorizontal={false}
+                >
+                  <TouchableOpacity
+                    onPress={() => handleCategoryPress(null)}
+                    style={[
+                      styles.categoryTab,
+                      !activeCategory && styles.activeCategoryTab
+                    ]}
+                  >
+                    {!activeCategory ? (
+                      <LinearGradient
+                        colors={['#4158D0', '#C850C0']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.categoryTabContent]}
+                      >
+                        <View style={styles.categoryContent}>
+                          <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>All</Text>
+                          <View style={[styles.badge, styles.activeBadge]}>
+                            <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptions.length}</Text>
+                          </View>
+                        </View>
+                      </LinearGradient>
+                    ) : (
+                      <View style={styles.categoryTabContent}>
+                        <View style={styles.categoryContent}>
+                          <Text style={styles.categoryTabText}>All</Text>
+                          <View style={styles.badge}>
+                            <Text style={styles.badgeText}>{subscriptions.length}</Text>
+                          </View>
+                        </View>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  
+                  {categories.map(category => {
+                    const subscriptionCount = subscriptions.filter(sub => sub.category_id === category.id).length;
+                    return (
+                      <TouchableOpacity
+                        key={category.id}
+                        onPress={() => handleCategoryPress(category.id!)}
+                        style={[
+                          styles.categoryTab,
+                          activeCategory === category.id && styles.activeCategoryTab
+                        ]}
+                      >
+                        {activeCategory === category.id ? (
+                          <LinearGradient
+                            colors={['#4158D0', '#C850C0']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={[styles.categoryTabContent]}
+                          >
+                            <View style={styles.categoryContent}>
+                              <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>
+                                {category.name}
+                              </Text>
+                              <View style={[styles.badge, styles.activeBadge]}>
+                                <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptionCount}</Text>
+                              </View>
+                            </View>
+                          </LinearGradient>
+                        ) : (
+                          <View style={styles.categoryTabContent}>
+                            <View style={styles.categoryContent}>
+                              <Text style={styles.categoryTabText}>{category.name}</Text>
+                              <View style={styles.badge}>
+                                <Text style={styles.badgeText}>{subscriptionCount}</Text>
+                              </View>
+                            </View>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Subscriptions List */}
+            {filteredSubscriptions.length === 0 ? (
+              renderEmptyState()
+            ) : (
+              <FlatList
+                data={filteredSubscriptions}
+                keyExtractor={(item, index) => 
+                  `subscription-${item.id}-${index}`
+                }
+                renderItem={({ item }) => (
+                  <SubscriptionCard 
+                    subscription={item}
+                    onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id!, isActive)}
+                    selectionMode={selectionMode}
+                    selected={selectedSubscriptions.includes(item.id!)}
+                    onToggleSelection={() => toggleSubscriptionSelection(item.id!)}
+                    disabled={toggleLoading}
+                    onPress={() => router.push(`/subscription/${item.id}`)}
+                    onRefresh={loadData}
+                  />
+                )}
+                contentContainerStyle={styles.listContent}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={['#4158D0']}
+                    tintColor="#4158D0"
+                    progressViewOffset={Platform.OS === 'android' ? 50 : 0}
+                  />
+                }
+                showsVerticalScrollIndicator={true}
+                scrollEnabled={true}
+                bounces={true}
+                ListEmptyComponent={renderEmptyState}
+              />
+            )}
+          </View>
+
+          <CustomLoader visible={toggleLoading} />
+          
+          <BulkActionBar
+            selectedCount={selectedSubscriptions.length}
+            onCancel={handleCancelSelection}
+            onDelete={handleBulkDelete}
+            onToggleStatus={handleBulkToggleStatus}
+          />
+        </SafeAreaView >
+        
+        <FilterModal
+          visible={filterModalVisible}
+          onClose={() => setFilterModalVisible(false)}
+          categories={categories}
+          selectedCategories={selectedCategories}
+          onSelectCategories={setSelectedCategories}
+          selectedStatuses={selectedStatuses}
+          onSelectStatuses={setSelectedStatuses}
+          onRefresh={loadData}
+        />
+      </View >
+    </ScrollView>
   );
 }
 
@@ -906,5 +922,8 @@ const styles = StyleSheet.create({
   activeCategoryTab: {
     // Add definition for the missing style
     // Minimal style, as gradient is applied internally
+  },
+  contentContainer: {
+    // Add any necessary styles for the content container
   },
 });

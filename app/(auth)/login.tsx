@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert, TextInput, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert, TextInput, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import Button from '../../components/Button';
 import { Lock, Mail, Eye, EyeOff, Fingerprint } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Input from '../../components/Input';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -14,6 +16,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showBiometricOption, setShowBiometricOption] = useState(false);
   const [showResetOption, setShowResetOption] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
@@ -31,12 +34,22 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     dismissKeyboard();
-    if (!email || !password) return;
+    // Reset validation error
+    setValidationError(null);
+    
+    // Validate inputs
+    if (!email || !password) {
+      setValidationError('All fields are required');
+      return;
+    }
+    
     try {
-      await signIn(email, password, false);
-      router.replace('/(app)/(tabs)');
+      await signIn(email, password);
+      setTimeout(() => {
+        router.replace('/(app)/(tabs)');
+      }, 500);
     } catch (error) {
-      // Error handled by auth context
+      // Error is already handled by the auth context
     }
   };
 
@@ -77,145 +90,149 @@ export default function LoginScreen() {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <TouchableWithoutFeedback onPress={dismissKeyboard}>
-      <View style={styles.container}>
-        <LinearGradient
-          colors={['#4158D0', '#C850C0', '#FFCC70']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        />
-        <KeyboardAvoidingView
-          style={styles.keyboardAvoidingView}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
-        >
-          <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-            <View style={styles.header}>
-              <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?q=80&w=200&auto=format&fit=crop' }}
-                style={styles.logo}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#4158D0', '#C850C0', '#FFCC70']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
+      />
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+          <View style={styles.header}>
+            <Image
+              source={{ uri: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?q=80&w=200&auto=format&fit=crop' }}
+              style={styles.logo}
+            />
+            <Text style={styles.title}>Subscription Reminder</Text>
+            <Text style={styles.subtitle}>Track and manage all your subscriptions</Text>
+          </View>
+
+          <View style={styles.formContainer}>
+            <Text style={styles.formTitle}>Login</Text>
+            
+            {(error || validationError) && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error || validationError}</Text>
+              </View>
+            )}
+
+            <View style={styles.inputContainer}>
+              <Mail size={20} color="#7f8c8d" style={styles.inputIcon} />
+              <Input
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                containerStyle={styles.input}
+                ref={emailInputRef}
               />
-              <Text style={styles.title}>Subscription Reminder</Text>
-              <Text style={styles.subtitle}>Track and manage all your subscriptions</Text>
             </View>
 
-            <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>Welcome Back</Text>
-              {error && (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>{error}</Text>
-                </View>
-              )}
-
-              <View style={styles.inputContainer}>
-                <Mail size={20} color="#7f8c8d" style={styles.inputIcon} />
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    ref={emailInputRef}
-                    placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    style={styles.textInput}
-                    placeholderTextColor="#7f8c8d"
-                    returnKeyType="next"
-                    onSubmitEditing={() => passwordInputRef.current?.focus()}
-                    blurOnSubmit={false}
-                    onFocus={() => console.log('Email focused')}
-                    autoCorrect={false}
-                    selectTextOnFocus
-                  />
-                </View>
+            <View style={styles.inputContainer}>
+              <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  containerStyle={styles.input}
+                  ref={passwordInputRef}
+                />
+                {/* <TouchableOpacity 
+                  style={styles.eyeIcon}
+                  onPress={() => {
+                    setTimeout(() => {
+                      togglePasswordVisibility();
+                    }, 50);
+                  }}
+                  activeOpacity={0.5}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color="#666" />
+                  ) : (
+                    <Eye size={20} color="#666" />
+                  )}
+                </TouchableOpacity> */}
               </View>
+            </View>
 
-              <View style={styles.inputContainer}>
-                <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    ref={passwordInputRef}
-                    placeholder="Password"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    style={styles.textInput}
-                    placeholderTextColor="#7f8c8d"
-                    returnKeyType="done"
-                    onSubmitEditing={handleLogin}
-                    onFocus={() => console.log('Password focused')}
-                    autoCorrect={false}
-                    selectTextOnFocus
-                  />
+            <TouchableOpacity 
+              style={[styles.registerButton, loading && styles.disabledButton]}
+              onPress={() => {
+                setTimeout(() => {
+                  handleLogin();
+                }, 50);
+              }}
+              activeOpacity={0.5}
+              disabled={loading}
+            >
+              <Text style={styles.registerButtonText}>Login</Text>
+            </TouchableOpacity>
+
+            {!loading && isBiometricSupported && (
+              <>
+                {!isBiometricEnabled ? (
                   <TouchableOpacity
-                    style={styles.eyeIcon}
-                    onPress={() => setShowPassword(!showPassword)}
+                    style={[styles.biometricButton, loading && styles.disabledButton]}
+                    onPress={handleEnableBiometric}
                     activeOpacity={0.5}
+                    disabled={loading}
                   >
-                    {showPassword ? <EyeOff size={20} color="#666" /> : <Eye size={20} color="#666" />}
+                    {loading ? <ActivityIndicator color="#4158D0" size="small" /> : <Text style={styles.biometricButtonText}>Enable Biometric Login</Text>}
                   </TouchableOpacity>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.loginButton, loading && styles.disabledButton]}
-                onPress={handleLogin}
-                activeOpacity={0.5}
-                disabled={loading}
-              >
-                {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.loginButtonText}>Login</Text>}
-              </TouchableOpacity>
-
-              {!loading && isBiometricSupported && (
-                <>
-                  {!isBiometricEnabled ? (
+                ) : (
+                  <>
                     <TouchableOpacity
                       style={[styles.biometricButton, loading && styles.disabledButton]}
-                      onPress={handleEnableBiometric}
+                      onPress={handleBiometricLogin}
                       activeOpacity={0.5}
                       disabled={loading}
                     >
-                      {loading ? <ActivityIndicator color="#4158D0" size="small" /> : <Text style={styles.biometricButtonText}>Enable Biometric Login</Text>}
+                      {loading ? <ActivityIndicator color="#4158D0" size="small" /> : <Text style={styles.biometricButtonText}>Login with Biometric</Text>}
                     </TouchableOpacity>
-                  ) : (
-                    <>
-                      <TouchableOpacity
-                        style={[styles.biometricButton, loading && styles.disabledButton]}
-                        onPress={handleBiometricLogin}
-                        activeOpacity={0.5}
-                        disabled={loading}
-                      >
-                        {loading ? <ActivityIndicator color="#4158D0" size="small" /> : <Text style={styles.biometricButtonText}>Login with Biometric</Text>}
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.resetBiometricButton, loading && styles.disabledButton]}
-                        onPress={handleResetBiometric}
-                        activeOpacity={0.5}
-                        disabled={loading}
-                      >
-                        {loading ? <ActivityIndicator color="#7f8c8d" size="small" /> : <Text style={styles.resetBiometricButtonText}>Reset Biometric</Text>}
-                      </TouchableOpacity>
-                    </>
-                  )}
-                </>
-              )}
+                    <TouchableOpacity
+                      style={[styles.resetBiometricButton, loading && styles.disabledButton]}
+                      onPress={handleResetBiometric}
+                      activeOpacity={0.5}
+                      disabled={loading}
+                    >
+                      {loading ? <ActivityIndicator color="#7f8c8d" size="small" /> : <Text style={styles.resetBiometricButtonText}>Reset Biometric</Text>}
+                    </TouchableOpacity>
+                  </>
+                )}
+              </>
+            )}
 
-              <View style={styles.registerContainer}>
-                <Text style={styles.registerText}>Don't have an account? </Text>
-                <TouchableOpacity
-                  style={styles.registerLinkTouchable}
-                  onPress={() => router.push('/register')}
-                  activeOpacity={0.5}
-                >
-                  <Text style={styles.registerLink}>Register</Text>
-                </TouchableOpacity>
-              </View>
+            <View style={styles.loginContainer}>
+              <Text style={styles.loginText}>Don't have an account? </Text>
+              <TouchableOpacity 
+                style={styles.loginLinkTouchable}
+                onPress={() => {
+                  setTimeout(() => {
+                    router.push('/register');
+                  }, 50);
+                }}
+                activeOpacity={0.5}
+              >
+                <Text style={styles.loginLink}>Register</Text>
+              </TouchableOpacity>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
-    </TouchableWithoutFeedback>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -241,120 +258,150 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
   },
   logo: {
     width: 100,
     height: 100,
-    borderRadius: 10,
-    marginBottom: 10,
+    borderRadius: 30,
+    marginBottom: 16,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   title: {
+    fontFamily: 'Inter-Bold',
     fontSize: 28,
-    fontWeight: 'bold',
     color: '#fff',
+    marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 10,
   },
   subtitle: {
+    fontFamily: 'Inter-Regular',
     fontSize: 16,
-    color: '#fff',
-    marginTop: 5,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
   },
   formContainer: {
-    width: '100%',
-    marginTop: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 24,
+    padding: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+    backdropFilter: 'blur(10px)',
   },
   formTitle: {
+    fontFamily: 'Inter-Bold',
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4158D0',
+    color: '#333',
+    marginBottom: 24,
     textAlign: 'center',
-    marginBottom: 15,
   },
   errorContainer: {
-    backgroundColor: '#f8d7da',
-    padding: 10,
-    marginBottom: 20,
-    borderRadius: 5,
+    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#e74c3c',
   },
   errorText: {
-    color: '#721c24',
+    fontFamily: 'Inter-Regular',
+    color: '#e74c3c',
     fontSize: 14,
-    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    marginBottom: 20,
-  },
-  inputIcon: {
-    marginRight: 10,
+    marginBottom: 16,
   },
   inputWrapper: {
     flex: 1,
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  textInput: {
-    fontSize: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 5,
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    marginBottom: 0,
     flex: 1,
   },
   eyeIcon: {
     position: 'absolute',
-    right: 10,
-    top: 10,
+    right: 12,
+    top: -12,
+    padding: 4,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
-  loginButton: {
+  registerButton: {
+    marginTop: 8,
+    height: 56,
+    borderRadius: 16,
     backgroundColor: '#4158D0',
-    paddingVertical: 15,
-    borderRadius: 5,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    shadowColor: '#4158D0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  registerButtonText: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 18,
+    color: '#fff',
+    textAlign: 'center',
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+    marginLeft: 25,
+  },
+  loginText: {
+    fontFamily: 'Inter-Regular',
+    color: '#7f8c8d',
+    marginRight: 4,
+  },
+  loginLink: {
+    fontFamily: 'Inter-Medium',
+    color: '#4158D0',
+  },
+  loginLinkTouchable: {
+    flex: 1,
+    borderRadius: 5,
+    marginRight: 10,
   },
   disabledButton: {
-    opacity: 0.6,
-  },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    opacity: 0.5,
   },
   biometricButton: {
-    backgroundColor: '#7f8c8d',
     paddingVertical: 15,
     borderRadius: 5,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 0,
   },
   biometricButtonText: {
-    color: '#fff',
+    color: '#7f8c8d',
     fontSize: 16,
     fontWeight: 'bold',
   },
   resetBiometricButton: {
-    backgroundColor: '#e74c3c',
-    paddingVertical: 15,
+    paddingVertical: 10,
     borderRadius: 5,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 0,
   },
   resetBiometricButtonText: {
-    color: '#fff',
+    color: '#e74c3c',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  registerText: {
-    fontSize: 16,
-    color: '#7f8c8d',
-  },
-  registerLinkTouchable: {},
-  registerLink: {
-    color: '#4158D0',
     fontWeight: 'bold',
   },
 });

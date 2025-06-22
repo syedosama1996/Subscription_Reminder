@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
-
+import { TouchableOpacity } from 'react-native-gesture-handler';
 interface Notification {
   id: string;
   user_id: string;
@@ -62,7 +62,7 @@ export function NotificationsList() {
   const renderItem = ({ item }: { item: Notification }) => (
     <TouchableOpacity
       style={[styles.notificationItem, item.read ? styles.read : styles.unread]}
-      onPressIn={() => markAsRead(item.id)}
+      onPress={() => markAsRead(item.id)}
     >
       <View style={styles.notificationContent}>
         <Text style={styles.title}>{item.title}</Text>

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, Switch, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Calendar, Clock, ExternalLink, CheckSquare, Square } from 'lucide-react-native';
 import { Subscription } from '../lib/subscriptions';
@@ -7,31 +7,50 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import StatusToggle from './StatusToggle';
 import CategoryBadge from './CategoryBadge';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 interface SubscriptionCardProps {
   subscription: Subscription;
-  onToggleStatus?: ((isActive: boolean) => void) | null;
+  onToggleStatus: (isActive: boolean) => void;
   selectionMode?: boolean;
   selected?: boolean;
   onToggleSelection?: () => void;
   disabled?: boolean;
-  onPressIn?: () => void;
+  onPress?: () => void;
   onRefresh?: () => void;
   simpleExpiryDisplay?: boolean;
 }
 
+// Global scroll state
+let isScrolling = false;
+let scrollTimeout: NodeJS.Timeout;
+
+export const setScrolling = (scrolling: boolean) => {
+  isScrolling = scrolling;
+  if (scrolling) {
+    clearTimeout(scrollTimeout);
+  } else {
+    scrollTimeout = setTimeout(() => {
+      isScrolling = false;
+    }, 150);
+  }
+};
+
 const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   subscription,
   onToggleStatus,
-  selectionMode,
-  selected,
+  selectionMode = false,
+  selected = false,
   onToggleSelection,
-  disabled,
-  onPressIn,
+  disabled = false,
+  onPress,
   onRefresh,
   simpleExpiryDisplay
 }) => {
   const router = useRouter();
+  const [touchStartTime, setTouchStartTime] = useState<number>(0);
+  const [touchStartY, setTouchStartY] = useState<number>(0);
+  const [lastTouchTime, setLastTouchTime] = useState(0);
   
   // Calculate days until expiry
   const daysUntilExpiry = () => {
@@ -72,10 +91,45 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   };
 
   const handlePress = () => {
+    if (disabled || isScrolling) return;
+    
+    const now = Date.now();
+    if (now - touchStartTime < 200) return; // Ignore quick touches
+    
     if (selectionMode) {
       onToggleSelection?.();
     } else {
-      onPressIn ? onPressIn() : router.push(`/subscription/${subscription.id}`);
+      onPress ? onPress() : router.push(`/subscription/${subscription.id}`);
+    }
+  };
+
+  const handlePressIn = () => {
+    setTouchStartTime(Date.now());
+    setTouchStartY(0);
+  };
+
+  const handlePressOut = (event: any) => {
+    const touchEndTime = Date.now();
+    const touchDuration = touchEndTime - touchStartTime;
+    const touchEndY = event.nativeEvent.pageY;
+    const touchDistance = Math.abs(touchEndY - touchStartY);
+
+    // Only trigger if not scrolling and touch duration is less than 200ms
+    if (!isScrolling && touchDuration < 200) {
+      if (selectionMode) {
+        onToggleSelection?.();
+      } else {
+        onPress ? onPress() : router.push(`/subscription/${subscription.id}`);
+      }
+    }
+  };
+
+  const handleTouchMove = (event: any) => {
+    const currentY = event.nativeEvent.pageY;
+    const touchDistance = Math.abs(currentY - touchStartY);
+    
+    if (touchDistance > 5) {
+      setScrolling(true);
     }
   };
 
@@ -103,10 +157,14 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   return (
     <TouchableOpacity 
       style={[styles.card, selected && styles.selectedCard]}
-      onPressIn={handlePress}
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onTouchMove={handleTouchMove}
       onLongPress={handleLongPress}
       disabled={disabled}
-      activeOpacity={0.6}
+      activeOpacity={0.7}
+      delayPressIn={100}
     >
       {Platform.OS === 'ios' ? (
         <BlurView intensity={80} tint="light" style={[
@@ -118,7 +176,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               {selectionMode ? (
                 <TouchableOpacity 
                   style={styles.checkboxContainer}
-                  onPressIn={onToggleSelection}
+                  onPress={onToggleSelection}
                 >
                   {selected ? (
                     <CheckSquare size={22} color="#4158D0" />
@@ -129,7 +187,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               ) : null}
               
               <Text style={styles.serviceName}>{subscription.service_name}</Text>
-              {onToggleStatus && (
+              {typeof onToggleStatus === 'function' && (
                 <StatusToggle 
                   subscription={subscription} 
                   onToggle={handleToggleStatus}
@@ -190,7 +248,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               {selectionMode ? (
                 <TouchableOpacity 
                   style={styles.checkboxContainer}
-                  onPressIn={onToggleSelection}
+                  onPress={onToggleSelection}
                 >
                   {selected ? (
                     <CheckSquare size={22} color="#4158D0" />
@@ -201,7 +259,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               ) : null}
               
               <Text style={styles.serviceName}>{subscription.service_name}</Text>
-              {onToggleStatus && (
+              {typeof onToggleStatus === 'function' && (
                 <StatusToggle 
                   subscription={subscription} 
                   onToggle={handleToggleStatus}

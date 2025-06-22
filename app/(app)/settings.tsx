@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { Bell, Moon, Sun, Lock, CreditCard, HelpCircle, Shield, Mail, LogOut,ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 
 export default function SettingsScreen() {
@@ -33,7 +34,7 @@ export default function SettingsScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPressIn={() => router.back()}
+          onPress={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
@@ -55,7 +56,7 @@ export default function SettingsScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPressIn={() => router.push('/(app)/change-password')}
+              onPress={() => router.push('/(app)/change-password')}
             >
               <Shield size={20} color="#4158D0" style={styles.menuIcon} />
               <View style={styles.menuContent}>
@@ -107,7 +108,7 @@ export default function SettingsScreen() {
 
           <TouchableOpacity 
             style={styles.signOutButton}
-            onPressIn={handleSignOut}
+            onPress={handleSignOut}
           >
             <LogOut size={18} color="#e74c3c" style={{ marginRight: 8 }} />
             <Text style={styles.signOutButtonText}>Sign Out</Text>

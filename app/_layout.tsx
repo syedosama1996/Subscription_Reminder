@@ -22,6 +22,7 @@ import { LogBox, View } from 'react-native';
 LogBox.ignoreLogs([
   'Gesture handler is not attached to a native view',
   'Non-serializable values were found in the navigation state',
+  'ViewPropTypes will be removed from React Native',
 ]);
 
 // Prevent splash screen from auto-hiding
@@ -106,7 +107,7 @@ const InnerLayout = () => {
 // RootLayout now only sets up providers
 const RootLayout = () => {
   return (
-    <GestureHandlerRootView style={{ flexGrow: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
           <SecurityProvider>

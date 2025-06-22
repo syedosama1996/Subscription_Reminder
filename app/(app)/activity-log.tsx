@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, ActivityIndicator, RefreshControl, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { Activity, Filter, Clock, CheckCircle, AlertCircle, Info, Plus, Trash2, Edit, Power, RefreshCw, ArrowLeft } from 'lucide-react-native';
@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityLogger } from '../../lib/services/activity-logger';
 import { useRouter } from 'expo-router';
 import CustomLoader from '@/components/CustomLoader';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 interface ActivityItem {
   id: string;
@@ -315,14 +316,14 @@ export default function ActivityLogScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPressIn={() => router.back()}
+          onPress={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Activity Log</Text>
         <TouchableOpacity
           style={styles.filterButton}
-          onPressIn={() => setShowFilterMenu(true)}
+          onPress={() => setShowFilterMenu(true)}
         >
           <Filter size={24} color="#fff" />
         </TouchableOpacity>
@@ -337,7 +338,7 @@ export default function ActivityLogScreen() {
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPressIn={() => setShowFilterMenu(false)}
+          onPress={() => setShowFilterMenu(false)}
         >
           <View style={styles.filterMenu}>
             {filterOptions.map((option) => (
@@ -347,7 +348,7 @@ export default function ActivityLogScreen() {
                   styles.filterMenuItem,
                   selectedFilter === option.id && styles.filterMenuItemActive
                 ]}
-                onPressIn={() => handleFilterSelect(option.id)}
+                onPress={() => handleFilterSelect(option.id)}
               >
                 <Text style={[
                   styles.filterMenuText,

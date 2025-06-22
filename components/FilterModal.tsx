@@ -3,7 +3,6 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  TouchableOpacity, 
   Modal, 
   ScrollView,
   Platform
@@ -11,6 +10,7 @@ import {
 import { X, Check } from 'lucide-react-native';
 import { Category } from '../lib/types';
 import CategoryBadge from './CategoryBadge';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 type FilterModalProps = {
   visible: boolean;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { History, Filter, Calendar, CreditCard, ArrowLeft, IndianRupee } from 'lucide-react-native';
@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getSubscriptions, Subscription } from '../../lib/subscriptions';
 import { router } from 'expo-router';
 import CustomLoader from '@/components/CustomLoader';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function PurchaseHistoryScreen() {
   const { user } = useAuth();
@@ -123,7 +124,7 @@ export default function PurchaseHistoryScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPressIn={() => router.back()}
+          onPress={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
@@ -134,7 +135,7 @@ export default function PurchaseHistoryScreen() {
       { error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPressIn={loadSubscriptions}>
+          <TouchableOpacity style={styles.retryButton} onPress={loadSubscriptions}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>

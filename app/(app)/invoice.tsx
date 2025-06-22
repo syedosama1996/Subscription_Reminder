@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Modal, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, Modal, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { FileText, Download, Calendar, DollarSign, Filter, User, Package, CreditCard, Share, Clock, Hash, CheckCircle, XCircle, AlertTriangle, ArrowLeft } from 'lucide-react-native';
@@ -10,6 +10,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
 import CustomLoader from '@/components/CustomLoader';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 interface InvoiceItemProps {
   item: Invoice;
@@ -395,9 +396,8 @@ export default function InvoiceScreen() {
     };
 
     return (
-      <TouchableOpacity 
+      <View 
         style={styles.invoiceCardImproved}
-        onPressIn={() => openInvoiceDetails(item)}
       >
         <View style={styles.invoiceCardHeader}>
           <View style={styles.invoiceCardTitleContainer}>
@@ -431,11 +431,11 @@ export default function InvoiceScreen() {
         </View>
 
          <View style={styles.invoiceCardFooter}>
-            <TouchableOpacity style={styles.viewDetailsButton} onPressIn={() => openInvoiceDetails(item)} >
+            <TouchableOpacity style={styles.viewDetailsButton} onPress={() => openInvoiceDetails(item)} >
               <Text style={styles.viewDetailsButtonText}>View Details</Text>
             </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -542,13 +542,13 @@ export default function InvoiceScreen() {
               <View style={styles.modalActionsImproved}>
                 <TouchableOpacity 
                   style={[styles.modalButtonImproved, styles.closeButtonImproved]}
-                  onPressIn={() => setModalVisible(false)}
+                  onPress={() => setModalVisible(false)}
                 >
                   <Text style={[styles.modalButtonTextImproved, styles.closeButtonTextImproved]}>Close</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={[styles.modalButtonImproved, styles.downloadPdfButtonImproved]}
-                  onPressIn={handleDownloadPdf}
+                  onPress={handleDownloadPdf}
                   disabled={pdfLoading}
                 >
                   {pdfLoading ? (
@@ -595,7 +595,7 @@ export default function InvoiceScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPressIn={() => router.back()}
+          onPress={() => router.back()}
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
@@ -893,6 +893,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 12,
+    paddingHorizontal: 15,
+
   },
   modalButtonTextImproved: {
     fontFamily: 'Inter-SemiBold',

@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Alert, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import Button from '../../components/Button';
 import { LogOut, Mail, Shield, HelpCircle as HelpCircle, CreditCard, Bell, Moon, Sun } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import { TouchableOpacity } from 'react-native-gesture-handler';
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
 

@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, TextInput, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, TextInput, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -67,145 +68,143 @@ export default function RegisterScreen() {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={dismissKeyboard}>
-      <View style={styles.container}>
-        <LinearGradient
-          colors={['#4158D0', '#C850C0', '#FFCC70']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        />
-        
-        <KeyboardAvoidingView
-          style={styles.keyboardAvoidingView}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#4158D0', '#C850C0', '#FFCC70']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
+      />
+      
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView 
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.header}>
-              <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?q=80&w=200&auto=format&fit=crop' }}
-                style={styles.logo}
+          <View style={styles.header}>
+            <Image
+              source={{ uri: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?q=80&w=200&auto=format&fit=crop' }}
+              style={styles.logo}
+            />
+            <Text style={styles.title}>Subscription Reminder</Text>
+            <Text style={styles.subtitle}>Track and manage all your subscriptions</Text>
+          </View>
+
+          <View style={styles.formContainer}>
+            <Text style={styles.formTitle}>Create Account</Text>
+            
+            {(error || validationError) && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error || validationError}</Text>
+              </View>
+            )}
+
+            <View style={styles.inputContainer}>
+              <Mail size={20} color="#7f8c8d" style={styles.inputIcon} />
+              <Input
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                containerStyle={styles.input}
+                ref={emailInputRef}
               />
-              <Text style={styles.title}>Subscription Reminder</Text>
-              <Text style={styles.subtitle}>Track and manage all your subscriptions</Text>
             </View>
 
-            <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>Create Account</Text>
-              
-              {(error || validationError) && (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>{error || validationError}</Text>
-                </View>
-              )}
-
-              <View style={styles.inputContainer}>
-                <Mail size={20} color="#7f8c8d" style={styles.inputIcon} />
+            <View style={styles.inputContainer}>
+              <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
+              <View style={styles.inputWrapper}>
                 <Input
-                  placeholder="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
                   containerStyle={styles.input}
-                  ref={emailInputRef}
+                  ref={passwordInputRef}
                 />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-                <View style={styles.inputWrapper}>
-                  <Input
-                    placeholder="Password"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    containerStyle={styles.input}
-                    ref={passwordInputRef}
-                  />
-                  <TouchableOpacity 
-                    style={styles.eyeIcon}
-                    onPressIn={() => {
-                      setTimeout(() => {
-                        togglePasswordVisibility();
-                      }, 50);
-                    }}
-                    activeOpacity={0.5}
-                  >
-                    {showPassword ? (
-                      <EyeOff size={20} color="#666" />
-                    ) : (
-                      <Eye size={20} color="#666" />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-                <View style={styles.inputWrapper}>
-                  <Input
-                    placeholder="Confirm Password"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry={!showConfirmPassword}
-                    containerStyle={styles.input}
-                    ref={confirmPasswordInputRef}
-                  />
-                  <TouchableOpacity 
-                    style={styles.eyeIcon}
-                    onPressIn={() => {
-                      setTimeout(() => {
-                        toggleConfirmPasswordVisibility();
-                      }, 50);
-                    }}
-                    activeOpacity={0.5}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff size={20} color="#666" />
-                    ) : (
-                      <Eye size={20} color="#666" />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <TouchableOpacity 
-                style={[styles.registerButton, loading && styles.disabledButton]}
-                onPressIn={() => {
-                  setTimeout(() => {
-                    handleRegister();
-                  }, 50);
-                }}
-                activeOpacity={0.5}
-                disabled={loading}
-              >
-                <Text style={styles.registerButtonText}>Register</Text>
-              </TouchableOpacity>
-
-              <View style={styles.loginContainer}>
-                <Text style={styles.loginText}>Already have an account? </Text>
-                <TouchableOpacity 
-                  style={styles.loginLinkTouchable}
-                  onPressIn={() => {
+                {/* <TouchableOpacity 
+                  style={styles.eyeIcon}
+                  onPress={() => {
                     setTimeout(() => {
-                      router.push('/login');
+                      togglePasswordVisibility();
                     }, 50);
                   }}
                   activeOpacity={0.5}
                 >
-                  <Text style={styles.loginLink}>Login</Text>
-                </TouchableOpacity>
+                  {showPassword ? (
+                    <EyeOff size={20} color="#666" />
+                  ) : (
+                    <Eye size={20} color="#666" />
+                  )}
+                </TouchableOpacity> */}
               </View>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
-    </TouchableWithoutFeedback>
+
+            <View style={styles.inputContainer}>
+              <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  containerStyle={styles.input}
+                  ref={confirmPasswordInputRef}
+                />
+                {/* <TouchableOpacity 
+                  style={styles.eyeIcon}
+                  onPress={() => {
+                    setTimeout(() => {
+                      toggleConfirmPasswordVisibility();
+                    }, 50);
+                  }}
+                  activeOpacity={0.5}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} color="#666" />
+                  ) : (
+                    <Eye size={20} color="#666" />
+                  )}
+                </TouchableOpacity> */}
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.registerButton, loading && styles.disabledButton]}
+              onPress={() => {
+                setTimeout(() => {
+                  handleRegister();
+                }, 50);
+              }}
+              activeOpacity={0.5}
+              disabled={loading}
+            >
+              <Text style={styles.registerButtonText}>Register</Text>
+            </TouchableOpacity>
+
+            <View style={styles.loginContainer}>
+              <Text style={styles.loginText}>Already have an account? </Text>
+              <TouchableOpacity 
+                style={styles.loginLinkTouchable}
+                onPress={() => {
+                  setTimeout(() => {
+                    router.push('/login');
+                  }, 50);
+                }}
+                activeOpacity={0.5}
+              >
+                <Text style={styles.loginLink}>Login</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -306,10 +305,15 @@ const styles = StyleSheet.create({
   eyeIcon: {
     position: 'absolute',
     right: 12,
-    top: 14,
+    top: '20%',
+    transform: [{ translateY: -35 }],
     padding: 4,
     borderRadius: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    height: 20,
+    width: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   registerButton: {
     marginTop: 8,

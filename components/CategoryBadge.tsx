@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Category } from '../lib/types';
-
+import { TouchableOpacity } from 'react-native-gesture-handler';
 interface CategoryBadgeProps {
   category: Category;
-  onPressIn?: () => void;
+  onPress?: () => void;
   selected?: boolean;
   style?: StyleProp<ViewStyle>;
 }
@@ -22,7 +22,7 @@ const DEFAULT_COLORS = [
   '#e67e22', // Dark Orange
 ];
 
-export default function CategoryBadge({ category, onPressIn, selected = false, style }: CategoryBadgeProps) {
+export default function CategoryBadge({ category, onPress, selected = false, style }: CategoryBadgeProps) {
   // Use the category's color or a default color based on the name
   const getColor = () => {
     if (category.color) return category.color;
@@ -34,7 +34,7 @@ export default function CategoryBadge({ category, onPressIn, selected = false, s
 
   const color = getColor();
   
-  const Component = onPressIn ? TouchableOpacity : View;
+  const Component = onPress ? TouchableOpacity : View;
   
   return (
     <Component 
@@ -44,7 +44,7 @@ export default function CategoryBadge({ category, onPressIn, selected = false, s
         selected && styles.selected,
         style
       ]}
-      onPressIn={onPressIn}
+      onPress={onPress}
       activeOpacity={0.7}
     >
       <Text style={styles.text}>{category.name}</Text>

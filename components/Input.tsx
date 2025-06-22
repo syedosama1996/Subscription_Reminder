@@ -6,8 +6,7 @@ import {
   StyleSheet, 
   TextInputProps,
   ViewStyle,
-  TextStyle,
-  TouchableWithoutFeedback
+  TextStyle
 } from 'react-native';
 
 interface InputProps extends TextInputProps {
@@ -30,17 +29,8 @@ const Input = forwardRef<TextInput, InputProps>(({
   errorStyle,
   multiline,
   numberOfLines,
-  onPressIn,
   ...props
 }, ref) => {
-  const handlePressIn = () => {
-    console.log('Input pressed');
-    if (ref && 'current' in ref && ref.current) {
-      ref.current.focus();
-    }
-    onPressIn?.();
-  };
-
   return (
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
@@ -57,9 +47,6 @@ const Input = forwardRef<TextInput, InputProps>(({
           multiline={multiline}
           numberOfLines={numberOfLines}
           textAlignVertical={multiline ? 'top' : 'center'}
-          onPressIn={handlePressIn}
-          editable={true}
-          selectTextOnFocus={true}
           {...props}
         />
       </View>

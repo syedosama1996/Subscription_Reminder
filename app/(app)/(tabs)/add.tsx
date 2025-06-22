@@ -4,7 +4,6 @@ import {
   Text, 
   StyleSheet, 
   ScrollView, 
-  TouchableOpacity, 
   Platform,
   KeyboardAvoidingView,
   Alert
@@ -21,6 +20,7 @@ import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Category } from '../../../lib/types';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function AddSubscriptionScreen() {
   const { user } = useAuth();
@@ -257,7 +257,7 @@ export default function AddSubscriptionScreen() {
                     <Text style={styles.dateLabel}>Purchase Date</Text>
                     <TouchableOpacity 
                       style={styles.dateButton}
-                      onPressIn={() => setShowPurchaseDatePicker(true)}
+                      onPress={() => setShowPurchaseDatePicker(true)}
                     >
                       <Calendar size={20} color="#4158D0" style={styles.dateIcon} />
                       <Text style={styles.dateText}>{formatDate(purchaseDate)}</Text>
@@ -268,7 +268,7 @@ export default function AddSubscriptionScreen() {
                     <Text style={styles.dateLabel}>Expiry Date</Text>
                     <TouchableOpacity 
                       style={styles.dateButton}
-                      onPressIn={() => setShowExpiryDatePicker(true)}
+                      onPress={() => setShowExpiryDatePicker(true)}
                     >
                       <Calendar size={20} color="#4158D0" style={styles.dateIcon} />
                       <Text style={styles.dateText}>{formatDate(expiryDate)}</Text>
@@ -399,7 +399,7 @@ export default function AddSubscriptionScreen() {
                   <Text style={styles.reminderText}>days before</Text>
                   <TouchableOpacity
                     style={styles.reminderDeleteButton}
-                    onPressIn={() => handleRemoveReminder(index)}
+                    onPress={() => handleRemoveReminder(index)}
                   >
                     <X size={18} color="#e74c3c" />
                   </TouchableOpacity>
@@ -409,14 +409,14 @@ export default function AddSubscriptionScreen() {
               <Button
                 title="Add Another Reminder"
                 variant="outline"
-                onPressIn={handleAddReminder}
+                onPress={handleAddReminder}
                 style={styles.addReminderButton}
               />
             </View>
 
             <Button
               title="Save Subscription"
-              onPressIn={handleSubmit}
+              onPress={handleSubmit}
               loading={loading}
               style={styles.submitButton}
             />

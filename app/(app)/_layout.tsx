@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Drawer } from 'expo-router/drawer';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, Platform, Image } from 'react-native';
 import { 
   Settings,
   Bell,
@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DrawerContentComponentProps as DrawerContentComponentPropsType } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 function CustomDrawerContent(props: DrawerContentComponentPropsType) {
   const { user, signOut } = useAuth();
@@ -33,32 +34,32 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
     {
       icon: <User size={24} color="#4158D0" />,
       label: 'Profile',
-      onPressIn: () => router.push('/(app)/profile')
+      onPress: () => router.push('/(app)/profile')
     },
     {
       icon: <FileText size={24} color="#4158D0" />,
       label: 'Invoice',
-      onPressIn: () => router.push('/(app)/invoice')
+      onPress: () => router.push('/(app)/invoice')
     },
     {
       icon: <BarChart2 size={24} color="#4158D0" />,
       label: 'Report',
-      onPressIn: () => router.push('/(app)/report')
+      onPress: () => router.push('/(app)/report')
     },
     {
       icon: <Activity size={24} color="#4158D0" />,
       label: 'Activity Log',
-      onPressIn: () => router.push('/(app)/activity-log')
+      onPress: () => router.push('/(app)/activity-log')
     },
     {
       icon: <History size={24} color="#4158D0" />,
       label: 'Purchase History',
-      onPressIn: () => router.push('/(app)/purchase-history')
+      onPress: () => router.push('/(app)/purchase-history')
     },
     {
       icon: <Settings size={24} color="#4158D0" />,
       label: 'Settings',
-      onPressIn: () => router.push('/(app)/settings')
+      onPress: () => router.push('/(app)/settings')
     }
   ];
 
@@ -93,7 +94,7 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
           <TouchableOpacity
             key={index}
             style={[styles.menuItem, { backgroundColor: '#F8F9FA' }]}
-            onPressIn={item.onPressIn}
+            onPress={item.onPress}
           >
             <View style={styles.menuIconContainer}>
               {item.icon}
@@ -105,7 +106,7 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
 
         <TouchableOpacity
           style={[styles.menuItem, styles.signOutButton]}
-          onPressIn={handleSignOut}
+          onPress={handleSignOut}
         >
           <View style={styles.menuIconContainer}>
             <Ionicons name="log-out-outline" size={24} color="black" />
