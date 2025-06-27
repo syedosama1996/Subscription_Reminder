@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
   },
   actionButton: {
     flex: 1,
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     borderRadius: 12,
     marginHorizontal: 4,
   },

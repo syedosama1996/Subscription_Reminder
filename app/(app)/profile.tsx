@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Alert, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, Alert, Modal, ActivityIndicator,TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { User, Mail, Phone, Calendar, MapPin, Edit2, X, ArrowLeft } from 'lucide-react-native';
@@ -7,7 +7,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { router } from 'expo-router';
 import { ActivityLogger } from '../../lib/services/activity-logger';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -105,7 +104,7 @@ export default function ProfileScreen() {
         <View style={styles.headerTop}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPressIn={() => router.back()}
+            onPress={() => router.back()}
           >
             <ArrowLeft size={24} color="#fff" />
           </TouchableOpacity>
@@ -119,7 +118,7 @@ export default function ProfileScreen() {
         <Text style={styles.email}>{user?.email || ''}</Text>
         <TouchableOpacity 
           style={styles.editButton}
-          onPressIn={() => setIsModalVisible(true)}
+          onPress={() => setIsModalVisible(true)}
         >
           <Edit2 size={20} color="#4158D0" />
           <Text style={styles.editButtonText}>Edit Profile</Text>
@@ -167,7 +166,7 @@ export default function ProfileScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Edit Profile</Text>
               <TouchableOpacity 
-                onPressIn={() => setIsModalVisible(false)}
+                onPress={() => setIsModalVisible(false)}
                 style={styles.closeButton}
               >
                 <X size={24} color="#2c3e50" />
@@ -195,13 +194,13 @@ export default function ProfileScreen() {
             <View style={styles.modalFooter}>
               <TouchableOpacity 
                 style={styles.cancelButton}
-                onPressIn={() => setIsModalVisible(false)}
+                onPress={() => setIsModalVisible(false)}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
-                onPressIn={handleSave}
+                onPress={handleSave}
                 disabled={isLoading}
               >
                 {isLoading ? (

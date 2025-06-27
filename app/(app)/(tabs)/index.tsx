@@ -73,14 +73,16 @@ export default function HomeScreen() {
 
     try {
       setError(null);
-      setLoading(true);
+      // Only set loading if we're not in a toggle operation
+      if (!toggleLoading) {
+        setLoading(true);
+      }
 
       // Load categories
       const categoriesData = await getCategories(user.id);
       
       // Load subscriptions with filters
       const data = await getSubscriptions(user.id);
-      
       
       // Filter only active subscriptions (is_active === true and not expired)
       const activeSubscriptions = data?.filter(sub => {
@@ -91,7 +93,6 @@ export default function HomeScreen() {
         expiryDate.setHours(0, 0, 0, 0); // Normalize expiry date
         return sub.is_active === true && expiryDate >= today;
       }) || [];
-
 
       // Apply status filters if selected
       let filteredByStatus = activeSubscriptions;
@@ -137,7 +138,10 @@ export default function HomeScreen() {
       setError('Failed to load data. Please try again.');
       Alert.alert('Error', 'Failed to load data. Please try again.');
     } finally {
-      setLoading(false);
+      // Only set loading false if we're not in a toggle operation
+      if (!toggleLoading) {
+        setLoading(false);
+      }
       setRefreshing(false);
     }
   };
@@ -189,28 +193,31 @@ export default function HomeScreen() {
     if (!user) return;
 
     try {
-      // Update the local state immediately for better UX
-      setSubscriptions(prevSubscriptions => 
-        prevSubscriptions.map(sub => 
-          sub.id === id ? { ...sub, is_active: isActive } : sub
-        )
-      );
-      setFilteredSubscriptions(prevSubscriptions => 
-        prevSubscriptions.map(sub => 
-          sub.id === id ? { ...sub, is_active: isActive } : sub
-        )
-      );
+      setToggleLoading(true);
       
-      // Then make the API call
+      // Update the local state immediately for better UX
+      const updateSubscriptionState = (prevSubscriptions: Subscription[]) => 
+        prevSubscriptions.map(sub => 
+          sub.id === id ? { ...sub, is_active: isActive } : sub
+        );
+      
+      setSubscriptions(updateSubscriptionState);
+      setFilteredSubscriptions(updateSubscriptionState);
+      
+      // Make the API call
       await toggleSubscriptionStatus(id, isActive, user.id);
       
-      // Reload data to ensure consistency without showing loader
-      await loadData();
+      // Only reload data if there was an error or if we need to refresh other data
+      if (onRefresh) {
+        onRefresh();
+      }
     } catch (error) {
       console.error('Error toggling subscription status:', error);
       // Revert the local state on error
       await loadData();
       Alert.alert('Error', 'Failed to update subscription status');
+    } finally {
+      setToggleLoading(false);
     }
   };
 

@@ -139,6 +139,7 @@ export default function PastSubscriptionsScreen() {
               <SubscriptionCard
                 subscription={item}
                 onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id, isActive)}
+                onRefresh={loadData}
               />
             )}
             contentContainerStyle={styles.listContent}

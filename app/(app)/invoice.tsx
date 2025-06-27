@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, Modal, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, Modal, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { FileText, Download, Calendar, DollarSign, Filter, User, Package, CreditCard, Share, Clock, Hash, CheckCircle, XCircle, AlertTriangle, ArrowLeft } from 'lucide-react-native';
@@ -10,7 +10,6 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
 import CustomLoader from '@/components/CustomLoader';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 
 interface InvoiceItemProps {
   item: Invoice;

@@ -141,7 +141,7 @@ export default function ExpiringSubscriptionsScreen() {
         ) : (
           <FlatList
             data={subscriptions}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => item.id || `subscription-${index}`}
             renderItem={({ item }) => (
               <SubscriptionCard
                 subscription={item}

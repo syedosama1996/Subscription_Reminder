@@ -5,12 +5,11 @@ import {
   StyleSheet, 
   Modal, 
   ScrollView,
-  Platform
+  TouchableOpacity
 } from 'react-native';
 import { X, Check } from 'lucide-react-native';
 import { Category } from '../lib/types';
 import CategoryBadge from './CategoryBadge';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 
 type FilterModalProps = {
   visible: boolean;
@@ -105,7 +104,7 @@ export default function FilterModal({
             <Text style={styles.modalTitle}>Filter Subscriptions</Text>
             <TouchableOpacity 
               style={styles.closeButton}
-              onPressIn={onClose}
+              onPress={onClose}
               activeOpacity={0.7}
             >
               <X size={24} color="#7f8c8d" />
@@ -123,7 +122,7 @@ export default function FilterModal({
                       styles.option,
                       localSelectedStatuses.includes(status.id) && styles.selectedOption
                     ]}
-                    onPressIn={() => toggleStatus(status.id)}
+                    onPress={() => toggleStatus(status.id)}
                     activeOpacity={0.7}
                   >
                     <View style={[styles.statusDot, { backgroundColor: status.color }]} />
@@ -148,7 +147,7 @@ export default function FilterModal({
                   {categories.map((category) => (
                     <TouchableOpacity
                       key={category.id}
-                      onPressIn={() => toggleCategory(category.id!)}
+                      onPress={() => toggleCategory(category.id!)}
                       activeOpacity={0.7}
                     >
                       <CategoryBadge 
@@ -166,7 +165,7 @@ export default function FilterModal({
             {hasActiveFilters && (
               <TouchableOpacity 
                 style={styles.clearButton}
-                onPressIn={handleClearFilters}
+                onPress={handleClearFilters}
                 activeOpacity={0.7}
               >
                 <Text style={styles.clearButtonText}>Clear All</Text>
@@ -175,7 +174,7 @@ export default function FilterModal({
             
             <TouchableOpacity 
               style={styles.applyButton}
-              onPressIn={handleApplyFilters}
+              onPress={handleApplyFilters}
               activeOpacity={0.7}
             >
               <Text style={styles.applyButtonText}>Apply Filters</Text>

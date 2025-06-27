@@ -201,7 +201,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                       editable={true}
                       selectTextOnFocus={true}
                       onFocus={() => console.log('TextInput focused')}
-                      onPressIn={() => console.log('TextInput pressed')}
+                      onPress={() => console.log('TextInput pressed')}
                     />
                     
                     <Text style={styles.colorLabel}>Select Color (Optional)</Text>

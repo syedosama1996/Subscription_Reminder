@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, Switch, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  Switch,
+  Pressable,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { Calendar, Clock, ExternalLink, CheckSquare, Square } from 'lucide-react-native';
+import {
+  Calendar,
+  Clock,
+  ExternalLink,
+  CheckSquare,
+  Square,
+} from 'lucide-react-native';
 import { Subscription } from '../lib/subscriptions';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -45,13 +58,13 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   disabled = false,
   onPress,
   onRefresh,
-  simpleExpiryDisplay
+  simpleExpiryDisplay,
 }) => {
   const router = useRouter();
   const [touchStartTime, setTouchStartTime] = useState<number>(0);
   const [touchStartY, setTouchStartY] = useState<number>(0);
   const [lastTouchTime, setLastTouchTime] = useState(0);
-  
+
   // Calculate days until expiry
   const daysUntilExpiry = () => {
     const today = new Date();
@@ -62,7 +75,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   };
 
   const days = daysUntilExpiry();
-  
+
   // Determine status color based on days until expiry
   const getStatusColor = () => {
     if (subscription.is_active === false) return '#7f8c8d'; // Inactive - gray
@@ -74,7 +87,8 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
 
   // Determine gradient colors based on status
   const getGradientColors = () => {
-    if (subscription.is_active === false) return ['#7f8c8d', '#95a5a6'] as const; // Inactive
+    if (subscription.is_active === false)
+      return ['#7f8c8d', '#95a5a6'] as const; // Inactive
     if (days < 0) return ['#e74c3c', '#c0392b'] as const; // Expired
     if (days <= 7) return ['#e67e22', '#d35400'] as const; // Expiring soon
     if (days <= 30) return ['#f1c40f', '#f39c12'] as const; // Expiring in a month
@@ -92,10 +106,10 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
 
   const handlePress = () => {
     if (disabled || isScrolling) return;
-    
+
     const now = Date.now();
     if (now - touchStartTime < 200) return; // Ignore quick touches
-    
+
     if (selectionMode) {
       onToggleSelection?.();
     } else {
@@ -108,9 +122,15 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     setTouchStartY(0);
   };
 
-  const handlePressOut = (event: any) => {
+  const handlePressOut = (event?: any) => {
     const touchEndTime = Date.now();
     const touchDuration = touchEndTime - touchStartTime;
+
+    // Add null check for event and nativeEvent
+    if (!event || !event.nativeEvent) {
+      return;
+    }
+
     const touchEndY = event.nativeEvent.pageY;
     const touchDistance = Math.abs(touchEndY - touchStartY);
 
@@ -124,20 +144,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     }
   };
 
-  const handleTouchMove = (event: any) => {
-    const currentY = event.nativeEvent.pageY;
-    const touchDistance = Math.abs(currentY - touchStartY);
-    
-    if (touchDistance > 5) {
-      setScrolling(true);
-    }
-  };
-
-  const handleLongPress = () => {
-    if (!selectionMode && onToggleSelection) {
-      onToggleSelection();
-    }
-  };
+  // Removed long press functionality - selection mode only through top button
 
   // Add a wrapper for onToggleStatus to refresh the screen after toggling
   const handleToggleStatus = async (isActive: boolean) => {
@@ -154,27 +161,30 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     }
   };
 
+  // Handler to prevent toggle area from triggering card press
+  const handleTogglePress = () => {
+    // Do nothing - this prevents the card press event
+  };
+
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.card, selected && styles.selectedCard]}
       onPress={handlePress}
-      onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      onTouchMove={handleTouchMove}
-      onLongPress={handleLongPress}
       disabled={disabled}
       activeOpacity={0.7}
       delayPressIn={100}
     >
       {Platform.OS === 'ios' ? (
-        <BlurView intensity={80} tint="light" style={[
-          styles.card,
-          selected && styles.selectedCard
-        ]}>
+        <BlurView
+          intensity={80}
+          tint="light"
+          style={[styles.card, selected && styles.selectedCard]}
+        >
           <View style={styles.cardContent}>
             <View style={styles.header}>
               {selectionMode ? (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.checkboxContainer}
                   onPress={onToggleSelection}
                 >
@@ -185,53 +195,65 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                   )}
                 </TouchableOpacity>
               ) : null}
-              
-              <Text style={styles.serviceName}>{subscription.service_name}</Text>
+
+              <Text style={styles.serviceName}>
+                {subscription.service_name}
+              </Text>
               {typeof onToggleStatus === 'function' && (
-                <StatusToggle 
-                  subscription={subscription} 
-                  onToggle={handleToggleStatus}
-                  disabled={disabled}
-                />
+                <TouchableOpacity
+                  style={styles.toggleContainer}
+                  onPress={handleTogglePress}
+                  activeOpacity={1}
+                >
+                  <StatusToggle
+                    subscription={subscription}
+                    onToggle={handleToggleStatus}
+                    disabled={disabled}
+                  />
+                </TouchableOpacity>
               )}
             </View>
-            
+
             {subscription.category && (
               <View style={styles.categoryContainer}>
                 <CategoryBadge category={subscription.category} />
               </View>
             )}
-            
+
             {subscription.domain_name && (
               <View style={styles.infoRow}>
                 <ExternalLink size={16} color="#7f8c8d" />
                 <Text style={styles.infoText}>{subscription.domain_name}</Text>
               </View>
             )}
-            
+
             <View style={styles.infoRow}>
               <Calendar size={16} color="#7f8c8d" />
-              <Text style={styles.infoText}>Expires: {formatDate(subscription.expiry_date)}</Text>
+              <Text style={styles.infoText}>
+                Expires: {formatDate(subscription.expiry_date)}
+              </Text>
             </View>
-            
+
             <View style={styles.footer}>
               <View style={styles.priceContainer}>
                 <Text style={styles.priceLabel}>PKR</Text>
-                <Text style={styles.price}>{subscription.purchase_amount_pkr.toLocaleString()}</Text>
+                <Text style={styles.price}>
+                  {subscription.purchase_amount_pkr.toLocaleString()}
+                </Text>
               </View>
-              
+
               <View style={styles.expiryContainer}>
                 <Clock size={14} color={getStatusColor()} />
                 <Text style={[styles.expiryText, { color: getStatusColor() }]}>
-                  {subscription.is_active === false 
+                  {subscription.is_active === false
                     ? 'Inactive'
-                    : days < 0 
-                      ? 'Expired'
-                      : simpleExpiryDisplay
-                        ? `${days} days left`
-                        : days === 0 
-                          ? 'Expired'
-                          : `${days} days left`}
+                    : days < 0
+                    ? 'Expired'
+                    : simpleExpiryDisplay
+                    ? `${days} days left`
+                    : days === 0
+                    ? 'Expired'
+                    : `${days} days left`}
                 </Text>
               </View>
             </View>
@@ -246,7 +268,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           <View style={styles.cardContent}>
             <View style={styles.header}>
               {selectionMode ? (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.checkboxContainer}
                   onPress={onToggleSelection}
                 >
@@ -257,60 +279,72 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                   )}
                 </TouchableOpacity>
               ) : null}
-              
-              <Text style={styles.serviceName}>{subscription.service_name}</Text>
+
+              <Text style={styles.serviceName}>
+                {subscription.service_name}
+              </Text>
               {typeof onToggleStatus === 'function' && (
-                <StatusToggle 
-                  subscription={subscription} 
-                  onToggle={handleToggleStatus}
-                  disabled={disabled}
-                />
+                <TouchableOpacity
+                  style={styles.toggleContainer}
+                  onPress={handleTogglePress}
+                  activeOpacity={1}
+                >
+                  <StatusToggle
+                    subscription={subscription}
+                    onToggle={handleToggleStatus}
+                    disabled={disabled}
+                  />
+                </TouchableOpacity>
               )}
             </View>
-            
+
             {subscription.category && (
               <View style={styles.categoryContainer}>
                 <CategoryBadge category={subscription.category} />
               </View>
             )}
-            
+
             {subscription.domain_name && (
               <View style={styles.infoRow}>
                 <ExternalLink size={16} color="#7f8c8d" />
                 <Text style={styles.infoText}>{subscription.domain_name}</Text>
               </View>
             )}
-            
+
             <View style={styles.infoRow}>
               <Calendar size={16} color="#7f8c8d" />
-              <Text style={styles.infoText}>Expires: {formatDate(subscription.expiry_date)}</Text>
+              <Text style={styles.infoText}>
+                Expires: {formatDate(subscription.expiry_date)}
+              </Text>
             </View>
-            
+
             <View style={styles.footer}>
               <View style={styles.priceContainer}>
                 <Text style={styles.priceLabel}>PKR</Text>
-                <Text style={styles.price}>{subscription.purchase_amount_pkr.toLocaleString()}</Text>
+                <Text style={styles.price}>
+                  {subscription.purchase_amount_pkr.toLocaleString()}
+                </Text>
               </View>
-              
+
               <View style={styles.expiryContainer}>
                 <Clock size={14} color={getStatusColor()} />
                 <Text style={[styles.expiryText, { color: getStatusColor() }]}>
-                  {subscription.is_active === false 
+                  {subscription.is_active === false
                     ? 'Inactive'
-                    : days < 0 
-                      ? 'Expired'
-                      : simpleExpiryDisplay
-                        ? `${days} days left`
-                        : days === 0 
-                          ? 'Expires today'
-                          : `${days} days left`}
+                    : days < 0
+                    ? 'Expired'
+                    : simpleExpiryDisplay
+                    ? `${days} days left`
+                    : days === 0
+                    ? 'Expires today'
+                    : `${days} days left`}
                 </Text>
               </View>
             </View>
           </View>
         </View>
       )}
-      
+
       <View style={[styles.statusBar, { backgroundColor: getStatusColor() }]}>
         <LinearGradient
           colors={getGradientColors()}
@@ -331,7 +365,8 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 20,
-    backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.7)' : 'white',
+    backgroundColor:
+      Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.7)' : 'white',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
@@ -428,6 +463,9 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
+  },
+  toggleContainer: {
+    marginRight: 12,
   },
 });
 

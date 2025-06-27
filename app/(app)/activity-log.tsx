@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, ActivityIndicator, RefreshControl, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, ActivityIndicator, RefreshControl, Alert, Modal, TouchableOpacity   } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { Activity, Filter, Clock, CheckCircle, AlertCircle, Info, Plus, Trash2, Edit, Power, RefreshCw, ArrowLeft } from 'lucide-react-native';
@@ -7,7 +7,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityLogger } from '../../lib/services/activity-logger';
 import { useRouter } from 'expo-router';
 import CustomLoader from '@/components/CustomLoader';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 
 interface ActivityItem {
   id: string;

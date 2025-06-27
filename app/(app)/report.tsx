@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator, Dimensions, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator, Dimensions, Modal, Platform, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { BarChart2, DollarSign, Calendar, TrendingUp, ArrowLeft, Download, Filter, ChevronDown } from 'lucide-react-native';
@@ -15,7 +15,6 @@ import * as MediaLibrary from 'expo-media-library';
 import { router } from 'expo-router';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import CustomLoader from '@/components/CustomLoader';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 interface CategoryData {
   name: string;
   count: number;
