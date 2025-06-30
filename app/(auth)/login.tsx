@@ -45,9 +45,7 @@ export default function LoginScreen() {
     
     try {
       await signIn(email, password);
-      setTimeout(() => {
-        router.replace('/(app)/(tabs)');
-      }, 500);
+      await router.replace('/(app)/(tabs)');
     } catch (error) {
       // Error is already handled by the auth context
     }
@@ -178,7 +176,11 @@ export default function LoginScreen() {
               activeOpacity={0.5}
               disabled={loading}
             >
-              <Text style={styles.registerButtonText}>Login</Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.registerButtonText}>Login</Text>
+              )}
             </TouchableOpacity>
 
             {!loading && isBiometricSupported && (
