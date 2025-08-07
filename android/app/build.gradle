@@ -118,6 +118,10 @@ android {
             ndk {
                 abiFilters "armeabi-v7a", "arm64-v8a"
             }
+            // Memory optimizations for release build
+            debuggable false
+            jniDebuggable false
+            renderscriptDebuggable false
         }
     }
     packagingOptions {
@@ -128,9 +132,17 @@ android {
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
     }
-    dexOptions {
-        javaMaxHeapSize "4g"
+    
+    // Memory optimizations
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
+    
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
 }
 
 // Apply static values from `gradle.properties` to the `android.packagingOptions`
