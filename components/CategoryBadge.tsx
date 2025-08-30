@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Category } from '../lib/types';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+
 interface CategoryBadgeProps {
   category: Category;
   onPress?: () => void;
@@ -34,35 +35,53 @@ export default function CategoryBadge({ category, onPress, selected = false, sty
 
   const color = getColor();
   
-  const Component = onPress ? TouchableOpacity : View;
-  
+  if (onPress) {
+    return (
+      <TouchableOpacity 
+        style={[
+          styles.container,
+          { backgroundColor: category.color },
+          selected && styles.selected,
+          style
+        ]}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.text} numberOfLines={1}>{category.name}</Text>
+      </TouchableOpacity>
+    );
+  }
+
   return (
-    <Component 
+    <View 
       style={[
         styles.container,
         { backgroundColor: category.color },
         selected && styles.selected,
         style
       ]}
-      onPress={onPress}
-      activeOpacity={0.7}
     >
-      <Text style={styles.text}>{category.name}</Text>
-    </Component>
+      <Text style={styles.text} numberOfLines={1}>{category.name}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
+    marginRight: 0,
+    marginBottom: 0,
+    minHeight: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 10,
+    color: '#ffffff',
+    textAlign: 'center',
   },
   selected: {
     backgroundColor: '#fff',

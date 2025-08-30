@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
 import { Subscription } from '../lib/subscriptions';
-import { Power } from 'lucide-react-native';
+import { Check, X } from 'lucide-react-native';
 
 type StatusToggleProps = {
   subscription: Subscription;
@@ -30,7 +30,7 @@ export default function StatusToggle({ subscription, onToggle, disabled = false 
 
   const translateX = slideAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 22],
+    outputRange: [0, 20],
   });
 
   return (
@@ -48,11 +48,11 @@ export default function StatusToggle({ subscription, onToggle, disabled = false 
         styles.toggle,
         { transform: [{ translateX }] }
       ]}>
-        <Power
-          size={16}
-          color={isActive ? '#2ecc71' : '#e74c3c'}
-          style={styles.icon}
-        />
+        {isActive ? (
+          <Check size={12} color="#ffffff" style={styles.icon} />
+        ) : (
+          <X size={12} color="#ffffff" style={styles.icon} />
+        )}
       </Animated.View>
     </TouchableOpacity>
   );
@@ -60,43 +60,41 @@ export default function StatusToggle({ subscription, onToggle, disabled = false 
 
 const styles = StyleSheet.create({
   container: {
-    width: 56,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 24,
+    borderRadius: 12,
     padding: 2,
     justifyContent: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.15,
         shadowRadius: 4,
       },
       android: {
-        elevation: 3,
+        elevation: 4,
       },
     }),
   },
   containerActive: {
-    backgroundColor: 'rgba(46, 204, 113, 0.2)',
-    borderWidth: 1,
-    borderColor: '#2ecc71',
+    backgroundColor: '#10b981',
+    borderWidth: 0,
   },
   containerInactive: {
-    backgroundColor: 'rgba(231, 76, 60, 0.2)',
-    borderWidth: 1,
-    borderColor: '#e74c3c',
+    backgroundColor: '#6b7280',
+    borderWidth: 0,
   },
   containerDisabled: {
     opacity: 0.5,
   },
   toggle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -105,11 +103,11 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
       },
       android: {
-        elevation: 2,
+        elevation: 3,
       },
     }),
   },
   icon: {
-    opacity: 0.9,
+    opacity: 1,
   },
 });

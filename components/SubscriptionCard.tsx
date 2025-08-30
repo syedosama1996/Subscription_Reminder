@@ -179,8 +179,9 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         <BlurView
           intensity={80}
           tint="light"
-          style={[styles.card, selected && styles.selectedCard]}
+          style={styles.card}
         >
+          {selected && <View style={styles.selectionOverlay} />}
           <View style={styles.cardContent}>
             <View style={styles.header}>
               {selectionMode ? (
@@ -214,13 +215,24 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               )}
             </View>
 
-            {subscription.category && (
-              <View style={styles.categoryContainer}>
+            {subscription.category && subscription.domain_name && (
+              <View style={styles.infoRow}>
+                <View style={styles.leftContent}>
+                  <ExternalLink size={16} color="#7f8c8d" />
+                  <Text style={styles.infoText}>{subscription.domain_name}</Text>
+                </View>
                 <CategoryBadge category={subscription.category} />
               </View>
             )}
 
-            {subscription.domain_name && (
+            {subscription.category && !subscription.domain_name && (
+              <View style={styles.infoRow}>
+                <View style={styles.leftContent} />
+                <CategoryBadge category={subscription.category} />
+              </View>
+            )}
+
+            {!subscription.category && subscription.domain_name && (
               <View style={styles.infoRow}>
                 <ExternalLink size={16} color="#7f8c8d" />
                 <Text style={styles.infoText}>{subscription.domain_name}</Text>
@@ -243,28 +255,31 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               </View>
 
               <View style={styles.expiryContainer}>
-                <Clock size={14} color={getStatusColor()} />
-                <Text style={[styles.expiryText, { color: getStatusColor() }]}>
-                  {subscription.is_active === false
-                    ? 'Inactive'
-                    : days < 0
-                    ? 'Expired'
-                    : simpleExpiryDisplay
-                    ? `${days} days left`
-                    : days === 0
-                    ? 'Expired'
-                    : `${days} days left`}
-                </Text>
+                <View style={styles.expiryContent}>
+                  <Clock size={14} color={getStatusColor()} />
+                  <Text style={[styles.expiryText, { color: getStatusColor() }]}>
+                    {subscription.is_active === false
+                      ? 'Inactive'
+                      : days < 0
+                      ? 'Expired'
+                      : simpleExpiryDisplay
+                      ? `${days} days left`
+                      : days === 0
+                      ? 'Expired'
+                      : `${days} days left`}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
         </BlurView>
       ) : (
-        <View style={[styles.card, selected && styles.selectedCard]}>
+        <View style={styles.card}>
           <LinearGradient
             colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.9)']}
             style={styles.cardGradient}
           />
+          {selected && <View style={styles.selectionOverlay} />}
           <View style={styles.cardContent}>
             <View style={styles.header}>
               {selectionMode ? (
@@ -282,6 +297,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
 
               <Text style={styles.serviceName}>
                 {subscription.service_name}
+                
               </Text>
               {typeof onToggleStatus === 'function' && (
                 <TouchableOpacity
@@ -298,20 +314,31 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               )}
             </View>
 
-            {subscription.category && (
-              <View style={styles.categoryContainer}>
+            {subscription.category && subscription.domain_name && (
+              <View style={styles.infoRow}>
+                <View style={styles.leftContent}>
+                  <ExternalLink size={16} color="#7f8c8d" />
+                  <Text style={styles.infoText}>{subscription.domain_name}</Text>
+                </View>
                 <CategoryBadge category={subscription.category} />
               </View>
             )}
 
-            {subscription.domain_name && (
+            {subscription.category && !subscription.domain_name && (
+              <View style={styles.infoRow}>
+                <View style={styles.leftContent} />
+                <CategoryBadge category={subscription.category} />
+              </View>
+            )}
+
+            {!subscription.category && subscription.domain_name && (
               <View style={styles.infoRow}>
                 <ExternalLink size={16} color="#7f8c8d" />
                 <Text style={styles.infoText}>{subscription.domain_name}</Text>
               </View>
             )}
 
-            <View style={styles.infoRow}>
+            <View style={styles.infoRow2}>
               <Calendar size={16} color="#7f8c8d" />
               <Text style={styles.infoText}>
                 Expires: {formatDate(subscription.expiry_date)}
@@ -327,18 +354,20 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               </View>
 
               <View style={styles.expiryContainer}>
-                <Clock size={14} color={getStatusColor()} />
-                <Text style={[styles.expiryText, { color: getStatusColor() }]}>
-                  {subscription.is_active === false
-                    ? 'Inactive'
-                    : days < 0
-                    ? 'Expired'
-                    : simpleExpiryDisplay
-                    ? `${days} days left`
-                    : days === 0
-                    ? 'Expires today'
-                    : `${days} days left`}
-                </Text>
+                <View style={styles.expiryContent}>
+                  <Clock size={14} color={getStatusColor()} />
+                  <Text style={[styles.expiryText, { color: getStatusColor() }]}>
+                    {subscription.is_active === false
+                      ? 'Inactive'
+                      : days < 0
+                      ? 'Expired'
+                      : simpleExpiryDisplay
+                      ? `${days} days left`
+                      : days === 0
+                      ? 'Expires today'
+                      : `${days} days left`}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -352,6 +381,11 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           end={{ x: 1, y: 0 }}
           style={styles.statusGradient}
         />
+        {(days <= 30 && days > 0) && (
+          <View style={styles.statusIconContainer}>
+            <Clock size={12} color="#ffffff" />
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -364,20 +398,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   card: {
-    borderRadius: 20,
-    backgroundColor:
-      Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.7)' : 'white',
+    borderRadius: 24,
+    backgroundColor: '#ffffff',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 6,
     position: 'relative',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
   },
   selectedCard: {
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: '#4158D0',
+    shadowColor: '#4158D0',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+    transform: [{ scale: 1.02 }],
   },
   cardContent: {
     padding: 16,
@@ -393,33 +434,48 @@ const styles = StyleSheet.create({
     height: 6,
     width: '100%',
     overflow: 'hidden',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   statusGradient: {
     height: '100%',
     width: '100%',
   },
+  statusIconContainer: {
+    position: 'absolute',
+    right: 8,
+    top: -3,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 8,
+    padding: 2,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   checkboxContainer: {
     marginRight: 12,
   },
   serviceName: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Inter-Bold',
-    color: '#2c3e50',
+    color: '#1f2937',
     flex: 1,
   },
-  categoryContainer: {
-    marginBottom: 4,
-  },
+
   infoRow: {
     flexDirection: 'row',
+    marginBottom: 8,
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'space-between',
+  },
+  infoRow2: {
+    flexDirection: 'row',
+    marginBottom: 8,
   },
   infoText: {
     marginLeft: 10,
@@ -431,10 +487,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 8,
+    marginTop: 10,
+    paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(241, 242, 246, 0.5)',
+    borderTopColor: '#f1f5f9',
   },
   priceContainer: {
     flexDirection: 'row',
@@ -447,17 +503,21 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   price: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Inter-Bold',
     color: '#2c3e50',
   },
   expiryContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+  },
+  expiryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   expiryText: {
     marginLeft: 4,
@@ -466,6 +526,21 @@ const styles = StyleSheet.create({
   },
   toggleContainer: {
     marginRight: 12,
+  },
+  selectionOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(65, 88, 208, 0.03)',
+    zIndex: 1,
+    borderRadius: 20,
+  },
+  leftContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
   },
 });
 

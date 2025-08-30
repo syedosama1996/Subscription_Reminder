@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 100,
+    zIndex: 9999,
   },
   blurContainer: {
     borderTopLeftRadius: 20,
@@ -92,14 +92,16 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
   },
   content: {
-    padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 90 : 100,
+    paddingHorizontal: 0,
+    paddingTop: 24,
+    paddingBottom: Platform.OS === 'ios' ? 100 : 110,
   },
   infoContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    paddingHorizontal: 20,
   },
   selectedText: {
     fontFamily: 'Inter-Bold',
@@ -116,7 +118,8 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     flexDirection: 'row',
-    // justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    gap: 12,
   },
   actionButton: {
     flex: 1,
@@ -124,10 +127,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    marginHorizontal: 4,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderRadius: 14,
   },
   deleteButton: {
     backgroundColor: 'rgba(231, 76, 60, 0.5)',

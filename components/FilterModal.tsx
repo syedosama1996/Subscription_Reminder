@@ -23,8 +23,9 @@ type FilterModalProps = {
 };
 
 const STATUS_OPTIONS = [
-  { id: 'active', label: 'Active', color: '#2ecc71' },
-  { id: 'expiring_soon', label: 'Expiring Soon', color: '#f39c12' },
+  { id: 'active', label: 'Active', color: '#10b981', },
+  { id: 'inactive', label: 'Inactive', color: '#6b7280',  },
+  { id: 'expiring_soon', label: 'Expiring Soon',  icon: '⏰' },
 ];
 
 export default function FilterModal({ 
@@ -125,7 +126,8 @@ export default function FilterModal({
                     onPress={() => toggleStatus(status.id)}
                     activeOpacity={0.7}
                   >
-                    <View style={[styles.statusDot, { backgroundColor: status.color }]} />
+                    {status.color && <View style={[styles.statusDot, { backgroundColor: status.color }]} />}
+                    {status.icon && <Text style={styles.statusIcon}>{status.icon}</Text>}
                     <Text style={[
                       styles.optionText,
                       localSelectedStatuses.includes(status.id) && styles.selectedOptionText
@@ -193,31 +195,31 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '80%',
+   
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f2f6',
   },
   modalTitle: {
     fontFamily: 'Inter-Bold',
     fontSize: 20,
-    color: '#2c3e50',
+    color: '#1f2937',
   },
   closeButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f1f2f6',
+    backgroundColor: '#f8fafc',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   section: {
     marginBottom: 24,
@@ -226,7 +228,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'Inter-SemiBold',
     fontSize: 18,
-    color: '#2c3e50',
+    color: '#1f2937',
     marginBottom: 16,
   },
   optionsContainer: {
@@ -235,32 +237,38 @@ const styles = StyleSheet.create({
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#dfe4ea',
+    borderColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
   },
   optionText: {
     fontFamily: 'Inter-Medium',
     fontSize: 16,
-    color: '#2c3e50',
+    color: '#374151',
     flex: 1,
   },
   selectedOption: {
-    backgroundColor: 'rgba(65, 88, 208, 0.1)',
-    borderColor: '#4158D0',
+    backgroundColor: '#f0f9ff',
+    borderColor: '#3b82f6',
   },
   selectedOptionText: {
     fontFamily: 'Inter-SemiBold',
-    color: '#4158D0',
+    color: '#1d4ed8',
   },
   statusDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
     marginRight: 12,
+  },
+  statusIcon: {
+    fontSize: 16,
+    marginRight: 8,
+    color: '#6b7280',
   },
   checkIcon: {
     marginLeft: 8,
@@ -276,24 +284,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#f1f2f6',
+    borderTopColor: '#f1f5f9',
+    backgroundColor: '#fafafa',
   },
   clearButton: {
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginRight: 12,
+    backgroundColor: '#fef2f2',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fecaca',
   },
   clearButtonText: {
     fontFamily: 'Inter-Medium',
     fontSize: 16,
-    color: '#e74c3c',
+    color: '#dc2626',
   },
   applyButton: {
-    backgroundColor: '#4158D0',
+    backgroundColor: '#6366f1',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 16,
-    shadowColor: '#4158D0',
+    shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -302,6 +315,6 @@ const styles = StyleSheet.create({
   applyButtonText: {
     fontFamily: 'Inter-Medium',
     fontSize: 16,
-    color: '#fff',
+    color: '#ffffff',
   },
 });

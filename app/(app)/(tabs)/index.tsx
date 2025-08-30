@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  RefreshControl, 
+  RefreshControl,
   Platform,
   Alert,
   ScrollView,
@@ -28,6 +28,7 @@ import SubscriptionCard from '../../../components/SubscriptionCard';
 import CategoryBadge from '../../../components/CategoryBadge';
 import FilterModal from '../../../components/FilterModal';
 import BulkActionBar from '../../../components/BulkActionBar';
+import NotificationBottomSheet from '../../../components/NotificationBottomSheet';
 import { Search, Bell, Plus, Filter, Download, CheckSquare, Menu, CheckCircle2, XCircle, TrendingUp, Calendar, DollarSign, AlertTriangle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -58,6 +59,7 @@ export default function HomeScreen() {
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [toggleLoading, setToggleLoading] = useState(false);
+  const [notificationBottomSheetVisible, setNotificationBottomSheetVisible] = useState(false);
   const categoriesScrollViewRef = useRef<ScrollView>(null);
 
   // Add focus effect to refresh data when screen comes into focus
@@ -80,10 +82,10 @@ export default function HomeScreen() {
 
       // Load categories
       const categoriesData = await getCategories(user.id);
-      
+
       // Load subscriptions with filters
       const data = await getSubscriptions(user.id);
-      
+
       // Filter only active subscriptions (is_active === true and not expired)
       const activeSubscriptions = data?.filter(sub => {
         if (!sub.expiry_date) return sub.is_active === true; // If no expiry date, just check is_active
@@ -105,11 +107,17 @@ export default function HomeScreen() {
           return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
         });
       }
+      if (selectedStatuses.includes('inactive')) {
+        filteredByStatus = subscriptions.filter(sub => sub.is_active === false);
+      }
+      if (selectedStatuses.includes('active')) {
+        filteredByStatus = subscriptions.filter(sub => sub.is_active === true);
+      }
 
       // Apply category filters if selected
       let filteredByCategory = filteredByStatus;
       if (selectedCategories.length > 0) {
-        filteredByCategory = filteredByStatus.filter(sub => 
+        filteredByCategory = filteredByStatus.filter(sub =>
           selectedCategories.includes(sub.category_id || '')
         );
       }
@@ -172,7 +180,7 @@ export default function HomeScreen() {
         const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         return daysUntilExpiry <= 30 && daysUntilExpiry > 0; // Subscriptions expiring in next 30 days
       });
-      
+
     }
   }, [selectedStatuses, subscriptions, filteredSubscriptions]);
 
@@ -194,19 +202,19 @@ export default function HomeScreen() {
 
     try {
       setToggleLoading(true);
-      
+
       // Update the local state immediately for better UX
-      const updateSubscriptionState = (prevSubscriptions: Subscription[]) => 
-        prevSubscriptions.map(sub => 
+      const updateSubscriptionState = (prevSubscriptions: Subscription[]) =>
+        prevSubscriptions.map(sub =>
           sub.id === id ? { ...sub, is_active: isActive } : sub
         );
-      
+
       setSubscriptions(updateSubscriptionState);
       setFilteredSubscriptions(updateSubscriptionState);
-      
+
       // Make the API call
       await toggleSubscriptionStatus(id, isActive, user.id);
-      
+
       // Only reload data if there was an error or if we need to refresh other data
       if (onRefresh) {
         onRefresh();
@@ -421,110 +429,93 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      onScrollBeginDrag={() => setScrolling(true)}
-      onScrollEndDrag={() => setScrolling(false)}
-      onMomentumScrollBegin={() => setScrolling(true)}
-      onMomentumScrollEnd={() => setScrolling(false)}
-      scrollEventThrottle={16}
-    >
-      <View style={styles.container}>
-        <LinearGradient
-          colors={['#4158D0', '#C850C0']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.headerGradient}
-        />
-
-        <SafeAreaView style={styles.safeArea} edges={['top']}>
-          {/* Header Section */}
-          <View style={styles.headerContainer}>
-            <View style={styles.header}>
-              <TouchableOpacity
-                style={styles.menuButton}
-                onPress={() => navigation.toggleDrawer()}
-              >
-                <Menu size={24} color="#fff" />
-              </TouchableOpacity>
-              <View style={styles.headerActions}>
-                {!selectionMode ? (
-                  <>
-                    <TouchableOpacity
-                      style={styles.iconButton}
-                      onPress={() => setSelectionMode(true)}
-                    >
-                      <CheckSquare size={22} color="#fff" />
-                    </TouchableOpacity>
-
-
-                    {/* <TouchableOpacity 
-                    style={styles.iconButton}
-                    onPress={handleExportData}
-                    disabled={exporting}
-                  >
-                    {exporting ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                      <Download size={22} color="#fff" />
-                    )}
-                  </TouchableOpacity> */}
-                    <TouchableOpacity style={styles.iconButton}>
-                      <Bell size={22} color="#fff" />
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <>
-                    <TouchableOpacity
-                      style={styles.iconButton}
-                      onPress={handleMarkAll}
-                    >
-                      <CheckCircle2 size={22} color="#fff" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.iconButton}
-                      onPress={handleRemoveAll}
-                    >
-                      <XCircle size={22} color="#fff" />
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
-            </View>
-
-            <View style={styles.searchContainer}>
-              <View style={styles.searchBar}>
-                <Search size={20} color="#7f8c8d" style={styles.searchIcon} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search subscriptions..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  placeholderTextColor="#95a5a6"
-                />
-                <TouchableOpacity style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
-                  <Filter size={20} color="#7f8c8d" />
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#4158D0', '#C850C0']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}
+      />
+      {/* Header Section */}
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => navigation.toggleDrawer()}
+          >
+            <Menu size={24} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            {!selectionMode ? (
+              <>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => setSelectionMode(true)}
+                >
+                  <CheckSquare size={22} color="#fff" />
                 </TouchableOpacity>
-              </View>
-            </View>
-            <View>
-              <Text style={styles.title}>Active Subscriptions</Text>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => setNotificationBottomSheetVisible(true)}
+                >
+                  <Bell size={22} color="#fff" />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={handleMarkAll}
+                >
+                  <CheckCircle2 size={22} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={handleRemoveAll}
+                >
+                  <XCircle size={22} color="#fff" />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
-          {/* <Text style={styles.title}>Active Subscriptions</Text> */}
-      </View>
+        </View>
 
-          {/* Main Content Section */ }
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Search size={20} color="#7f8c8d" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search subscriptions..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor="#95a5a6"
+            />
+            <TouchableOpacity style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
+              <Filter size={20} color="#7f8c8d" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Active Subscriptions</Text>
+        </View>
+      </View>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.contentContainer}
+          onScrollBeginDrag={() => setScrolling(true)}
+          onScrollEndDrag={() => setScrolling(false)}
+          onMomentumScrollBegin={() => setScrolling(true)}
+          onMomentumScrollEnd={() => setScrolling(false)}
+          scrollEventThrottle={16}
+        >
           <View style={styles.mainContent}>
-            {/* Touch Test Component */}
-            {/* <TouchTest /> */}
-            
-            {/* Categories Tabs */}
+
             {categories.length > 0 && (
               <View style={styles.categoriesWrapper}>
-                <ScrollView 
+                <ScrollView
                   ref={categoriesScrollViewRef}
-                  horizontal 
+                  horizontal
                   showsHorizontalScrollIndicator={false}
                   style={styles.categoriesContainer}
                   contentContainerStyle={styles.categoriesScrollContent}
@@ -562,7 +553,7 @@ export default function HomeScreen() {
                       </View>
                     )}
                   </TouchableOpacity>
-                  
+
                   {categories.map(category => {
                     const subscriptionCount = subscriptions.filter(sub => sub.category_id === category.id).length;
                     return (
@@ -613,20 +604,22 @@ export default function HomeScreen() {
             ) : (
               <FlatList
                 data={filteredSubscriptions}
-                keyExtractor={(item, index) => 
+                keyExtractor={(item, index) =>
                   `subscription-${item.id}-${index}`
                 }
                 renderItem={({ item }) => (
-                  <SubscriptionCard 
-                    subscription={item}
-                    onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id!, isActive)}
-                    selectionMode={selectionMode}
-                    selected={selectedSubscriptions.includes(item.id!)}
-                    onToggleSelection={() => toggleSubscriptionSelection(item.id!)}
-                    disabled={toggleLoading}
-                    onPress={() => router.push(`/subscription/${item.id}`)}
-                    onRefresh={loadData}
-                  />
+                  <View style={styles.cardWrapper}>
+                    <SubscriptionCard
+                      subscription={item}
+                      onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id!, isActive)}
+                      selectionMode={selectionMode}
+                      selected={selectedSubscriptions.includes(item.id!)}
+                      onToggleSelection={() => toggleSubscriptionSelection(item.id!)}
+                      disabled={toggleLoading}
+                      onPress={() => router.push(`/subscription/${item.id}`)}
+                      onRefresh={loadData}
+                    />
+                  </View>
                 )}
                 contentContainerStyle={styles.listContent}
                 refreshControl={
@@ -647,27 +640,33 @@ export default function HomeScreen() {
           </View>
 
           <CustomLoader visible={toggleLoading} />
-          
-          <BulkActionBar
-            selectedCount={selectedSubscriptions.length}
-            onCancel={handleCancelSelection}
-            onDelete={handleBulkDelete}
-            onToggleStatus={handleBulkToggleStatus}
-          />
-        </SafeAreaView >
-        
-        <FilterModal
-          visible={filterModalVisible}
-          onClose={() => setFilterModalVisible(false)}
-          categories={categories}
-          selectedCategories={selectedCategories}
-          onSelectCategories={setSelectedCategories}
-          selectedStatuses={selectedStatuses}
-          onSelectStatuses={setSelectedStatuses}
-          onRefresh={loadData}
-        />
-      </View >
-    </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
+
+      {/* BulkActionBar - Fixed at bottom, outside ScrollView */}
+      <BulkActionBar
+        selectedCount={selectedSubscriptions.length}
+        onCancel={handleCancelSelection}
+        onDelete={handleBulkDelete}
+        onToggleStatus={handleBulkToggleStatus}
+      />
+
+      <FilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        categories={categories}
+        selectedCategories={selectedCategories}
+        onSelectCategories={setSelectedCategories}
+        selectedStatuses={selectedStatuses}
+        onSelectStatuses={setSelectedStatuses}
+        onRefresh={loadData}
+      />
+
+      <NotificationBottomSheet
+        visible={notificationBottomSheetVisible}
+        onClose={() => setNotificationBottomSheetVisible(false)}
+      />
+    </View>
   );
 }
 
@@ -675,6 +674,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  scrollView: {
+    flex: 1,
   },
   headerGradient: {
     position: 'absolute',
@@ -688,17 +690,16 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    paddingBottom: Platform.OS === 'android' ? 60 : 80,
   },
   headerContainer: {
-    paddingBottom: 25,
+    marginTop: 40,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   menuButton: {
     width: 40,
@@ -722,8 +723,8 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   searchContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
   searchBar: {
     flexDirection: 'row',
@@ -731,7 +732,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 16,
     borderRadius: 14,
-    height: 50,
+    height: 45,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -754,13 +755,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
     fontSize: 26,
     color: '#fff',
-    paddingHorizontal: 20,
     marginTop: Platform.OS === 'ios' ? -4 : 4,
-    // paddingTop: 12,
+  },
+  titleContainer: {
+    paddingLeft: 15,
+    marginTop: 5,
   },
   mainContent: {
     flex: 1,
-    marginTop: Platform.OS === 'ios' ? 5 : 15,
+    marginTop: Platform.OS === 'ios' ? 5 : 5,
 
   },
   categoriesWrapper: {
@@ -768,8 +771,6 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     height: 40,
-    marginTop: 12,
-    marginBottom: 12,
   },
   categoriesScrollContent: {
     flexDirection: 'row',
@@ -831,8 +832,11 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    marginTop: 18,
-    paddingBottom: Platform.OS === 'android' ? 30 : 20,
+    marginTop: 20,
+    paddingBottom: Platform.OS === 'android' ? 180 : 200,
+  },
+  cardWrapper: {
+    marginBottom: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -867,6 +871,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
+    marginTop: 100,
   },
   emptyTitle: {
     fontFamily: 'Inter-Bold',
