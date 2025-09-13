@@ -8,7 +8,7 @@ import {
   TextStyle,
   View
 } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;

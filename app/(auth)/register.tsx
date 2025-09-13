@@ -7,6 +7,7 @@ import Button from '../../components/Button';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import PasswordInput from '../../components/PasswordInput';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -32,23 +33,23 @@ export default function RegisterScreen() {
     dismissKeyboard();
     // Reset validation error
     setValidationError(null);
-    
+
     // Validate inputs
     if (!email || !password || !confirmPassword) {
       setValidationError('All fields are required');
       return;
     }
-    
+
     if (password !== confirmPassword) {
       setValidationError('Passwords do not match');
       return;
     }
-    
+
     if (password.length < 6) {
       setValidationError('Password must be at least 6 characters');
       return;
     }
-    
+
     try {
       await signUp(email, password);
       setTimeout(() => {
@@ -60,10 +61,16 @@ export default function RegisterScreen() {
   };
 
   const togglePasswordVisibility = () => {
+    console.log('🔐 Toggle password visibility clicked!');
+    console.log('Current showPassword:', showPassword);
+    console.log('New showPassword:', !showPassword);
     setShowPassword(!showPassword);
   };
 
   const toggleConfirmPasswordVisibility = () => {
+    console.log('🔐 Toggle confirm password visibility clicked!');
+    console.log('Current showConfirmPassword:', showConfirmPassword);
+    console.log('New showConfirmPassword:', !showConfirmPassword);
     setShowConfirmPassword(!showConfirmPassword);
   };
 
@@ -75,13 +82,13 @@ export default function RegisterScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       />
-      
+
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
         >
@@ -96,7 +103,7 @@ export default function RegisterScreen() {
 
           <View style={styles.formContainer}>
             <Text style={styles.formTitle}>Create Account</Text>
-            
+
             {(error || validationError) && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{error || validationError}</Text>
@@ -116,65 +123,19 @@ export default function RegisterScreen() {
               />
             </View>
 
-            <View style={styles.inputContainer}>
-              <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <View style={styles.inputWrapper}>
-                <Input
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  containerStyle={styles.input}
-                  ref={passwordInputRef}
-                />
-                {/* <TouchableOpacity 
-                  style={styles.eyeIcon}
-                  onPress={() => {
-                    setTimeout(() => {
-                      togglePasswordVisibility();
-                    }, 50);
-                  }}
-                  activeOpacity={0.5}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#666" />
-                  ) : (
-                    <Eye size={20} color="#666" />
-                  )}
-                </TouchableOpacity> */}
-              </View>
-            </View>
+            <PasswordInput
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+            />
 
-            <View style={styles.inputContainer}>
-              <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <View style={styles.inputWrapper}>
-                <Input
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showConfirmPassword}
-                  containerStyle={styles.input}
-                  ref={confirmPasswordInputRef}
-                />
-                {/* <TouchableOpacity 
-                  style={styles.eyeIcon}
-                  onPress={() => {
-                    setTimeout(() => {
-                      toggleConfirmPasswordVisibility();
-                    }, 50);
-                  }}
-                  activeOpacity={0.5}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff size={20} color="#666" />
-                  ) : (
-                    <Eye size={20} color="#666" />
-                  )}
-                </TouchableOpacity> */}
-              </View>
-            </View>
+            <PasswordInput
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.registerButton, loading && styles.disabledButton]}
               onPress={() => {
                 setTimeout(() => {
@@ -189,7 +150,7 @@ export default function RegisterScreen() {
 
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Already have an account? </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.loginLinkTouchable}
                 onPress={() => {
                   setTimeout(() => {
@@ -291,10 +252,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  inputWrapper: {
-    flex: 1,
-    position: 'relative',
-  },
+
   inputIcon: {
     marginRight: 12,
   },
@@ -302,19 +260,12 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     flex: 1,
   },
-  eyeIcon: {
-    position: 'absolute',
-    right: 12,
-    top: '20%',
-    transform: [{ translateY: -35 }],
-    padding: 4,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    height: 20,
-    width: 20,
+  inputWrapper: {
+    flex: 1,
+    position: 'relative',
     justifyContent: 'center',
-    alignItems: 'center',
   },
+
   registerButton: {
     marginTop: 8,
     height: 56,

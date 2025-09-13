@@ -52,4 +52,69 @@ The app has been modified to handle missing Supabase configuration gracefully:
 
 ## Database Schema
 
-Make sure your Supabase database has the required tables. Check the `supabase/migrations/` folder for the database schema files. 
+Make sure your Supabase database has the required tables. Check the `supabase/migrations/` folder for the database schema files.
+
+### New Migration: Profiles Table
+
+A new migration has been added to create the `profiles` table with the following structure:
+
+```sql
+CREATE TABLE profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username text NOT NULL,
+  phone text,
+  location text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+```
+
+**To apply this migration:**
+
+1. **Option 1: Using Supabase CLI (Recommended)**
+   ```bash
+   # Install Supabase CLI if you haven't already
+   npm install -g supabase
+   
+   # Login to your Supabase account
+   supabase login
+   
+   # Link your project (replace with your project ref)
+   supabase link --project-ref your-project-ref
+   
+   # Apply the migration
+   supabase db push
+   ```
+
+2. **Option 2: Using Supabase Dashboard**
+   - Go to your Supabase project dashboard
+   - Navigate to SQL Editor
+   - Copy and paste the SQL from `supabase/migrations/20250308000002_create_profiles_table.sql`
+   - Execute the SQL
+
+3. **Option 3: Manual SQL Execution**
+   - Go to your Supabase project dashboard
+   - Navigate to SQL Editor
+   - Run the following SQL:
+   ```sql
+   -- Create profiles table
+   CREATE TABLE IF NOT EXISTS profiles (
+     id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+     username text NOT NULL,
+     phone text,
+     location text,
+     created_at timestamptz DEFAULT now(),
+     updated_at timestamptz DEFAULT now()
+   );
+   
+   -- Enable RLS
+   ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+   
+   -- Create policies
+   CREATE POLICY "Users can manage their own profile"
+     ON profiles FOR ALL TO authenticated
+     USING (auth.uid() = id)
+     WITH CHECK (auth.uid() = id);
+   ```
+
+**Note:** The app will now work with the Edit Profile functionality, but you must run this migration first to create the required database table. 

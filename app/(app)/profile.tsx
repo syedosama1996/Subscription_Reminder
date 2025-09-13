@@ -16,36 +16,89 @@ export default function ProfileScreen() {
   const [location, setLocation] = useState('Not set');
   const [isLoading, setIsLoading] = useState(false);
   const [previousUsername, setPreviousUsername] = useState('');
+  const [previousPhone, setPreviousPhone] = useState('Not set');
+  const [previousLocation, setPreviousLocation] = useState('Not set');
 
   useEffect(() => {
-    // Initialize username from email or fetch from profiles table
-    const initializeUsername = async () => {
+    // Initialize profile data from profiles table
+    const initializeProfile = async () => {
       if (user?.email) {
         try {
-          // Try to fetch existing username from profiles table
+          // Try to fetch existing profile data from profiles table
           const { data, error } = await supabase
             .from('profiles')
-            .select('username')
+            .select('username, phone, location')
             .eq('id', user.id)
             .single();
 
-          if (error) throw error;
+          if (error) {
+            // If profile doesn't exist, create one
+            if (error.code === 'PGRST116') {
+              const initialUsername = user.email.split('@')[0];
+              const { error: insertError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: user.id,
+                  username: initialUsername,
+                  phone: null,
+                  location: null
+                });
 
-          // If username exists in profiles, use it, otherwise use email prefix
-          const initialUsername = data?.username || user.email.split('@')[0];
-          setUsername(initialUsername);
-          setPreviousUsername(initialUsername);
+              if (insertError) {
+                console.error('Error creating profile:', insertError);
+              }
+
+              setUsername(initialUsername);
+              setPhone('Not set');
+              setLocation('Not set');
+              setPreviousUsername(initialUsername);
+              setPreviousPhone('Not set');
+              setPreviousLocation('Not set');
+            } else {
+              throw error;
+            }
+          } else {
+            // If profile data exists, use it
+            const initialUsername = data?.username || user.email.split('@')[0];
+            const initialPhone = data?.phone || 'Not set';
+            const initialLocation = data?.location || 'Not set';
+            
+            setUsername(initialUsername);
+            setPhone(initialPhone);
+            setLocation(initialLocation);
+            setPreviousUsername(initialUsername);
+            setPreviousPhone(initialPhone);
+            setPreviousLocation(initialLocation);
+          }
         } catch (error) {
-          console.error('Error fetching username:', error);
-          // Fallback to email prefix if there's an error
-          const initialUsername = user.email.split('@')[0];
-          setUsername(initialUsername);
-          setPreviousUsername(initialUsername);
+          console.error('Error fetching profile:', error);
+          // Check if it's a schema error (table doesn't exist)
+          if (error && typeof error === 'object' && 'message' in error && 
+              typeof error.message === 'string' && error.message.includes('does not exist')) {
+            console.log('Profiles table does not exist yet. Please run the migration first.');
+            // Still set default values for UI
+            const initialUsername = user.email.split('@')[0];
+            setUsername(initialUsername);
+            setPhone('Not set');
+            setLocation('Not set');
+            setPreviousUsername(initialUsername);
+            setPreviousPhone('Not set');
+            setPreviousLocation('Not set');
+          } else {
+            // Fallback to defaults for other errors
+            const initialUsername = user.email.split('@')[0];
+            setUsername(initialUsername);
+            setPhone('Not set');
+            setLocation('Not set');
+            setPreviousUsername(initialUsername);
+            setPreviousPhone('Not set');
+            setPreviousLocation('Not set');
+          }
         }
       }
     };
 
-    initializeUsername();
+    initializeProfile();
   }, [user]);
 
   const handleSave = async () => {
@@ -54,14 +107,23 @@ export default function ProfileScreen() {
       return;
     }
 
+    if (phone.trim() !== 'Not set' && phone.trim().length < 10) {
+      Alert.alert('Error', 'Please enter a valid phone number');
+      return;
+    }
+
     try {
       setIsLoading(true);
       
-      // Update username in the profiles table
+      // Update profile data in the profiles table
       const { error } = await supabase
         .from('profiles')
-        .update({ username: username.trim() })
-        .eq('id', user?.id);
+        .upsert({ 
+          id: user?.id,
+          username: username.trim(),
+          phone: phone.trim() || null,
+          location: location.trim() || null
+        });
 
       if (error) throw error;
 
@@ -73,16 +135,28 @@ export default function ProfileScreen() {
         entity_id: user?.id,
         details: {
           previous_username: previousUsername,
-          new_username: username.trim()
+          new_username: username.trim(),
+          previous_phone: previousPhone,
+          new_phone: phone.trim(),
+          previous_location: previousLocation,
+          new_location: location.trim()
         }
       });
 
       setPreviousUsername(username.trim());
+      setPreviousPhone(phone.trim() || 'Not set');
+      setPreviousLocation(location.trim() || 'Not set');
       setIsModalVisible(false);
       Alert.alert('Success', 'Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      // Check if it's a schema error (table doesn't exist)
+      if (error && typeof error === 'object' && 'message' in error && 
+          typeof error.message === 'string' && error.message.includes('does not exist')) {
+        Alert.alert('Error', 'Database schema not ready. Please contact support or try again later.');
+      } else {
+        Alert.alert('Error', 'Failed to update profile. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -90,6 +164,26 @@ export default function ProfileScreen() {
 
   const getInitialLetter = () => {
     return username ? username[0].toUpperCase() : '?';
+  };
+
+  const formatPhoneNumber = (phoneNumber: string) => {
+    if (phoneNumber === 'Not set') return phoneNumber;
+    // Remove all non-numeric characters
+    const cleaned = phoneNumber.replace(/\D/g, '');
+    // Format as (XXX) XXX-XXXX
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    }
+    return phoneNumber;
+  };
+
+  const handlePhoneChange = (text: string) => {
+    // Remove all non-numeric characters
+    const cleaned = text.replace(/\D/g, '');
+    // Limit to 10 digits
+    if (cleaned.length <= 10) {
+      setPhone(cleaned);
+    }
   };
 
   return (
@@ -133,7 +227,7 @@ export default function ProfileScreen() {
             <Phone size={20} color="#7f8c8d" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Phone</Text>
-              <Text style={styles.infoValue}>{phone}</Text>
+              <Text style={styles.infoValue}>{phone && phone !== 'Not set' ? formatPhoneNumber(phone) : 'Not set'}</Text>
             </View>
           </View>
 
@@ -149,7 +243,7 @@ export default function ProfileScreen() {
             <MapPin size={20} color="#7f8c8d" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Location</Text>
-              <Text style={styles.infoValue}>{location}</Text>
+              <Text style={styles.infoValue}>{location && location !== 'Not set' ? location : 'Not set'}</Text>
             </View>
           </View>
         </View>
@@ -182,12 +276,43 @@ export default function ProfileScreen() {
                   onChangeText={setUsername}
                   placeholder="Enter username"
                   placeholderTextColor="#95a5a6"
+                  textAlignVertical="center"
                 />
               </View>
 
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Email</Text>
-                <Text style={styles.readOnlyInput}>{user?.email || ''}</Text>
+                <TextInput
+                  style={styles.readOnlyInput}
+                  value={user?.email || ''}
+                  editable={false}
+                  textAlignVertical="center"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Phone</Text>
+                <TextInput
+                  style={styles.input}
+                  value={phone === 'Not set' ? '' : phone}
+                  onChangeText={handlePhoneChange}
+                  placeholder="Enter phone number"
+                  placeholderTextColor="#95a5a6"
+                  keyboardType="phone-pad"
+                  textAlignVertical="center"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Location</Text>
+                <TextInput
+                  style={styles.input}
+                  value={location === 'Not set' ? '' : location}
+                  onChangeText={setLocation}
+                  placeholder="Enter location"
+                  placeholderTextColor="#95a5a6"
+                  textAlignVertical="center"
+                />
               </View>
             </View>
 
@@ -385,20 +510,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
     borderRadius: 8,
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#2c3e50',
+    backgroundColor: '#fff',
+    minHeight: 48,
   },
   readOnlyInput: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
     borderRadius: 8,
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#95a5a6',
     backgroundColor: '#f8f9fa',
+    minHeight: 48,
   },
   modalFooter: {
     flexDirection: 'row',

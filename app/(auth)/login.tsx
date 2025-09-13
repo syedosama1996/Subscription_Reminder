@@ -2,18 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert, TextInput, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
-import Button from '../../components/Button';
-import { Lock, Mail, Eye, EyeOff, Fingerprint } from 'lucide-react-native';
+import { Mail } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Input from '../../components/Input';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import PasswordInput from '../../components/PasswordInput';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn, loading, error, isBiometricSupported, enableBiometric, signInWithBiometric, isBiometricEnabled, resetBiometric } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [showBiometricOption, setShowBiometricOption] = useState(false);
   const [showResetOption, setShowResetOption] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -36,13 +35,13 @@ export default function LoginScreen() {
     dismissKeyboard();
     // Reset validation error
     setValidationError(null);
-    
+
     // Validate inputs
     if (!email || !password) {
       setValidationError('All fields are required');
       return;
     }
-    
+
     try {
       await signIn(email, password);
       await router.replace('/(app)/(tabs)');
@@ -88,10 +87,6 @@ export default function LoginScreen() {
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -117,7 +112,7 @@ export default function LoginScreen() {
 
           <View style={styles.formContainer}>
             <Text style={styles.formTitle}>Login</Text>
-            
+
             {(error || validationError) && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{error || validationError}</Text>
@@ -137,36 +132,13 @@ export default function LoginScreen() {
               />
             </View>
 
-            <View style={styles.inputContainer}>
-              <Lock size={20} color="#7f8c8d" style={styles.inputIcon} />
-              <View style={styles.inputWrapper}>
-                <Input
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  containerStyle={styles.input}
-                  ref={passwordInputRef}
-                />
-                {/* <TouchableOpacity 
-                  style={styles.eyeIcon}
-                  onPress={() => {
-                    setTimeout(() => {
-                      togglePasswordVisibility();
-                    }, 50);
-                  }}
-                  activeOpacity={0.5}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#666" />
-                  ) : (
-                    <Eye size={20} color="#666" />
-                  )}
-                </TouchableOpacity> */}
-              </View>
-            </View>
 
-            <TouchableOpacity 
+            <PasswordInput
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+            />
+            <TouchableOpacity
               style={[styles.registerButton, loading && styles.disabledButton]}
               onPress={() => {
                 setTimeout(() => {
@@ -181,6 +153,19 @@ export default function LoginScreen() {
               ) : (
                 <Text style={styles.registerButtonText}>Login</Text>
               )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.forgotPasswordButton}
+              onPress={() => {
+                setTimeout(() => {
+                  // TODO: Implement forgot password functionality
+                  Alert.alert('Forgot Password', 'This feature will be implemented soon.');
+                }, 50);
+              }}
+              activeOpacity={0.5}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
             {!loading && isBiometricSupported && (
@@ -219,7 +204,7 @@ export default function LoginScreen() {
 
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Don't have an account? </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.loginLinkTouchable}
                 onPress={() => {
                   setTimeout(() => {
@@ -321,12 +306,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  inputWrapper: {
-    flex: 1,
-    position: 'relative',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+
   inputIcon: {
     marginRight: 12,
   },
@@ -334,13 +314,27 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     flex: 1,
   },
+  inputWrapper: {
+    flex: 1,
+    // position: 'relative',
+    flexDirection: 'row',
+  },
   eyeIcon: {
     position: 'absolute',
-    right: 12,
-    top: -12,
-    padding: 4,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+
+    right: 10,
+    top: 10,
+    padding: 8,
+    borderRadius: 18,
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    zIndex: 999,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+
   },
   registerButton: {
     marginTop: 8,
@@ -383,6 +377,18 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
+  },
+  forgotPasswordButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  forgotPasswordText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 16,
+    color: '#4158D0',
+    textDecorationLine: 'underline',
   },
   biometricButton: {
     paddingVertical: 15,

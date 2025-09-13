@@ -18,6 +18,7 @@ interface InputProps extends TextInputProps {
   errorStyle?: TextStyle;
   multiline?: boolean;
   numberOfLines?: number;
+  children?: React.ReactNode;
 }
 
 const Input = forwardRef<TextInput, InputProps>(({
@@ -29,6 +30,7 @@ const Input = forwardRef<TextInput, InputProps>(({
   errorStyle,
   multiline,
   numberOfLines,
+  children,
   ...props
 }, ref) => {
   return (
@@ -49,6 +51,7 @@ const Input = forwardRef<TextInput, InputProps>(({
           textAlignVertical={multiline ? 'top' : 'center'}
           {...props}
         />
+        {children}
       </View>
       {error && <Text style={[styles.error, errorStyle]}>{error}</Text>}
     </View>

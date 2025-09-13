@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { X, Trash2, Power } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native';
 type BulkActionBarProps = {
   selectedCount: number;
   onCancel: () => void;

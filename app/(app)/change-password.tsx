@@ -3,13 +3,13 @@ import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { LinearGradient } from 'expo-linear-gradient';
-import Input from '../../components/Input';
 import Button from '../../components/Button';
-import { Shield, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { ActivityLogger } from '../../lib/services/activity-logger';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import PasswordInput from '@/components/PasswordInput';
 
 export default function ChangePasswordScreen() {
   const { user } = useAuth();
@@ -17,9 +17,6 @@ export default function ChangePasswordScreen() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -124,80 +121,29 @@ export default function ChangePasswordScreen() {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Current Password</Text>
-            <View style={styles.inputRow}>
-              {/* <Shield size={20} color="#7f8c8d" style={styles.inputIcon} /> */}
-              <View style={styles.inputWrapper}>
-                <Input
-                  value={currentPassword}
-                  onChangeText={setCurrentPassword}
-                  secureTextEntry={!showCurrentPassword}
-                  placeholder="Enter your current password"
-                  containerStyle={styles.input}
-                />
-                <TouchableOpacity 
-                  onPress={() => setShowCurrentPassword(!showCurrentPassword)}
-                  style={styles.eyeIcon}
-                >
-                  {showCurrentPassword ? (
-                    <EyeOff size={20} color="#7f8c8d" />
-                  ) : (
-                    <Eye size={20} color="#7f8c8d" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
+            <PasswordInput
+              placeholder="Enter current password"
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+            />
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>New Password</Text>
-            <View style={styles.inputRow}>
-              {/* <Shield size={20} color="#7f8c8d" style={styles.inputIcon} /> */}
-              <View style={styles.inputWrapper}>
-                <Input
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                  secureTextEntry={!showNewPassword}
-                  placeholder="Enter your new password"
-                  containerStyle={styles.input}
-                />
-                <TouchableOpacity 
-                  onPress={() => setShowNewPassword(!showNewPassword)}
-                  style={styles.eyeIcon}
-                >
-                  {showNewPassword ? (
-                    <EyeOff size={20} color="#7f8c8d" />
-                  ) : (
-                    <Eye size={20} color="#7f8c8d" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
+            <PasswordInput
+              placeholder="Enter new password"
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Confirm New Password</Text>
-            <View style={styles.inputRow}>
-              {/* <Shield size={20} color="#7f8c8d" style={styles.inputIcon} /> */}
-              <View style={styles.inputWrapper}>
-                <Input
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showConfirmPassword}
-                  placeholder="Confirm your new password"
-                  containerStyle={styles.input}
-                />
-                <TouchableOpacity 
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={styles.eyeIcon}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff size={20} color="#7f8c8d" />
-                  ) : (
-                    <Eye size={20} color="#7f8c8d" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
+            <PasswordInput
+              placeholder="Confirm new password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
           </View>
 
           <Button
@@ -283,44 +229,6 @@ const styles = StyleSheet.create({
     color: '#2c3e50',
     marginBottom: 8,
     marginLeft: 4,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(223, 228, 234, 0.5)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    height: 56,
-  },
-  inputWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  inputIcon: {
-    marginLeft: 16,
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#2c3e50',
-    marginBottom: 0,
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: 12,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    padding: 12,
   },
   button: {
     marginTop: 30,

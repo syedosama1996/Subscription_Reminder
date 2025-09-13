@@ -38,7 +38,7 @@ import * as Sharing from 'expo-sharing';
 import CustomLoader from '../../../components/CustomLoader';
 import { ScrollView as GestureScrollView } from 'react-native-gesture-handler';
 import { setScrolling } from '../../../components/SubscriptionCard';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native';
 
 export default function HomeScreen() {
   const { user } = useAuth();

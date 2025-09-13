@@ -25,6 +25,7 @@ import {
 } from '../../lib/subscriptions';
 import Button from '../../components/Button';
 import ReminderItem from '../../components/ReminderItem';
+import CustomModal from '../../components/CustomModal';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -44,7 +45,7 @@ import {
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native';
 
 export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -76,6 +77,14 @@ export default function SubscriptionDetailScreen() {
   
   // History modal state
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
+  
+  // Custom modal states
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalTitle, setModalTitle] = useState('');
 
   useEffect(() => {
     loadSubscription();
@@ -94,9 +103,8 @@ export default function SubscriptionDetailScreen() {
       const data = await getSubscription(id);
       setSubscription(data);
       
-      // Initialize edited subscription with current data
+      // Initialize edited subscription with current data (excluding history)
       setEditedSubscription({
-        ...data,
         service_name: data.service_name,
         domain_name: data.domain_name,
         purchase_date: data.purchase_date,
@@ -128,27 +136,20 @@ export default function SubscriptionDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Subscription',
-      'Are you sure you want to delete this subscription? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              if (!subscription?.id || !user) return;
-              await deleteSubscription(subscription.id, user.id);
-              router.replace('/');
-            } catch (err) {
-              console.error('Error deleting subscription:', err);
-              Alert.alert('Error', 'Failed to delete subscription');
-            }
-          }
-        }
-      ]
-    );
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      if (!subscription?.id || !user) return;
+      await deleteSubscription(subscription.id, user.id);
+      router.replace('/');
+    } catch (err) {
+      console.error('Error deleting subscription:', err);
+      setModalTitle('Error');
+      setModalMessage('Failed to delete subscription');
+      setErrorModalVisible(true);
+    }
   };
   
   const handleEdit = () => {
@@ -156,10 +157,9 @@ export default function SubscriptionDetailScreen() {
   };
   
   const handleCancelEdit = () => {
-    // Reset edited subscription to current data
+    // Reset edited subscription to current data (excluding history)
     if (subscription) {
       setEditedSubscription({
-        ...subscription,
         service_name: subscription.service_name,
         domain_name: subscription.domain_name,
         purchase_date: subscription.purchase_date,
@@ -187,7 +187,9 @@ export default function SubscriptionDetailScreen() {
       setIsEditing(false);
     } catch (err) {
       console.error('Error updating subscription:', err);
-      Alert.alert('Error', 'Failed to update subscription');
+      setModalTitle('Error');
+      setModalMessage('Failed to update subscription');
+      setErrorModalVisible(true);
     } finally {
       setLoading(false);
     }
@@ -228,10 +230,14 @@ export default function SubscriptionDetailScreen() {
       setRenewModalVisible(false);
       await loadSubscription();
       
-      Alert.alert('Success', 'Subscription renewed successfully');
+      setModalTitle('Success');
+      setModalMessage('Subscription renewed successfully');
+      setSuccessModalVisible(true);
     } catch (err) {
       console.error('Error renewing subscription:', err);
-      Alert.alert('Error', 'Failed to renew subscription');
+      setModalTitle('Error');
+      setModalMessage('Failed to renew subscription');
+      setErrorModalVisible(true);
     } finally {
       setLoading(false);
     }
@@ -587,7 +593,11 @@ export default function SubscriptionDetailScreen() {
                   <Text style={styles.detailValue}>{subscription.password ? '••••••••' : 'N/A'}</Text>
                   {subscription.password && (
                     <TouchableOpacity 
-                      onPress={() => Alert.alert('Password', subscription.password || '')}
+                      onPress={() => {
+                        setModalTitle('Password');
+                        setModalMessage(subscription.password || '');
+                        setPasswordModalVisible(true);
+                      }}
                       style={styles.showPasswordButton}
                     >
                       <Text style={styles.showPasswordText}>Show</Text>
@@ -877,6 +887,47 @@ export default function SubscriptionDetailScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Custom Modals */}
+      <CustomModal
+        visible={deleteModalVisible}
+        onClose={() => setDeleteModalVisible(false)}
+        title="Delete Subscription"
+        message="Are you sure you want to delete this subscription? This action cannot be undone."
+        type="confirm"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDelete}
+        showCancel={true}
+        confirmButtonColor="#ef4444"
+      />
+
+      <CustomModal
+        visible={errorModalVisible}
+        onClose={() => setErrorModalVisible(false)}
+        title={modalTitle}
+        message={modalMessage}
+        type="error"
+        confirmText="OK"
+      />
+
+      <CustomModal
+        visible={successModalVisible}
+        onClose={() => setSuccessModalVisible(false)}
+        title={modalTitle}
+        message={modalMessage}
+        type="success"
+        confirmText="OK"
+      />
+
+      <CustomModal
+        visible={passwordModalVisible}
+        onClose={() => setPasswordModalVisible(false)}
+        title={modalTitle}
+        message={modalMessage}
+        type="info"
+        confirmText="OK"
+      />
     </SafeAreaView>
   );
 }

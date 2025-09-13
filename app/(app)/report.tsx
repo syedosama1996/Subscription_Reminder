@@ -557,36 +557,44 @@ export default function ReportScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Spending by Category</Text>
             {categoryData.length > 0 ? (
-              <BarChart
-                data={{
-                  labels: categoryData.map(item => item.name.length > 10 ? item.name.substring(0, 8) + '...' : item.name),
-                  datasets: [{
-                    data: categoryData.map(item => item.count)
-                  }]
-                }}
-                width={Dimensions.get('window').width - (styles.content.paddingHorizontal * 2) - (styles.section.padding * 2)}
-                height={220}
-                yAxisLabel=""
-                yAxisSuffix=""
-                chartConfig={{
-                  backgroundColor: '#ffffff',
-                  backgroundGradientFrom: '#ffffff',
-                  backgroundGradientTo: '#ffffff',
-                  decimalPlaces: 0,
-                  color: (opacity = 1) => `rgba(65, 88, 208, ${opacity})`,
-                   labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                  style: {
-                    borderRadius: 16
-                  },
-                   propsForDots: {
+              <View style={styles.chartContainer}>
+                <BarChart
+                  data={{
+                    labels: categoryData.map(item => item.name.length > 8 ? item.name.substring(0, 6) + '..' : item.name),
+                    datasets: [{
+                      data: categoryData.map(item => item.count)
+                    }]
+                  }}
+                  width={Dimensions.get('window').width - 60}
+                  height={240}
+                  yAxisLabel=""
+                  yAxisSuffix=""
+                  chartConfig={{
+                    backgroundColor: '#ffffff',
+                    backgroundGradientFrom: '#ffffff',
+                    backgroundGradientTo: '#ffffff',
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(65, 88, 208, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                    style: {
+                      borderRadius: 16
+                    },
+                    propsForDots: {
                       r: "4",
                       strokeWidth: "1",
                       stroke: "#4158D0"
-                  }
-                }}
-                style={styles.chart}
-                verticalLabelRotation={30}
-              />
+                    },
+                    propsForLabels: {
+                      fontSize: 12,
+                      fontWeight: '500'
+                    }
+                  }}
+                  style={styles.chart}
+                  verticalLabelRotation={0}
+                  showValuesOnTopOfBars={true}
+                  fromZero={true}
+                />
+              </View>
             ) : (
               <View style={styles.chartPlaceholder}>
                 <Text style={styles.chartText}>No category data available</Text>
@@ -644,66 +652,73 @@ export default function ReportScreen() {
         onRequestClose={() => setIsDateRangeModalVisible(false)}
       >
         <View style={styles.modalCenteredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Select Date Range</Text>
-            
-            {dateRanges.map((range, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.dateRangeOption,
-                  dateRange.label === range.label && styles.selectedDateRangeOption
-                ]}
-                onPress={() => handleDateRangeSelect(range)}
-              >
-                <Text style={[
-                  styles.dateRangeOptionText,
-                  dateRange.label === range.label && styles.selectedDateRangeOptionText
-                ]}>
-                  {range.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-            
-            <View style={styles.customDateRangeContainer}>
-              <Text style={styles.customDateRangeTitle}>Custom Range</Text>
+          <ScrollView 
+            style={styles.modalScrollView}
+            contentContainerStyle={styles.modalScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>Select Date Range</Text>
+              
+              {dateRanges.map((range, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.dateRangeOption,
+                    dateRange.label === range.label && styles.selectedDateRangeOption
+                  ]}
+                  onPress={() => handleDateRangeSelect(range)}
+                >
+                  <Text style={[
+                    styles.dateRangeOptionText,
+                    dateRange.label === range.label && styles.selectedDateRangeOptionText
+                  ]}>
+                    {range.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              
+              <View style={styles.customDateRangeContainer}>
+                <Text style={styles.customDateRangeTitle}>Custom Range</Text>
+                
+                <TouchableOpacity
+                  style={styles.customDateButton}
+                  onPress={() => setShowStartDatePicker(true)}
+                >
+                  <Text style={styles.customDateButtonText}>
+                    Start: {formatDate(dateRange.startDate)}
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.customDateButton}
+                  onPress={() => setShowEndDatePicker(true)}
+                >
+                  <Text style={styles.customDateButtonText}>
+                    End: {formatDate(dateRange.endDate)}
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.applyCustomDateButton}
+                  onPress={() => {
+                    setDateRange(prev => ({...prev, label: 'Custom Range'}));
+                    setIsDateRangeModalVisible(false);
+                  }}
+                >
+                  <Text style={styles.applyCustomDateButtonText}>Apply Custom Range</Text>
+                </TouchableOpacity>
+              </View>
               
               <TouchableOpacity
-                style={styles.customDateButton}
-                onPress={() => setShowStartDatePicker(true)}
+                style={styles.modalButtonClose}
+                onPress={() => setIsDateRangeModalVisible(false)}
+                activeOpacity={0.7}
               >
-                <Text style={styles.customDateButtonText}>
-                  Start: {formatDate(dateRange.startDate)}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.customDateButton}
-                onPress={() => setShowEndDatePicker(true)}
-              >
-                <Text style={styles.customDateButtonText}>
-                  End: {formatDate(dateRange.endDate)}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.applyCustomDateButton}
-                onPress={() => {
-                  setDateRange(prev => ({...prev, label: 'Custom Range'}));
-                  setIsDateRangeModalVisible(false);
-                }}
-              >
-                <Text style={styles.applyCustomDateButtonText}>Apply Custom Range</Text>
+                <Text style={styles.modalButtonCloseText}>Cancel</Text>
               </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity
-              style={styles.modalButtonClose}
-              onPress={() => setIsDateRangeModalVisible(false)}
-            >
-              <Text style={styles.modalButtonCloseText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
 
@@ -760,8 +775,9 @@ export default function ReportScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonClose]}
+              style={styles.modalButtonClose}
               onPress={() => setIsExportModalVisible(false)}
+              activeOpacity={0.7}
             >
               <Text style={styles.modalButtonCloseText}>Cancel</Text>
             </TouchableOpacity>
@@ -894,9 +910,15 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
     paddingBottom: 5,
   },
+  chartContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
   chart: {
     marginVertical: 8,
     borderRadius: 8,
+    alignSelf: 'center',
   },
   chartPlaceholder: {
     height: 200,
@@ -921,12 +943,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
+  modalScrollView: {
+    width: '100%',
+    maxHeight: '80%',
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+  },
   modalView: {
     width: '100%',
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 25,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 25,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -962,10 +993,14 @@ const styles = StyleSheet.create({
       backgroundColor: '#1976D2',
   },
    modalButtonClose: {
-    marginTop: 10,
-    backgroundColor: '#f0f0f0',
-    borderWidth: 1,
-    borderColor: '#ccc',
+    marginTop: 0,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#e74c3c',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 25,
+    minWidth: 150,
    },
   modalButtonText: {
     color: 'white',
@@ -973,9 +1008,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   modalButtonCloseText: {
-    color: '#555',
-    fontFamily: 'Inter-Medium',
+    color: '#e74c3c',
+    fontFamily: 'Inter-SemiBold',
     fontSize: 16,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
   filterButton: {
     width: 40,

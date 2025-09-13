@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getSubscriptions, Subscription } from '../../lib/subscriptions';
 import { router } from 'expo-router';
 import CustomLoader from '@/components/CustomLoader';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native';
 
 export default function PurchaseHistoryScreen() {
   const { user } = useAuth();
