@@ -82,18 +82,26 @@ export default function AddSubscriptionScreen() {
     });
   };
 
+  const clearError = () => {
+    if (error) {
+      setError(null);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!user) return;
     
+    // Clear any existing errors first
+    setError(null);
+    
     // Validate required fields
-    if (!serviceName) {
+    if (!serviceName.trim()) {
       setError('Service name is required');
       return;
     }
 
     try {
       setLoading(true);
-      setError(null);
 
       // Create subscription
       const subscription = await createSubscription({
@@ -196,18 +204,21 @@ export default function AddSubscriptionScreen() {
               <Text style={styles.sectionTitle}>Basic Information</Text>
               
               <View style={styles.inputRow}>
-                <Globe size={20} color="#4158D0" style={styles.inputIcon} />
+                <Globe size={20} color="#8e8e93" style={styles.inputIcon} />
                 <Input
                   label="Service Name"
                   placeholder="Netflix, Spotify, Domain, etc."
                   value={serviceName}
-                  onChangeText={setServiceName}
+                  onChangeText={(text) => {
+                    setServiceName(text);
+                    clearError();
+                  }}
                   containerStyle={styles.input}
                 />
               </View>
 
               <View style={styles.inputRow}>
-                <Globe size={20} color="#4158D0" style={styles.inputIcon} />
+                <Globe size={20} color="#8e8e93" style={styles.inputIcon} />
                 <Input
                   label="Domain Name (if applicable)"
                   placeholder="example.com"
@@ -223,7 +234,7 @@ export default function AddSubscriptionScreen() {
               />
 
               <View style={styles.inputRow}>
-                <User size={20} color="#4158D0" style={styles.inputIcon} />
+                <User size={20} color="#8e8e93" style={styles.inputIcon} />
                 <Input
                   label="Vendor"
                   placeholder="Company providing the service"
@@ -234,7 +245,7 @@ export default function AddSubscriptionScreen() {
               </View>
 
               <View style={styles.inputRow}>
-                <Link size={20} color="#4158D0" style={styles.inputIcon} />
+                <Link size={20} color="#8e8e93" style={styles.inputIcon} />
                 <Input
                   label="Vendor Link"
                   placeholder="https://vendor-website.com"
@@ -259,7 +270,7 @@ export default function AddSubscriptionScreen() {
                       style={styles.dateButton}
                       onPress={() => setShowPurchaseDatePicker(true)}
                     >
-                      <Calendar size={20} color="#4158D0" style={styles.dateIcon} />
+                      <Calendar size={20} color="#8e8e93" style={styles.dateIcon} />
                       <Text style={styles.dateText}>{formatDate(purchaseDate)}</Text>
                     </TouchableOpacity>
                   </View>
@@ -270,7 +281,7 @@ export default function AddSubscriptionScreen() {
                       style={styles.dateButton}
                       onPress={() => setShowExpiryDatePicker(true)}
                     >
-                      <Calendar size={20} color="#4158D0" style={styles.dateIcon} />
+                      <Calendar size={20} color="#8e8e93" style={styles.dateIcon} />
                       <Text style={styles.dateText}>{formatDate(expiryDate)}</Text>
                     </TouchableOpacity>
                   </View>
@@ -306,7 +317,7 @@ export default function AddSubscriptionScreen() {
               )}
 
               <View style={styles.inputRow}>
-                <DollarSign size={20} color="#4158D0" style={styles.inputIcon} />
+                <DollarSign size={20} color="#8e8e93" style={styles.inputIcon} />
                 <Input
                   label="Amount (PKR)"
                   placeholder="5000"
@@ -318,7 +329,7 @@ export default function AddSubscriptionScreen() {
               </View>
 
               <View style={styles.inputRow}>
-                <DollarSign size={20} color="#4158D0" style={styles.inputIcon} />
+                <DollarSign size={20} color="#8e8e93" style={styles.inputIcon} />
                 <Input
                   label="Amount (USD)"
                   placeholder="30"
@@ -334,7 +345,7 @@ export default function AddSubscriptionScreen() {
               <Text style={styles.sectionTitle}>Account Details (Optional)</Text>
               
               <View style={styles.inputRow}>
-                <Mail size={20} color="#4158D0" style={styles.inputIcon} />
+                <Mail size={20} color="#8e8e93" style={styles.inputIcon} />
                 <Input
                   label="Email"
                   placeholder="account@example.com"
@@ -347,7 +358,7 @@ export default function AddSubscriptionScreen() {
               </View>
 
               <View style={styles.inputRow}>
-                <User size={20} color="#4158D0" style={styles.inputIcon} />
+                <User size={20} color="#8e8e93" style={styles.inputIcon} />
                 <Input
                   label="Username"
                   placeholder="username"
@@ -358,7 +369,7 @@ export default function AddSubscriptionScreen() {
               </View>
 
               <View style={styles.inputRow}>
-                <Key size={20} color="#4158D0" style={styles.inputIcon} />
+                <Key size={20} color="#8e8e93" style={styles.inputIcon} />
                 <Input
                   label="Password"
                   placeholder="password"
@@ -460,18 +471,19 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   errorContainer: {
-    margin: 20,
-    marginTop: 0,
-    padding: 16,
-    backgroundColor: 'rgba(231, 76, 60, 0.1)',
-    borderRadius: 12,
+    marginHorizontal: 20,
+    marginTop: 8,
+    padding: 12,
+    backgroundColor: '#ffebee',
+    borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#e74c3c',
+    borderLeftColor: '#f44336',
   },
   errorText: {
-    fontFamily: 'Inter-Regular',
-    color: '#e74c3c',
+    fontFamily: 'Inter-Medium',
+    color: '#d32f2f',
     fontSize: 14,
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
@@ -482,21 +494,22 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   formSection: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 5,
+    shadowRadius: 8,
+    elevation: 3,
   },
   sectionTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 20,
-    color: '#2c3e50',
-    marginBottom: 20,
+    fontSize: 18,
+    color: '#1a1a1a',
+    marginBottom: 16,
+    fontWeight: '600',
   },
   inputRow: {
     flexDirection: 'row',
@@ -529,19 +542,20 @@ const styles = StyleSheet.create({
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 246, 250, 0.8)',
-    height: 56,
-    borderRadius: 16,
-    paddingHorizontal: 16,
+    backgroundColor: '#f8f9fa',
+    height: 48,
+    borderRadius: 12,
+    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: 'rgba(223, 228, 234, 0.5)',
+    borderColor: '#e1e5e9',
   },
   dateIcon: {
     marginRight: 8,
   },
   dateText: {
-    fontSize: 16,
-    color: '#2c3e50',
+    fontSize: 15,
+    color: '#1a1a1a',
+    fontFamily: 'Inter-Regular',
   },
   notesInput: {
     height: 120,
@@ -580,8 +594,8 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginBottom: 40,
-    backgroundColor: '#4158D0',
-    height: 60,
-    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    height: 56,
+    borderRadius: 16,
   },
 });

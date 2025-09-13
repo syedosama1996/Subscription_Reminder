@@ -45,7 +45,7 @@ const Input = forwardRef<TextInput, InputProps>(({
             multiline && styles.multilineInput,
             inputStyle
           ]}
-          placeholderTextColor="#95a5a6"
+          placeholderTextColor="#8e8e93"
           multiline={multiline}
           numberOfLines={numberOfLines}
           textAlignVertical={multiline ? 'top' : 'center'}
@@ -72,19 +72,20 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   input: {
-    backgroundColor: '#f5f6fa',
-    height: 56,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#2c3e50',
+    backgroundColor: '#f8f9fa',
+    height: 48,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    color: '#1a1a1a',
     borderWidth: 1,
-    borderColor: 'rgba(223, 228, 234, 0.5)',
+    borderColor: '#e1e5e9',
+    fontFamily: 'Inter-Regular',
   },
   multilineInput: {
-    height: 120,
-    paddingTop: 16,
-    paddingBottom: 16,
+    height: 100,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   inputError: {
     borderColor: '#e74c3c',

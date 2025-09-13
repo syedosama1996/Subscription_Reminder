@@ -1,13 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { View, StyleSheet, Platform, Text } from 'react-native';
+import { View, StyleSheet, Platform, Text, TouchableOpacity } from 'react-native';
 import { Home, Plus, Clock, History } from 'lucide-react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { TouchableOpacity } from 'react-native';
-import MaskedView from '@react-native-masked-view/masked-view';
 
 interface TabBarIconProps {
   color: string;
@@ -20,50 +15,21 @@ interface Route {
   name: string;
 }
 
-const GradientText = ({ style, children }: { style?: any, children: React.ReactNode }) => {
-  return (
-    <MaskedView maskElement={<Text style={style}>{children}</Text>}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-      >
-        <Text style={[style, { opacity: 0 }]}>{children}</Text>
-      </LinearGradient>
-    </MaskedView>
-  );
-};
+interface BottomTabBarProps {
+  state: any;
+  descriptors: any;
+  navigation: any;
+}
 
-const GradientIcon = ({ icon: Icon, size }: { icon: any, size: number }) => {
-  return (
-    <MaskedView
-      maskElement={
-        <Icon size={size} color="black" strokeWidth={2} />
-      }
-    >
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={{ height: size, width: size }}
-      />
-    </MaskedView>
-  );
-};
 
 const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.tabBarContainer, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-      {Platform.OS === 'ios' ? (
-        <BlurView tint="light" intensity={95} style={StyleSheet.absoluteFill} />
-      ) : (
-        <LinearGradient
-          colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.98)']}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
+    <View style={[styles.tabBarContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      {/* Background */}
+      <View style={styles.tabBarBackground} />
+      
       <View style={styles.tabBar}>
         {state.routes.map((route: Route, index: number) => {
           const { options } = descriptors[route.key];
@@ -86,62 +52,29 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
             <TouchableOpacity
               key={route.key}
               onPress={onPress}
-              style={[
-                styles.tabItem,
-                isAddButton && styles.addButtonContainer,
-              ]}
+              style={styles.tabItem}
+              activeOpacity={0.7}
             >
-              <View style={styles.tabItemInner}>
-                {isAddButton ? (
-                  <>
-                    <LinearGradient
-                      colors={['#4158D0', '#C850C0']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.addButton}
-                    >
-                      <Plus size={20} color="white" strokeWidth={2} />
-                    </LinearGradient>
-                    {isFocused ? (
-                      <GradientText style={styles.tabLabel}>
-                        Add
-                      </GradientText>
-                    ) : (
-                      <Text style={[styles.tabLabel, { color: '#95a5a6' }]}>
-                        Add
-                      </Text>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {isFocused ? (
-                      <GradientIcon 
-                        icon={
-                          route.name === 'index' ? Home :
-                          route.name === 'expiring' ? Clock :
-                          History
-                        }
-                        size={20}
-                      />
-                    ) : (
-                      options.tabBarIcon?.({
-                        color: '#95a5a6',
-                        size: 20,
-                        focused: false,
-                      })
-                    )}
-                    {isFocused ? (
-                      <GradientText style={styles.tabLabel}>
-                        {options.title}
-                      </GradientText>
-                    ) : (
-                      <Text style={[styles.tabLabel, { color: '#95a5a6' }]}>
-                        {options.title}
-                      </Text>
-                    )}
-                  </>
-                )}
-              </View>
+              {isAddButton ? (
+                <View style={styles.addButtonContainer}>
+                  <View style={styles.addButton}>
+                    <Plus size={20} color="white" strokeWidth={2} />
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.regularTabContainer}>
+                  <View style={styles.iconContainer}>
+                    {options.tabBarIcon?.({
+                      color: isFocused ? '#007AFF' : '#8E8E93',
+                      size: 24,
+                      focused: isFocused,
+                    })}
+                  </View>
+                  <Text style={[styles.tabLabel, { color: isFocused ? '#007AFF' : '#8E8E93' }]}>
+                    {options.title}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
@@ -159,21 +92,21 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="add"
-        options={{
-          title: 'Add New',
-          tabBarIcon: ({ size }: TabBarIconProps) => (
-            <Plus size={size} color="white" strokeWidth={2} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
         name="index"
         options={{
           title: 'Active',
           tabBarIcon: ({ color, size }: TabBarIconProps) => (
             <Home size={size} color={color} strokeWidth={2} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="add"
+        options={{
+          title: 'Add',
+          tabBarIcon: ({ size }: TabBarIconProps) => (
+            <Plus size={size} color="white" strokeWidth={2} />
           ),
         }}
       />
@@ -207,9 +140,21 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: Platform.OS === 'ios' ? 85 : 70,
+    height: Platform.OS === 'ios' ? 90 : 75,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  tabBarBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 0.5,
-    borderTopColor: 'rgba(0,0,0,0.05)',
+    borderTopColor: '#E5E5EA',
   },
   tabBar: {
     flexDirection: 'row',
@@ -217,40 +162,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: 16,
+    paddingTop: 8,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
+    paddingVertical: 8,
   },
-  tabItemInner: {
+  regularTabContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 8,
-  },
-  tabLabel: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 12,
-    marginTop: 5,
-    letterSpacing: 0.8,
-  },
-  addButtonContainer: {
-    marginBottom: Platform.OS === 'ios' ? 25 : 0,
-  },
-  addButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   iconContainer: {
-    padding: 12,
-    borderRadius: 22,
-    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 2,
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  addButtonContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButton: {
+    width: 45,
+    height: 45,
+    borderRadius: 28,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
