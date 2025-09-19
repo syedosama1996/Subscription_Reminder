@@ -10,7 +10,8 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
-  Dimensions
+  Dimensions,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../lib/auth';
@@ -60,6 +61,7 @@ export default function HomeScreen() {
   const [exporting, setExporting] = useState(false);
   const [toggleLoading, setToggleLoading] = useState(false);
   const [notificationBottomSheetVisible, setNotificationBottomSheetVisible] = useState(false);
+  const [deleteConfirmModalVisible, setDeleteConfirmModalVisible] = useState(false);
   const categoriesScrollViewRef = useRef<ScrollView>(null);
 
   // Add focus effect to refresh data when screen comes into focus
@@ -254,34 +256,27 @@ export default function HomeScreen() {
 
   const handleBulkDelete = async () => {
     if (!user || selectedSubscriptions.length === 0) return;
+    setDeleteConfirmModalVisible(true);
+  };
 
-    Alert.alert(
-      'Delete Subscriptions',
-      `Are you sure you want to delete ${selectedSubscriptions.length} subscription(s)? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              await deleteMultipleSubscriptions(selectedSubscriptions, user.id);
+  const confirmBulkDelete = async () => {
+    if (!user || selectedSubscriptions.length === 0) return;
 
-              // Reset selection mode and reload data
-              setSelectionMode(false);
-              setSelectedSubscriptions([]);
-              loadData();
-            } catch (error) {
-              console.error('Error deleting subscriptions:', error);
-              Alert.alert('Error', 'Failed to delete subscriptions');
-            } finally {
-              setLoading(false);
-            }
-          }
-        }
-      ]
-    );
+    try {
+      setLoading(true);
+      await deleteMultipleSubscriptions(selectedSubscriptions, user.id);
+
+      // Reset selection mode and reload data
+      setSelectionMode(false);
+      setSelectedSubscriptions([]);
+      loadData();
+    } catch (error) {
+      console.error('Error deleting subscriptions:', error);
+      Alert.alert('Error', 'Failed to delete subscriptions');
+    } finally {
+      setLoading(false);
+      setDeleteConfirmModalVisible(false);
+    }
   };
 
   const handleExportData = async () => {
@@ -665,7 +660,51 @@ export default function HomeScreen() {
       <NotificationBottomSheet
         visible={notificationBottomSheetVisible}
         onClose={() => setNotificationBottomSheetVisible(false)}
+        userId={user?.id}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={deleteConfirmModalVisible}
+        onRequestClose={() => setDeleteConfirmModalVisible(false)}
+      >
+        <View style={styles.modalCenteredView}>
+          <View style={styles.modalView}>
+            <View style={styles.modalIconContainer}>
+              <AlertTriangle size={48} color="#e74c3c" />
+            </View>
+            <Text style={styles.modalTitle}>Delete Subscriptions</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to delete {selectedSubscriptions.length} subscription(s)? This action cannot be undone.
+            </Text>
+            
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setDeleteConfirmModalVisible(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.modalDeleteButton}
+                onPress={confirmBulkDelete}
+                activeOpacity={0.7}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modalDeleteButtonText}>Delete</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -937,5 +976,81 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     // Add any necessary styles for the content container
+  },
+  // Delete Confirmation Modal Styles
+  modalCenteredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    width: '85%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalIconContainer: {
+    marginBottom: 15,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 25,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    gap: 15,
+  },
+  modalCancelButton: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#e74c3c',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  modalCancelButtonText: {
+    color: '#e74c3c',
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 16,
+  },
+  modalDeleteButton: {
+    flex: 1,
+    backgroundColor: '#e74c3c',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    minHeight: 50,
+    justifyContent: 'center',
+  },
+  modalDeleteButtonText: {
+    color: '#fff',
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 16,
   },
 });

@@ -91,6 +91,15 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
+        <Tabs.Screen
+        name="add"
+        options={{
+          title: 'Add',
+          tabBarIcon: ({ size }: TabBarIconProps) => (
+            <Plus size={size} color="white" strokeWidth={2} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="index"
         options={{
@@ -101,15 +110,7 @@ export default function TabLayout() {
         }}
       />
 
-      <Tabs.Screen
-        name="add"
-        options={{
-          title: 'Add',
-          tabBarIcon: ({ size }: TabBarIconProps) => (
-            <Plus size={size} color="white" strokeWidth={2} />
-          ),
-        }}
-      />
+    
 
       <Tabs.Screen
         name="expiring"

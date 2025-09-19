@@ -95,6 +95,37 @@ export async function scheduleNotification(title: string, body: string, data: an
   });
 }
 
+// Create notification record in database
+export async function createNotificationRecord(
+  title: string, 
+  message: string, 
+  type: 'expiry_reminder' | 'payment_due' | 'general' = 'general',
+  subscriptionId?: string,
+  userId?: string
+) {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert({
+        title,
+        message,
+        type,
+        subscription_id: subscriptionId,
+        user_id: userId,
+        read: false,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating notification record:', error);
+    throw error;
+  }
+}
+
 export async function scheduleExpiryNotification(
   subscriptionName: string,
   expiryDate: Date,

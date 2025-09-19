@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+
 interface Notification {
   id: string;
   user_id: string;
@@ -90,7 +91,7 @@ export function NotificationsList() {
         keyExtractor={item => item.id}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No notifications</Text>
+            <Text style={styles.emptyText}>No notifications yet</Text>
           </View>
         }
       />

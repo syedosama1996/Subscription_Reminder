@@ -116,6 +116,16 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
         `${newSubscription.service_name} has been added to your subscriptions`
       );
 
+      // Create notification record in database
+      const { createNotificationRecord } = await import('./notifications');
+      await createNotificationRecord(
+        'New Subscription Added',
+        `${newSubscription.service_name} has been added to your subscriptions`,
+        'general',
+        newSubscription.id,
+        userId
+      );
+
       await logActivity({
         user_id: userId,
         action: 'create',
@@ -290,6 +300,16 @@ export const toggleSubscriptionStatus = async (id: string, isActive: boolean, us
     await scheduleNotification(
       `Subscription ${isActive ? 'Activated' : 'Deactivated'}`,
       `${subscription.service_name} has been ${isActive ? 'activated' : 'deactivated'}`
+    );
+
+    // Create notification record in database
+    const { createNotificationRecord } = await import('./notifications');
+    await createNotificationRecord(
+      `Subscription ${isActive ? 'Activated' : 'Deactivated'}`,
+      `${subscription.service_name} has been ${isActive ? 'activated' : 'deactivated'}`,
+      'general',
+      id,
+      userId
     );
 
     await logActivity({
@@ -647,6 +667,16 @@ export const renewSubscription = async (
     await scheduleNotification(
       'Subscription Renewed',
       `${existingSubscription.service_name} has been renewed until ${new Date(renewalData.expiry_date).toLocaleDateString()}`
+    );
+
+    // Create notification record in database
+    const { createNotificationRecord } = await import('./notifications');
+    await createNotificationRecord(
+      'Subscription Renewed',
+      `${existingSubscription.service_name} has been renewed until ${new Date(renewalData.expiry_date).toLocaleDateString()}`,
+      'general',
+      id,
+      userId
     );
 
     await logActivity({

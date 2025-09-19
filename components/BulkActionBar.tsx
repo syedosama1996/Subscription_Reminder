@@ -35,7 +35,7 @@ export default function BulkActionBar({
           style={styles.actionButton}
           onPress={() => onToggleStatus(true)}
         >
-          <Power size={20} color="#fff" />
+          <Power size={14} color="#fff" />
           <Text style={styles.actionText}>Activate</Text>
         </TouchableOpacity>
         
@@ -43,7 +43,7 @@ export default function BulkActionBar({
           style={styles.actionButton}
           onPress={() => onToggleStatus(false)}
         >
-          <Power size={20} color="#fff" />
+          <Power size={14} color="#fff" />
           <Text style={styles.actionText}>Deactivate</Text>
         </TouchableOpacity>
         
@@ -51,7 +51,7 @@ export default function BulkActionBar({
           style={[styles.actionButton, styles.deleteButton]}
           onPress={onDelete}
         >
-          <Trash2 size={20} color="#fff" />
+          <Trash2 size={14} color="#fff" />
           <Text style={styles.actionText}>Delete</Text>
         </TouchableOpacity>
       </View>
@@ -84,10 +84,10 @@ const styles = StyleSheet.create({
   blurContainer: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    overflow: 'hidden',
+    // overflow: 'hidden',
   },
   androidContainer: {
-    backgroundColor: 'rgba(44, 62, 80, 0.95)',
+    backgroundColor: 'grey',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
@@ -127,8 +127,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderRadius: 14,
   },
   deleteButton: {
@@ -136,8 +136,8 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 12,
     color: '#fff',
-    marginLeft: 8,
+    marginLeft: 4,
   },
 });

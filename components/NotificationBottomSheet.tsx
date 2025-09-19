@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { X, Bell, Calendar, Clock } from 'lucide-react-native';
+import { X, Bell, Calendar, Clock, RefreshCw } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { supabase } from '../lib/supabase';
 
@@ -27,11 +27,13 @@ interface Notification {
 interface NotificationBottomSheetProps {
   visible: boolean;
   onClose: () => void;
+  userId?: string;
 }
 
 export default function NotificationBottomSheet({
   visible,
   onClose,
+  userId,
 }: NotificationBottomSheetProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,16 +42,24 @@ export default function NotificationBottomSheet({
     if (visible) {
       fetchNotifications();
     }
-  }, [visible]);
+  }, [visible, userId]);
 
   async function fetchNotifications() {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('notifications')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
+
+      // Filter by userId if provided
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setNotifications(data || []);
@@ -146,9 +156,12 @@ export default function NotificationBottomSheet({
     <View style={styles.content}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <X size={24} color="#2c3e50" />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+        
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <X size={24} color="#2c3e50" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading ? (
@@ -229,6 +242,19 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  refreshButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(65, 88, 208, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 20,

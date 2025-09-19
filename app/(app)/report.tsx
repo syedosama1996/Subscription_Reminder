@@ -945,7 +945,7 @@ const styles = StyleSheet.create({
   },
   modalScrollView: {
     width: '100%',
-    maxHeight: '80%',
+    maxHeight: '90%',
   },
   modalScrollContent: {
     flexGrow: 1,
@@ -957,7 +957,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 25,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 25,
+    paddingBottom: Platform.OS === 'ios' ? 50 : 35,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -967,6 +967,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 5,
+    minHeight: 300,
   },
    modalTitle: {
     fontSize: 18,

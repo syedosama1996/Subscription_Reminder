@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   RefreshControl,
   Alert,
   Platform
@@ -17,7 +16,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { History } from 'lucide-react-native';
 import CustomLoader from '../../../components/CustomLoader';
 import { useFocusEffect } from 'expo-router';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function PastSubscriptionsScreen() {
   const { user } = useAuth();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Alert, Modal, ActivityIndicator,TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, Modal, ActivityIndicator,TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { User, Mail, Phone, Calendar, MapPin, Edit2, X, ArrowLeft } from 'lucide-react-native';
@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { router } from 'expo-router';
 import { ActivityLogger } from '../../lib/services/activity-logger';
+import CustomModal from '../../components/CustomModal';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -18,6 +19,11 @@ export default function ProfileScreen() {
   const [previousUsername, setPreviousUsername] = useState('');
   const [previousPhone, setPreviousPhone] = useState('Not set');
   const [previousLocation, setPreviousLocation] = useState('Not set');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState<'success' | 'error'>('success');
 
   useEffect(() => {
     // Initialize profile data from profiles table
@@ -103,12 +109,18 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     if (!username.trim()) {
-      Alert.alert('Error', 'Username cannot be empty');
+      setModalTitle('Error');
+      setModalMessage('Username cannot be empty');
+      setModalType('error');
+      setShowErrorModal(true);
       return;
     }
 
     if (phone.trim() !== 'Not set' && phone.trim().length < 10) {
-      Alert.alert('Error', 'Please enter a valid phone number');
+      setModalTitle('Error');
+      setModalMessage('Please enter a valid phone number');
+      setModalType('error');
+      setShowErrorModal(true);
       return;
     }
 
@@ -147,15 +159,24 @@ export default function ProfileScreen() {
       setPreviousPhone(phone.trim() || 'Not set');
       setPreviousLocation(location.trim() || 'Not set');
       setIsModalVisible(false);
-      Alert.alert('Success', 'Profile updated successfully');
+      setModalTitle('Success');
+      setModalMessage('Profile updated successfully');
+      setModalType('success');
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error updating profile:', error);
       // Check if it's a schema error (table doesn't exist)
       if (error && typeof error === 'object' && 'message' in error && 
           typeof error.message === 'string' && error.message.includes('does not exist')) {
-        Alert.alert('Error', 'Database schema not ready. Please contact support or try again later.');
+        setModalTitle('Error');
+        setModalMessage('Database schema not ready. Please contact support or try again later.');
+        setModalType('error');
+        setShowErrorModal(true);
       } else {
-        Alert.alert('Error', 'Failed to update profile. Please try again.');
+        setModalTitle('Error');
+        setModalMessage('Failed to update profile. Please try again.');
+        setModalType('error');
+        setShowErrorModal(true);
       }
     } finally {
       setIsLoading(false);
@@ -270,49 +291,53 @@ export default function ProfileScreen() {
             <View style={styles.modalBody}>
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Username</Text>
-                <TextInput
-                  style={styles.input}
-                  value={username}
-                  onChangeText={setUsername}
-                  placeholder="Enter username"
-                  placeholderTextColor="#95a5a6"
-                  textAlignVertical="center"
-                />
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    value={username}
+                    onChangeText={setUsername}
+                    placeholder="Enter username"
+                    placeholderTextColor="#95a5a6"
+                  />
+                </View>
               </View>
 
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Email</Text>
-                <TextInput
-                  style={styles.readOnlyInput}
-                  value={user?.email || ''}
-                  editable={false}
-                  textAlignVertical="center"
-                />
+                <View style={styles.readOnlyInputWrapper}>
+                  <TextInput
+                    style={styles.readOnlyInput}
+                    value={user?.email || ''}
+                    editable={false}
+                  />
+                </View>
               </View>
 
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Phone</Text>
-                <TextInput
-                  style={styles.input}
-                  value={phone === 'Not set' ? '' : phone}
-                  onChangeText={handlePhoneChange}
-                  placeholder="Enter phone number"
-                  placeholderTextColor="#95a5a6"
-                  keyboardType="phone-pad"
-                  textAlignVertical="center"
-                />
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    value={phone === 'Not set' ? '' : phone}
+                    onChangeText={handlePhoneChange}
+                    placeholder="Enter phone number"
+                    placeholderTextColor="#95a5a6"
+                    keyboardType="phone-pad"
+                  />
+                </View>
               </View>
 
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Location</Text>
-                <TextInput
-                  style={styles.input}
-                  value={location === 'Not set' ? '' : location}
-                  onChangeText={setLocation}
-                  placeholder="Enter location"
-                  placeholderTextColor="#95a5a6"
-                  textAlignVertical="center"
-                />
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    value={location === 'Not set' ? '' : location}
+                    onChangeText={setLocation}
+                    placeholder="Enter location"
+                    placeholderTextColor="#95a5a6"
+                  />
+                </View>
               </View>
             </View>
 
@@ -338,6 +363,26 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Success Modal */}
+      <CustomModal
+        visible={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title={modalTitle}
+        message={modalMessage}
+        type="success"
+        confirmText="OK"
+      />
+
+      {/* Error Modal */}
+      <CustomModal
+        visible={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title={modalTitle}
+        message={modalMessage}
+        type="error"
+        confirmText="OK"
+      />
     </SafeAreaView>
   );
 }
@@ -500,6 +545,15 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 16,
   },
+  inputWrapper: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    paddingLeft: 20,
+    paddingRight: 16,
+    height: 48,
+  },
   inputLabel: {
     fontFamily: 'Inter-Medium',
     fontSize: 14,
@@ -507,28 +561,33 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    flex: 1,
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#2c3e50',
-    backgroundColor: '#fff',
-    minHeight: 48,
+    backgroundColor: 'transparent',
+    paddingVertical: 14,
+    margin: 0,
+    padding: 0,
   },
   readOnlyInput: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    flex: 1,
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#95a5a6',
+    backgroundColor: 'transparent',
+    paddingVertical: 14,
+    margin: 0,
+    padding: 0,
+  },
+  readOnlyInputWrapper: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
     backgroundColor: '#f8f9fa',
-    minHeight: 48,
+    paddingLeft: 20,
+    paddingRight: 16,
+    height: 48,
   },
   modalFooter: {
     flexDirection: 'row',
