@@ -73,9 +73,9 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     position: 'absolute',
-    right: 12,
-    top: '50%',
-    transform: [{ translateY: -10 }], // center vertically
+    right: 10,
+    // top: '46%',
+    transform: [{ translateY: 0 }], // center vertically
     padding: 4,
   },
 });

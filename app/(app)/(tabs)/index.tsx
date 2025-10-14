@@ -503,6 +503,7 @@ export default function HomeScreen() {
           onMomentumScrollBegin={() => setScrolling(true)}
           onMomentumScrollEnd={() => setScrolling(false)}
           scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
         >
           <View style={styles.mainContent}>
 
@@ -722,9 +723,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 240,
+    height: 210,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    zIndex: 1000,
   },
 
   safeArea: {
@@ -732,6 +734,8 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginTop: 40,
+    zIndex: 1001,
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',
@@ -798,12 +802,11 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     paddingLeft: 15,
-    marginTop: 5,
   },
   mainContent: {
     flex: 1,
-    marginTop: Platform.OS === 'ios' ? 5 : 5,
-
+    marginTop: 0,
+    zIndex: 1,
   },
   categoriesWrapper: {
     borderBottomColor: '#e6e6f0',
@@ -975,7 +978,7 @@ const styles = StyleSheet.create({
     // Minimal style, as gradient is applied internally
   },
   contentContainer: {
-    // Add any necessary styles for the content container
+    paddingBottom: Platform.OS === 'android' ? 180 : 200,
   },
   // Delete Confirmation Modal Styles
   modalCenteredView: {

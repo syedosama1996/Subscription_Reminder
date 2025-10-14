@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 160,
+    height: 130,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },

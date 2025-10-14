@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { X, Bell, Calendar, Clock, RefreshCw } from 'lucide-react-native';
+import { X, Bell, Calendar, Clock } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { supabase } from '../lib/supabase';
 

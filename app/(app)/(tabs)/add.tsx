@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +6,8 @@ import {
   ScrollView, 
   Platform,
   KeyboardAvoidingView,
-  Alert
+  Alert,
+  BackHandler
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -53,6 +54,7 @@ export default function AddSubscriptionScreen() {
     { days: 14, enabled: true }, // 2 weeks before
     { days: 7, enabled: true }   // 1 week before
   ]);
+
 
   const handleAddReminder = () => {
     setReminders([...reminders, { days: 1, enabled: true }]);
