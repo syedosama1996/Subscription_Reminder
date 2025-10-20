@@ -21,7 +21,7 @@ interface Notification {
 
 // Configure notification handler
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
+  handleNotification: async (notification) => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
@@ -496,6 +496,8 @@ export function setupNotificationListener() {
         if (newNotification && !newNotification.read) {
           await scheduleNotification(newNotification.title, newNotification.message, {
             notificationId: newNotification.id,
+            subscriptionId: newNotification.subscription_id,
+            type: newNotification.type,
           });
         }
       }

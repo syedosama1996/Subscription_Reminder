@@ -375,17 +375,8 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       )}
 
       <View style={[styles.statusBar, { backgroundColor: getStatusColor() }]}>
-        <LinearGradient
-          colors={getGradientColors()}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.statusGradient}
-        />
-        {(days <= 30 && days > 0) && (
-          <View style={styles.statusIconContainer}>
-            <Clock size={12} color="#ffffff" />
-          </View>
-        )}
+     
+      
       </View>
     </TouchableOpacity>
   );

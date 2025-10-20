@@ -431,7 +431,6 @@ export default function HomeScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.headerGradient}
       />
-      {/* Header Section */}
       <View style={styles.headerContainer}>
         <View style={styles.header}>
           <TouchableOpacity
@@ -494,7 +493,7 @@ export default function HomeScreen() {
           <Text style={styles.title}>Active Subscriptions</Text>
         </View>
       </View>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} >
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
@@ -504,6 +503,8 @@ export default function HomeScreen() {
           onMomentumScrollEnd={() => setScrolling(false)}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
         >
           <View style={styles.mainContent}>
 
@@ -717,6 +718,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    backgroundColor: '#f8f9fa',
   },
   headerGradient: {
     position: 'absolute',
@@ -733,7 +735,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerContainer: {
-    marginTop: 40,
+    marginTop: 30,
     zIndex: 1001,
     position: 'relative',
   },
@@ -742,7 +744,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingVertical: 15,
   },
   menuButton: {
     width: 40,
@@ -978,7 +980,8 @@ const styles = StyleSheet.create({
     // Minimal style, as gradient is applied internally
   },
   contentContainer: {
-    paddingBottom: Platform.OS === 'android' ? 180 : 200,
+    // paddingBottom: Platform.OS === 'android' ? 180 : 200,
+    backgroundColor: '#f8f9fa',
   },
   // Delete Confirmation Modal Styles
   modalCenteredView: {

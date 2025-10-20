@@ -406,7 +406,7 @@ export default function SubscriptionDetailScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Subscription Details</Text>
+          <Text style={styles.sectionTitle}></Text>
           
           <View style={styles.detailRow}>
             <Globe size={20} color="#7f8c8d" style={styles.detailIcon} />

@@ -191,16 +191,9 @@ export default function AddSubscriptionScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}
         >
-          <View style={styles.header}>
-            <Text style={styles.title}>Add Subscription</Text>
-          </View>
-
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
+            <View style={styles.header}>
+              <Text style={styles.title}>Add Subscription</Text>
             </View>
-          )}
-
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
             <View style={styles.formSection}>
               <Text style={styles.sectionTitle}>Basic Information</Text>
@@ -450,9 +443,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 150,
+    height: 130,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    // zIndex: 1000,
   },
   safeArea: {
     flex: 1,
@@ -464,6 +458,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
+ 
   title: {
     fontFamily: 'Inter-Bold',
     fontSize: 32,

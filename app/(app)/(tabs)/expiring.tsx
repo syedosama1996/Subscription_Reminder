@@ -143,11 +143,14 @@ export default function ExpiringSubscriptionsScreen() {
             data={subscriptions}
             keyExtractor={(item, index) => item.id || `subscription-${index}`}
             renderItem={({ item }) => (
+              <View style={styles.cardWrapper}>
+
               <SubscriptionCard
                 subscription={item}
                 onToggleStatus={null}
                 simpleExpiryDisplay={true}
               />
+                </View>
             )}
             contentContainerStyle={styles.listContent}
             refreshControl={
@@ -175,14 +178,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 150,
+    height: 125,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
 
   safeArea: {
     flex: 1,
-    paddingBottom: Platform.OS === 'android' ? 0 : 0,
   },
   header: {
     paddingHorizontal: 20,
@@ -208,6 +210,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: Platform.OS === 'android' ? 90 : 100,
+    marginBottom:20
+  },
+  cardWrapper: {
+    marginBottom: 20,
   },
   errorContainer: {
     margin: 20,

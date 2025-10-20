@@ -134,11 +134,13 @@ export default function PastSubscriptionsScreen() {
             data={subscriptions}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
+              <View style={styles.cardWrapper}>
               <SubscriptionCard
                 subscription={item}
                 onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id, isActive)}
                 onRefresh={loadData}
               />
+              </View>
             )}
             contentContainerStyle={styles.listContent}
             refreshControl={
@@ -166,10 +168,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 150,
+    height: 125,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
+  cardWrapper: {
+    marginBottom: 20,
+  },  
   safeArea: {
     flex: 1,
     paddingBottom: Platform.OS === 'android' ? 60 : 80,

@@ -15,6 +15,8 @@ import {
   setupNotificationListener,
   setupAllExpiryReminders
 } from '../lib/notifications';
+import * as Notifications from 'expo-notifications';
+import { useRouter } from 'expo-router';
 import { getSubscriptions } from '../lib/subscriptions';
 import { LogBox, View } from 'react-native';
 
@@ -38,6 +40,7 @@ const InnerLayout = () => {
   });
 
   const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
@@ -50,13 +53,23 @@ const InnerLayout = () => {
 
   // Initialize notifications
   useEffect(() => {
-    let subscriptionSub, notificationSub;
+    let subscriptionSub, notificationSub, responseListener;
     
     async function setupNotifications() {
       try {
         await registerForPushNotificationsAsync();
         subscriptionSub = setupSubscriptionNotifications();
         notificationSub = setupNotificationListener();
+        
+        // Set up notification response listener
+        responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+          const data = response.notification.request.content.data;
+          
+          // If notification has subscription_id, navigate to subscription detail
+          if (data?.subscriptionId) {
+            router.push(`/subscription/${data.subscriptionId}`);
+          }
+        });
       } catch (error) {
         console.error('Error setting up notifications:', error);
       }
@@ -67,8 +80,9 @@ const InnerLayout = () => {
     return () => {
       if (subscriptionSub?.unsubscribe) subscriptionSub.unsubscribe();
       if (notificationSub?.unsubscribe) notificationSub.unsubscribe();
+      if (responseListener) Notifications.removeNotificationSubscription(responseListener);
     };
-  }, []);
+  }, [router]);
 
   // Set up expiry reminders when user is logged in
   useEffect(() => {

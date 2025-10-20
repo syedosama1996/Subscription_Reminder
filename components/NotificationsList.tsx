@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { useRouter } from 'expo-router';
 
 interface Notification {
   id: string;
@@ -18,6 +19,7 @@ interface Notification {
 export function NotificationsList() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     fetchNotifications();
@@ -60,10 +62,20 @@ export function NotificationsList() {
     }
   }
 
+  const handleNotificationPress = (notification: Notification) => {
+    // Mark as read first
+    markAsRead(notification.id);
+    
+    // If notification has subscription_id, navigate to subscription detail
+    if (notification.subscription_id) {
+      router.push(`/subscription/${notification.subscription_id}`);
+    }
+  };
+
   const renderItem = ({ item }: { item: Notification }) => (
     <TouchableOpacity
       style={[styles.notificationItem, item.read ? styles.read : styles.unread]}
-      onPress={() => markAsRead(item.id)}
+      onPress={() => handleNotificationPress(item)}
     >
       <View style={styles.notificationContent}>
         <Text style={styles.title}>{item.title}</Text>

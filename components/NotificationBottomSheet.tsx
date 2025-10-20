@@ -13,6 +13,7 @@ import { BlurView } from 'expo-blur';
 import { X, Bell, Calendar, Clock } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { supabase } from '../lib/supabase';
+import { useRouter } from 'expo-router';
 
 interface Notification {
   id: string;
@@ -37,6 +38,7 @@ export default function NotificationBottomSheet({
 }: NotificationBottomSheetProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     if (visible) {
@@ -72,6 +74,7 @@ export default function NotificationBottomSheet({
           title: 'Domain Expiring Soon',
           message: 'Your domain subscription expires in 7 days',
           type: 'expiry_reminder',
+          subscription_id: 'mock-subscription-1',
           read: false,
           created_at: new Date().toISOString(),
         },
@@ -80,6 +83,7 @@ export default function NotificationBottomSheet({
           title: 'Payment Reminder',
           message: 'GoDaddy subscription payment is due tomorrow',
           type: 'payment_due',
+          subscription_id: 'mock-subscription-2',
           read: true,
           created_at: new Date(Date.now() - 86400000).toISOString(),
         },
@@ -129,10 +133,21 @@ export default function NotificationBottomSheet({
     }
   };
 
+  const handleNotificationPress = (notification: Notification) => {
+    // Mark as read first
+    markAsRead(notification.id);
+    
+    // If notification has subscription_id, navigate to subscription detail
+    if (notification.subscription_id) {
+      router.push(`/subscription/${notification.subscription_id}`);
+      onClose(); // Close the notification sheet
+    }
+  };
+
   const renderNotification = ({ item }: { item: Notification }) => (
     <TouchableOpacity
       style={[styles.notificationItem, item.read ? styles.read : styles.unread]}
-      onPress={() => markAsRead(item.id)}
+      onPress={() => handleNotificationPress(item)}
     >
       <View style={styles.iconContainer}>
         {getNotificationIcon(item.type)}
@@ -147,6 +162,9 @@ export default function NotificationBottomSheet({
         <Text style={styles.date}>
           {format(new Date(item.created_at), 'MMM d, yyyy h:mm a')}
         </Text>
+        {item.subscription_id && (
+          <Text style={styles.clickableHint}>Tap to view subscription</Text>
+        )}
       </View>
       {!item.read && <View style={styles.unreadDot} />}
     </TouchableOpacity>
@@ -353,5 +371,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#4158D0',
     marginLeft: 8,
+  },
+  clickableHint: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#3498db',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
