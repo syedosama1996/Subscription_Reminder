@@ -14,6 +14,7 @@ import { X, Bell, Calendar, Clock } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
+import { useNotificationCount } from '../lib/hooks/useNotificationCount';
 
 interface Notification {
   id: string;
@@ -39,6 +40,7 @@ export default function NotificationBottomSheet({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { markAsRead: markNotificationAsRead, markAllAsRead } = useNotificationCount(userId);
 
   useEffect(() => {
     if (visible) {
@@ -134,7 +136,8 @@ export default function NotificationBottomSheet({
   };
 
   const handleNotificationPress = (notification: Notification) => {
-    // Mark as read first
+    // Mark as read first using the hook
+    markNotificationAsRead(notification.id);
     markAsRead(notification.id);
     
     // If notification has subscription_id, navigate to subscription detail
@@ -175,7 +178,7 @@ export default function NotificationBottomSheet({
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Notifications</Text>
         <View style={styles.headerButtons}>
-        
+         
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <X size={24} color="#2c3e50" />
           </TouchableOpacity>
@@ -278,6 +281,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Inter-Bold',
     color: '#2c3e50',
+  },
+  markAllButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(65, 88, 208, 0.1)',
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  markAllText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#4158D0',
   },
   closeButton: {
     width: 36,

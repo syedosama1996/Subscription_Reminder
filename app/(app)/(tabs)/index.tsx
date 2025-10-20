@@ -16,7 +16,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../lib/auth';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
-import { Drawer } from 'expo-router/drawer';
 import {
   getSubscriptions,
   getCategories,
@@ -26,18 +25,16 @@ import {
   exportSubscriptionsToCSV
 } from '../../../lib/subscriptions';
 import SubscriptionCard from '../../../components/SubscriptionCard';
-import CategoryBadge from '../../../components/CategoryBadge';
 import FilterModal from '../../../components/FilterModal';
 import BulkActionBar from '../../../components/BulkActionBar';
 import NotificationBottomSheet from '../../../components/NotificationBottomSheet';
+import NotificationIcon from '../../../components/NotificationIcon';
 import { Search, Bell, Plus, Filter, Download, CheckSquare, Menu, CheckCircle2, XCircle, TrendingUp, Calendar, DollarSign, AlertTriangle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Category, SubscriptionFilter } from '../../../lib/types';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import CustomLoader from '../../../components/CustomLoader';
-import { ScrollView as GestureScrollView } from 'react-native-gesture-handler';
 import { setScrolling } from '../../../components/SubscriptionCard';
 import { TouchableOpacity } from 'react-native';
 
@@ -448,12 +445,13 @@ export default function HomeScreen() {
                 >
                   <CheckSquare size={22} color="#fff" />
                 </TouchableOpacity>
-                <TouchableOpacity
+                <NotificationIcon
                   style={styles.iconButton}
                   onPress={() => setNotificationBottomSheetVisible(true)}
-                >
-                  <Bell size={22} color="#fff" />
-                </TouchableOpacity>
+                  userId={user?.id}
+                  size={22}
+                  color="#fff"
+                />
               </>
             ) : (
               <>
@@ -636,7 +634,7 @@ export default function HomeScreen() {
             )}
           </View>
 
-          <CustomLoader visible={toggleLoading} />
+          {/* <CustomLoader visible={toggleLoading} /> */}
         </ScrollView>
       </SafeAreaView>
 
