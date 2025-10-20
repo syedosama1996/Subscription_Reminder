@@ -159,8 +159,7 @@ export default function LoginScreen() {
               style={styles.forgotPasswordButton}
               onPress={() => {
                 setTimeout(() => {
-                  // TODO: Implement forgot password functionality
-                  Alert.alert('Forgot Password', 'This feature will be implemented soon.');
+                  router.push('/forgot-password');
                 }, 50);
               }}
               activeOpacity={0.5}

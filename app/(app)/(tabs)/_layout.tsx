@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet, Platform, Text, TouchableOpacity } from 'react-native';
-import { Zap, Plus, CalendarClock, Archive } from 'lucide-react-native';
+import { Zap, PlusCircle, CalendarClock, Archive } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -29,7 +29,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
   return (
     <View style={[styles.tabBarContainer, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       <View style={styles.tabBarBackground} />
-      
+
       <View style={styles.tabBar}>
         {state.routes.map((route: Route, index: number) => {
           const { options } = descriptors[route.key];
@@ -56,15 +56,25 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
               activeOpacity={0.7}
             >
               {isAddButton ? (
-                <View style={styles.addButtonContainer}>
-                  <LinearGradient
-                    colors={['#4158D0', '#C850C0']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.addButton}
-                  >
-                    <Plus size={22} color="white" strokeWidth={2.5} />
-                  </LinearGradient>
+                <View style={styles.regularTabContainer}>
+                  {isFocused && (
+                    <LinearGradient
+                      colors={['#4158D0', '#C850C0']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.activeBackground}
+                    />
+                  )}
+                  <View style={styles.iconContainer}>
+                    {options.tabBarIcon?.({
+                      color: isFocused ? '#FFFFFF' : '#9CA3AF',
+                      size: 24,
+                      focused: isFocused,
+                    })}
+                  </View>
+                  <Text style={[styles.tabLabel, { color: isFocused ? '#FFFFFF' : '#9CA3AF' }]}>
+                    {options.title}
+                  </Text>
                 </View>
               ) : (
                 <View style={styles.regularTabContainer}>
@@ -139,8 +149,8 @@ export default function TabLayout() {
         name="add"
         options={{
           title: 'Add',
-          tabBarIcon: ({ size }: TabBarIconProps) => (
-            <Plus size={size} color="white" strokeWidth={2} />
+          tabBarIcon: ({ color, size }: TabBarIconProps) => (
+            <PlusCircle size={size} color={color} strokeWidth={2} />
           ),
         }}
       />

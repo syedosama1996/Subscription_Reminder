@@ -17,6 +17,8 @@ type AuthContextType = {
   signIn: (email: string, password: string, shouldTriggerBiometric?: boolean) => Promise<void>;
   signInWithId: (userId: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPasswordWithCode: (email: string, code: string, newPassword: string) => Promise<void>;
   error: string | null;
   isBiometricSupported: boolean;
   enableBiometric: (email: string, password: string) => Promise<void>;
@@ -450,6 +452,139 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Check if Supabase is configured
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase is not configured. Please set up your Supabase credentials.');
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // Check if the email exists in the database
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', email)
+        .single();
+      
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('Error checking if email exists:', userError);
+        throw new Error('Unable to verify email address. Please try again.');
+      }
+      
+      if (!userData) {
+        // Don't reveal if email exists or not for security
+        console.log('Password reset requested for non-existent email:', email);
+        // Still show success toast for security reasons
+        Toast.show({
+          type: 'success',
+          text1: 'Password reset email sent',
+          text2: 'If an account exists, you will receive a code shortly.',
+        });
+        return;
+      }
+
+      // Send password reset email
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: Platform.OS === 'web' 
+          ? `${window.location.origin}/reset-password` 
+          : 'myapp://reset-password',
+      });
+
+      if (error) {
+        console.error('Password reset error:', error);
+        throw new Error('Failed to send password reset email. Please try again.');
+      }
+
+      // Log password reset request
+      await ActivityLogger.log({
+        user_id: userData.id,
+        action: 'password_reset_request',
+        entity_type: 'account',
+        entity_id: userData.id,
+        details: {
+          email: email
+        }
+      });
+
+      Toast.show({
+        type: 'success',
+        text1: 'Password reset email sent',
+        text2: 'Check your email for the code to reset your password.',
+      });
+
+    } catch (error: any) {
+      console.error('Forgot password error:', error);
+      setError(error.message || 'Failed to send password reset email');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPasswordWithCode = async (email: string, code: string, newPassword: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Validate inputs
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address');
+      }
+      if (!code || code.trim().length < 4) {
+        throw new Error('Please enter the verification code');
+      }
+      if (!newPassword || newPassword.length < 6) {
+        throw new Error('Password must be at least 6 characters');
+      }
+
+      // Verify the recovery code
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: code,
+        type: 'recovery',
+      });
+
+      if (verifyError) {
+        console.error('Verify recovery code error:', verifyError);
+        throw new Error('Invalid or expired code');
+      }
+
+      // Update the password for the now-authenticated recovery session
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) {
+        console.error('Update password error:', updateError);
+        const friendly = updateError.message?.includes('New password should be different')
+          ? 'New password must be different from the old password.'
+          : 'Failed to set new password';
+        setError(friendly);
+        Toast.show({ type: 'error', text1: 'Password not changed', text2: friendly });
+        throw new Error(friendly);
+      }
+
+      Toast.show({ type: 'success', text1: 'Password updated', text2: 'You can now log in with the new password.' });
+      router.replace('/(auth)/login');
+    } catch (error: any) {
+      console.error('Reset password with code error:', error);
+      setError(error.message || 'Failed to reset password');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -460,6 +595,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signInWithId,
         signOut,
+        forgotPassword,
+        resetPasswordWithCode,
         error,
         isBiometricSupported,
         enableBiometric,
