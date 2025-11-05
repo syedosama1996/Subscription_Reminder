@@ -957,7 +957,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 25,
-    paddingBottom: Platform.OS === 'ios' ? 50 : 35,
+    paddingBottom: Platform.OS === 'ios' ? 80 : 60,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -994,7 +994,8 @@ const styles = StyleSheet.create({
       backgroundColor: '#1976D2',
   },
    modalButtonClose: {
-    marginTop: 0,
+    marginTop: 10,
+    marginBottom: 10,
     backgroundColor: '#fff',
     borderWidth: 2,
     borderColor: '#e74c3c',
@@ -1002,6 +1003,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 25,
     minWidth: 150,
+    width: '90%',
    },
   modalButtonText: {
     color: 'white',

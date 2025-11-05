@@ -19,6 +19,7 @@ import {
   updateSubscription, 
   deleteSubscription, 
   renewSubscription,
+  toggleSubscriptionStatus,
   Subscription, 
   Reminder,
   SubscriptionHistory
@@ -41,7 +42,8 @@ import {
   Link,
   History,
   X,
-  Check
+  Check,
+  Power
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
@@ -247,6 +249,28 @@ export default function SubscriptionDetailScreen() {
     setHistoryModalVisible(true);
   };
 
+  const handleToggleStatus = async () => {
+    if (!subscription?.id || !user) return;
+    
+    try {
+      setLoading(true);
+      const newStatus = !subscription.is_active;
+      await toggleSubscriptionStatus(subscription.id, newStatus, user.id);
+      await loadSubscription();
+      
+      setModalTitle('Success');
+      setModalMessage(`Subscription ${newStatus ? 'activated' : 'deactivated'} successfully`);
+      setSuccessModalVisible(true);
+    } catch (err) {
+      console.error('Error toggling subscription status:', err);
+      setModalTitle('Error');
+      setModalMessage('Failed to toggle subscription status');
+      setErrorModalVisible(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -397,12 +421,33 @@ export default function SubscriptionDetailScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.statusBar}>
-          <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
-          <Text style={[styles.statusText, { color: getStatusColor() }]}>
-            {getStatusText()}
-          </Text>
+          <View style={styles.statusBarContent}>
+            <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
+            <Text style={[styles.statusText, { color: getStatusColor() }]}>
+              {getStatusText()}
+            </Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.toggleButton}
+            onPress={handleToggleStatus}
+            disabled={loading}
+          >
+            <Power 
+              size={20} 
+              color={subscription?.is_active ? '#2ecc71' : '#e74c3c'} 
+            />
+            <Text style={[
+              styles.toggleButtonText,
+              { color: subscription?.is_active ? '#2ecc71' : '#e74c3c' }
+            ]}>
+              {subscription?.is_active ? 'Deactivate' : 'Activate'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -984,9 +1029,13 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 80,
+  },
   statusBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#fff',
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -999,6 +1048,11 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
+  statusBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   statusIndicator: {
     width: 12,
     height: 12,
@@ -1008,6 +1062,21 @@ const styles = StyleSheet.create({
   statusText: {
     fontFamily: 'Inter-SemiBold',
     fontSize: 16,
+  },
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f5f6fa',
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
+  },
+  toggleButtonText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 10,
+    marginLeft: 8,
   },
   section: {
     backgroundColor: '#fff',
@@ -1098,7 +1167,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginHorizontal: 20,
-    marginBottom: 40,
+    marginBottom: 60,
   },
   renewButton: {
     backgroundColor: '#2ecc71',
@@ -1192,8 +1261,7 @@ const styles = StyleSheet.create({
     color: '#2c3e50',
   },
   modalButton: {
-    marginTop: 8,
-    marginBottom: 20,
+    marginBottom: 50,
   },
   vendorToggleContainer: {
     flexDirection: 'row',

@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityLogger } from '../../lib/services/activity-logger';
 import { useRouter } from 'expo-router';
 import CustomLoader from '@/components/CustomLoader';
+import { supabase } from '../../lib/supabase';
 
 interface ActivityItem {
   id: string;
@@ -15,6 +16,7 @@ interface ActivityItem {
   entity_id: string | null;
   details: Record<string, any> | null;
   created_at: string;
+  subscription_name?: string; // Will be populated for subscription activities
 }
 
 export default function ActivityLogScreen() {
@@ -77,7 +79,9 @@ export default function ActivityLogScreen() {
       if (data.activities.length === 0) {
         setActivities([]);
       } else {
-        setActivities(data.activities);
+        // Enrich activities with subscription names if needed
+        const enrichedActivities = await enrichActivitiesWithSubscriptionNames(data.activities);
+        setActivities(enrichedActivities);
       }
       setHasMore(data.hasMore);
       setTotalCount(data.totalCount);
@@ -86,6 +90,40 @@ export default function ActivityLogScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to enrich activities with subscription names
+  const enrichActivitiesWithSubscriptionNames = async (activities: ActivityItem[]) => {
+    const enriched = await Promise.all(activities.map(async (activity) => {
+      // If it's a subscription activity and doesn't have service_name in details
+      if (activity.entity_type === 'subscription' && activity.entity_id) {
+        // Check if service_name is already in details
+        if (!activity.details?.service_name && !activity.details?.name) {
+          try {
+            // Try to fetch subscription name
+            const { data: subscription } = await supabase
+              .from('subscriptions')
+              .select('service_name')
+              .eq('id', activity.entity_id)
+              .single();
+            
+            if (subscription?.service_name) {
+              return {
+                ...activity,
+                details: {
+                  ...activity.details,
+                  service_name: subscription.service_name
+                }
+              };
+            }
+          } catch (err) {
+            console.error('Error fetching subscription name:', err);
+          }
+        }
+      }
+      return activity;
+    }));
+    return enriched;
   };
 
   const loadMoreActivities = async () => {
@@ -100,7 +138,8 @@ export default function ActivityLogScreen() {
       });
 
       if (data.activities.length > 0) {
-        setActivities(prev => [...prev, ...data.activities]);
+        const enrichedActivities = await enrichActivitiesWithSubscriptionNames(data.activities);
+        setActivities(prev => [...prev, ...enrichedActivities]);
         setOffset(offset + PAGE_SIZE);
       } else {
         setHasMore(false);
@@ -180,7 +219,7 @@ export default function ActivityLogScreen() {
   };
 
   const getActivityDescription = (activity: ActivityItem) => {
-    const entityName = activity.details?.service_name || activity.details?.name || '';
+    const entityName = activity.details?.service_name || activity.details?.name || 'subscription';
     const entityType = activity.entity_type.charAt(0).toUpperCase() + activity.entity_type.slice(1);
     const textColor = getTextColor(activity.action);
 
@@ -192,9 +231,9 @@ export default function ActivityLogScreen() {
       case 'delete':
         return { text: `Deleted ${entityType} "${entityName}"`, color: textColor };
       case 'activate':
-        return { text: `Activated ${entityType} "${entityName}"`, color: textColor };
+        return { text: `Activated Subscription "${entityName}"`, color: textColor };
       case 'deactivate':
-        return { text: `Deactivated ${entityType} "${entityName}"`, color: textColor };
+        return { text: `Deactivated Subscription "${entityName}"`, color: textColor };
       case 'renew':
         return { text: `Renewed ${entityType} "${entityName}"`, color: textColor };
       default:
@@ -253,24 +292,23 @@ export default function ActivityLogScreen() {
     return (
       <View style={styles.activityCard}>
         <View style={styles.activityContent}>
-          <View style={[styles.iconContainer, { backgroundColor: `${iconColor}15` }]}>
-            <ActionIcon size={20} color={iconColor} />
+          <View style={[
+            styles.iconContainer, 
+            { 
+              backgroundColor: iconColor
+            }
+          ]}>
+            <ActionIcon size={22} color="#FFFFFF" strokeWidth={2.5} />
           </View>
           <View style={styles.activityInfo}>
-            <Text style={[styles.activityTitle, { color: description.color }]}>{description.text}</Text>
-            {item.details && (
-              <Text style={styles.activityDescription}>
-                {Object.entries(item.details)
-                  .filter(([key]) => !['service_name', 'name'].includes(key))
-                  .map(([key, value]) => `${key}: ${value}`)
-                  .join(', ')}
-              </Text>
-            )}
+            <Text style={[styles.activityTitle, { color: description.color }]}>
+              {description.text}
+            </Text>
+            <View style={styles.activityFooter}>
+              <Clock size={14} color="#9CA3AF" />
+              <Text style={styles.timestamp}>{relativeTime}</Text>
+            </View>
           </View>
-        </View>
-        <View style={styles.activityFooter}>
-          <Clock size={16} color="#6B7280" />
-          <Text style={styles.timestamp}>{relativeTime}</Text>
         </View>
       </View>
     );
@@ -476,73 +514,83 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   activityCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
   activityContent: {
     flexDirection: 'row',
-    marginBottom: 12,
+    alignItems: 'flex-start',
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 14,
   },
   activityInfo: {
     flex: 1,
+    paddingTop: 2,
   },
   activityTitle: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
-    marginBottom: 6,
+    fontSize: 15,
     lineHeight: 22,
+    marginBottom: 8,
+    letterSpacing: -0.2,
   },
   activityDescription: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
-    lineHeight: 20,
+    lineHeight: 18,
+    marginTop: 4,
   },
   activityFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 4,
   },
   timestamp: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Inter-Medium',
     fontSize: 12,
-    color: '#7f8c8d',
-    marginLeft: 8,
+    color: '#9CA3AF',
+    marginLeft: 6,
+    letterSpacing: 0.2,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 40,
+    marginTop: 60,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Inter-SemiBold',
-    color: '#2c3e50',
-    marginTop: 16,
+    color: '#374151',
+    marginTop: 20,
+    letterSpacing: -0.3,
   },
   emptySubtext: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter-Regular',
-    color: '#7f8c8d',
+    color: '#9CA3AF',
     marginTop: 8,
+    textAlign: 'center',
   },
   footerLoader: {
     flexDirection: 'row',
@@ -565,21 +613,22 @@ const styles = StyleSheet.create({
   filterMenu: {
     backgroundColor: '#fff',
     marginHorizontal: 20,
-    borderRadius: 12,
-    padding: 8,
+    borderRadius: 16,
+    padding: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   filterMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    marginBottom: 4,
   },
   filterMenuItemActive: {
     backgroundColor: 'rgba(65, 88, 208, 0.1)',
@@ -587,7 +636,8 @@ const styles = StyleSheet.create({
   filterMenuText: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',
-    color: '#333',
+    color: '#374151',
+    letterSpacing: -0.2,
   },
   filterMenuTextActive: {
     color: '#4158D0',

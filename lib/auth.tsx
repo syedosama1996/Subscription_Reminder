@@ -543,8 +543,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!code || code.trim().length < 4) {
         throw new Error('Please enter the verification code');
       }
-      if (!newPassword || newPassword.length < 6) {
-        throw new Error('Password must be at least 6 characters');
+      // Validate password strength
+      const minLength = 8;
+      const hasUpperCase = /[A-Z]/.test(newPassword);
+      const hasLowerCase = /[a-z]/.test(newPassword);
+      const hasNumbers = /\d/.test(newPassword);
+      const hasSpecialChar = /[^A-Za-z0-9]/.test(newPassword);
+
+      if (!newPassword || newPassword.length < minLength) {
+        throw new Error('Password must be at least 8 characters long');
+      }
+      if (!hasUpperCase) {
+        throw new Error('Password must contain at least one uppercase letter');
+      }
+      if (!hasLowerCase) {
+        throw new Error('Password must contain at least one lowercase letter');
+      }
+      if (!hasNumbers) {
+        throw new Error('Password must contain at least one number');
+      }
+      if (!hasSpecialChar) {
+        throw new Error('Password must contain at least one special character');
       }
 
       // Verify the recovery code

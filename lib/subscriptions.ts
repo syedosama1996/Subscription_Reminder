@@ -305,7 +305,10 @@ export const toggleSubscriptionStatus = async (id: string, isActive: boolean, us
       action: isActive ? 'activate' : 'deactivate',
       entity_type: 'subscription',
       entity_id: id,
-      details: { is_active: isActive }
+      details: { 
+        is_active: isActive,
+        service_name: subscription.service_name
+      }
     });
     
     return data;
