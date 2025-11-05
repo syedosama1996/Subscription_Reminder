@@ -44,6 +44,9 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
     if (selectedCategoryId && categories.length > 0) {
       const category = categories.find(cat => cat.id === selectedCategoryId);
       setSelectedCategory(category || null);
+    } else if (!selectedCategoryId) {
+      // Clear selection if selectedCategoryId is null/undefined
+      setSelectedCategory(null);
     }
   }, [selectedCategoryId, categories]);
 
@@ -114,7 +117,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
       
       {selectedCategory ? (
         <View style={styles.selectedContainer}>
-          <CategoryBadge category={selectedCategory} selected />
+          <CategoryBadge category={selectedCategory} />
           <TouchableOpacity 
             style={styles.changeButton}
             onPress={() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -7,21 +7,21 @@ import {
   Platform,
   KeyboardAvoidingView,
   Alert,
-  BackHandler
+  BackHandler,
+  TouchableOpacity
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../../lib/auth';
 import { createSubscription, createReminder } from '../../../lib/subscriptions';
 import Input from '../../../components/Input';
 import Button from '../../../components/Button';
 import CategorySelector from '../../../components/CategorySelector';
-import { Calendar, DollarSign, Globe, Key, Mail, User, X, Link } from 'lucide-react-native';
+import { Calendar, DollarSign, Globe, Key, Mail, User, X, Link, Eye, EyeOff } from 'lucide-react-native';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Category } from '../../../lib/types';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function AddSubscriptionScreen() {
   const { user } = useAuth();
@@ -43,6 +43,7 @@ export default function AddSubscriptionScreen() {
   const [vendor, setVendor] = useState('');
   const [vendorLink, setVendorLink] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Date picker state
   const [showPurchaseDatePicker, setShowPurchaseDatePicker] = useState(false);
@@ -85,9 +86,30 @@ export default function AddSubscriptionScreen() {
   };
 
   const clearError = () => {
-    if (error) {
-      setError(null);
-    }
+    setError(null);
+  };
+
+  const resetForm = () => {
+    setServiceName('');
+    setDomainName('');
+    setPurchaseDate(new Date());
+    setExpiryDate(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000));
+    setAmountPKR('');
+    setAmountUSD('');
+    setEmail('');
+    setUsername('');
+    setPassword('');
+    setNotes('');
+    setVendor('');
+    setVendorLink('');
+    setSelectedCategory(null);
+    setError(null);
+    setShowPassword(false);
+    setReminders([
+      { days: 30, enabled: true },
+      { days: 14, enabled: true },
+      { days: 7, enabled: true }
+    ]);
   };
 
   const handleSubmit = async () => {
@@ -102,6 +124,51 @@ export default function AddSubscriptionScreen() {
       return;
     }
 
+    // Validate dates
+    if (!purchaseDate || isNaN(purchaseDate.getTime())) {
+      setError('Purchase date is required');
+      return;
+    }
+
+    if (!expiryDate || isNaN(expiryDate.getTime())) {
+      setError('Expiry date is required');
+      return;
+    }
+
+    // Validate that expiry date is after purchase date
+    if (expiryDate <= purchaseDate) {
+      setError('Expiry date must be after purchase date');
+      return;
+    }
+
+    // Validate at least one amount is provided
+    const amountPKRNum = amountPKR ? parseFloat(amountPKR) : 0;
+    const amountUSDNum = amountUSD ? parseFloat(amountUSD) : 0;
+    
+    if (amountPKRNum <= 0 && amountUSDNum <= 0) {
+      setError('Please provide at least one amount (PKR or USD)');
+      return;
+    }
+
+    // Validate numeric amounts
+    if (amountPKR && (isNaN(amountPKRNum) || amountPKRNum < 0)) {
+      setError('Amount (PKR) must be a valid positive number');
+      return;
+    }
+
+    if (amountUSD && (isNaN(amountUSDNum) || amountUSDNum < 0)) {
+      setError('Amount (USD) must be a valid positive number');
+      return;
+    }
+
+    // Validate reminders if any are enabled
+    for (const reminder of reminders) {
+      if (reminder.enabled && (!reminder.days || reminder.days <= 0)) {
+        setError('Reminder days must be a positive number');
+        return;
+      }
+    }
+
     try {
       setLoading(true);
 
@@ -111,8 +178,8 @@ export default function AddSubscriptionScreen() {
         service_name: serviceName,
         domain_name: domainName,
         purchase_date: purchaseDate.toISOString(),
-        purchase_amount_pkr: amountPKR ? parseFloat(amountPKR) : 0,
-        purchase_amount_usd: amountUSD ? parseFloat(amountUSD) : 0,
+        purchase_amount_pkr: amountPKRNum,
+        purchase_amount_usd: amountUSDNum,
         expiry_date: expiryDate.toISOString(),
         email: email,
         username: username,
@@ -134,6 +201,23 @@ export default function AddSubscriptionScreen() {
           });
         }
       }
+
+      // Reset form immediately after successful submission
+      resetForm();
+
+      // Show success and navigate back
+      Alert.alert(
+        'Success',
+        'Subscription added successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.back();
+            }
+          }
+        ]
+      );
     } catch (err: any) {
       console.error('Error adding subscription:', err);
       setError(err.message || 'Failed to add subscription');
@@ -195,6 +279,11 @@ export default function AddSubscriptionScreen() {
               <Text style={styles.title}>Add Subscription</Text>
             </View>
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+            {error && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
             <View style={styles.formSection}>
               <Text style={styles.sectionTitle}>Basic Information</Text>
               
@@ -218,7 +307,10 @@ export default function AddSubscriptionScreen() {
                   label="Domain Name (if applicable)"
                   placeholder="example.com"
                   value={domainName}
-                  onChangeText={setDomainName}
+                  onChangeText={(text) => {
+                    setDomainName(text);
+                    clearError();
+                  }}
                   containerStyle={styles.input}
                 />
               </View>
@@ -234,7 +326,10 @@ export default function AddSubscriptionScreen() {
                   label="Vendor"
                   placeholder="Company providing the service"
                   value={vendor}
-                  onChangeText={setVendor}
+                  onChangeText={(text) => {
+                    setVendor(text);
+                    clearError();
+                  }}
                   containerStyle={styles.input}
                 />
               </View>
@@ -245,7 +340,10 @@ export default function AddSubscriptionScreen() {
                   label="Vendor Link"
                   placeholder="https://vendor-website.com"
                   value={vendorLink}
-                  onChangeText={setVendorLink}
+                  onChangeText={(text) => {
+                    setVendorLink(text);
+                    clearError();
+                  }}
                   keyboardType="url"
                   autoCapitalize="none"
                   containerStyle={styles.input}
@@ -254,8 +352,14 @@ export default function AddSubscriptionScreen() {
 
               {Platform.OS === 'web' ? (
                 <>
-                  {renderWebDatePicker(purchaseDate, setPurchaseDate, "Purchase Date")}
-                  {renderWebDatePicker(expiryDate, setExpiryDate, "Expiry Date")}
+                  {renderWebDatePicker(purchaseDate, (date) => {
+                    setPurchaseDate(date);
+                    clearError();
+                  }, "Purchase Date")}
+                  {renderWebDatePicker(expiryDate, (date) => {
+                    setExpiryDate(date);
+                    clearError();
+                  }, "Expiry Date")}
                 </>
               ) : (
                 <View style={styles.dateRow}>
@@ -292,6 +396,7 @@ export default function AddSubscriptionScreen() {
                     setShowPurchaseDatePicker(false);
                     if (selectedDate) {
                       setPurchaseDate(selectedDate);
+                      clearError();
                     }
                   }}
                 />
@@ -306,6 +411,7 @@ export default function AddSubscriptionScreen() {
                     setShowExpiryDatePicker(false);
                     if (selectedDate) {
                       setExpiryDate(selectedDate);
+                      clearError();
                     }
                   }}
                 />
@@ -317,7 +423,10 @@ export default function AddSubscriptionScreen() {
                   label="Amount (PKR)"
                   placeholder="5000"
                   value={amountPKR}
-                  onChangeText={setAmountPKR}
+                  onChangeText={(text) => {
+                    setAmountPKR(text);
+                    clearError();
+                  }}
                   keyboardType="numeric"
                   containerStyle={styles.input}
                 />
@@ -329,7 +438,10 @@ export default function AddSubscriptionScreen() {
                   label="Amount (USD)"
                   placeholder="30"
                   value={amountUSD}
-                  onChangeText={setAmountUSD}
+                  onChangeText={(text) => {
+                    setAmountUSD(text);
+                    clearError();
+                  }}
                   keyboardType="numeric"
                   containerStyle={styles.input}
                 />
@@ -365,14 +477,32 @@ export default function AddSubscriptionScreen() {
 
               <View style={styles.inputRow}>
                 <Key size={20} color="#8e8e93" style={styles.inputIcon} />
-                <Input
-                  label="Password"
-                  placeholder="password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  containerStyle={styles.input}
-                />
+                <View style={styles.passwordContainer}>
+                  <Input
+                    label="Password"
+                    placeholder="password"
+                    value={password}
+                    onChangeText={(text) => {
+                      setPassword(text);
+                      clearError();
+                    }}
+                    secureTextEntry={!showPassword}
+                    containerStyle={styles.input}
+                    inputStyle={{ paddingRight: 50 }}
+                  >
+                    <TouchableOpacity
+                      style={styles.eyeIcon}
+                      onPress={() => setShowPassword(!showPassword)}
+                      activeOpacity={0.7}
+                    >
+                      {showPassword ? (
+                        <EyeOff size={20} color="#7f8c8d" />
+                      ) : (
+                        <Eye size={20} color="#7f8c8d" />
+                      )}
+                    </TouchableOpacity>
+                  </Input>
+                </View>
               </View>
 
               <Input
@@ -594,5 +724,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     height: 56,
     borderRadius: 16,
+  },
+  passwordContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 12,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
   },
 });

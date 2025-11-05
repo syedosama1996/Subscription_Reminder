@@ -104,6 +104,25 @@ export async function createNotificationRecord(
   userId?: string
 ) {
   try {
+    // Check for duplicate notifications within the last 5 seconds
+    const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString();
+    const { data: recentNotifications } = await supabase
+      .from('notifications')
+      .select('id')
+      .eq('title', title)
+      .eq('message', message)
+      .eq('subscription_id', subscriptionId || null)
+      .eq('user_id', userId || null)
+      .gte('created_at', fiveSecondsAgo)
+      .limit(1);
+
+    // If duplicate found, don't create another notification
+    if (recentNotifications && recentNotifications.length > 0) {
+      console.log('Duplicate notification prevented:', title);
+      return null;
+    }
+
+    // Create notification record
     const { data, error } = await supabase
       .from('notifications')
       .insert({
@@ -119,6 +138,13 @@ export async function createNotificationRecord(
       .single();
 
     if (error) throw error;
+
+    // Schedule the notification to show
+    await scheduleNotification(title, message, { 
+      subscriptionId,
+      notificationId: data.id 
+    });
+
     return data;
   } catch (error) {
     console.error('Error creating notification record:', error);
@@ -449,28 +475,22 @@ export function setupSubscriptionNotifications() {
         const newSubscription = newRecord as Subscription;
         const oldSubscription = oldRecord as Subscription;
         
-        let title = '';
-        let message = '';
-
-        switch (eventType) {
-          case 'INSERT':
-            title = 'New Subscription Added';
-            message = `${newSubscription.name} has been added to your subscriptions`;
-            break;
-          case 'UPDATE':
-            if (newSubscription.status !== oldSubscription.status) {
-              title = `Subscription ${newSubscription.status === 'active' ? 'Activated' : 'Deactivated'}`;
-              message = `${newSubscription.name} has been ${newSubscription.status === 'active' ? 'activated' : 'deactivated'}`;
-            }
-            break;
-          case 'DELETE':
-            title = 'Subscription Removed';
-            message = `${oldSubscription.name} has been removed from your subscriptions`;
-            break;
-        }
-
-        if (title && message) {
-          await scheduleNotification(title, message, { subscriptionId: newSubscription?.id || oldSubscription?.id });
+        // Skip notifications for INSERT and UPDATE events since we handle them manually
+        // Only handle DELETE events here
+        if (eventType === 'DELETE' && oldSubscription) {
+          const title = 'Subscription Removed';
+          const message = `${oldSubscription.service_name || 'A subscription'} has been removed from your subscriptions`;
+          
+          // Create notification record (which will also schedule the notification)
+          await createNotificationRecord(
+            title,
+            message,
+            'general',
+            oldSubscription.id,
+            oldSubscription.user_id
+          ).catch(err => {
+            console.error('Error creating delete notification:', err);
+          });
         }
       }
     )

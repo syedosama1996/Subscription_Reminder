@@ -40,8 +40,7 @@ export default function CategoryBadge({ category, onPress, selected = false, sty
       <TouchableOpacity 
         style={[
           styles.container,
-          { backgroundColor: category.color },
-          selected && styles.selected,
+          { backgroundColor: color, opacity: selected ? 0.4 : 1 },
           style
         ]}
         onPress={onPress}
@@ -56,8 +55,7 @@ export default function CategoryBadge({ category, onPress, selected = false, sty
     <View 
       style={[
         styles.container,
-        { backgroundColor: category.color },
-        selected && styles.selected,
+        { backgroundColor: color, opacity: selected ? 0.4 : 1 },
         style
       ]}
     >
@@ -82,8 +80,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#ffffff',
     textAlign: 'center',
-  },
-  selected: {
-    backgroundColor: '#fff',
   },
 });

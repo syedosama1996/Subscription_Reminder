@@ -110,13 +110,7 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
         subscriptionDetailsForInvoice
       );
 
-      // Create notification for new subscription
-      await scheduleNotification(
-        'New Subscription Added',
-        `${newSubscription.service_name} has been added to your subscriptions`
-      );
-
-      // Create notification record in database
+      // Create notification record in database (notification will be shown via real-time listener)
       const { createNotificationRecord } = await import('./notifications');
       await createNotificationRecord(
         'New Subscription Added',
@@ -296,13 +290,7 @@ export const toggleSubscriptionStatus = async (id: string, isActive: boolean, us
 
     if (error) throw error;
 
-    // Create notification
-    await scheduleNotification(
-      `Subscription ${isActive ? 'Activated' : 'Deactivated'}`,
-      `${subscription.service_name} has been ${isActive ? 'activated' : 'deactivated'}`
-    );
-
-    // Create notification record in database
+    // Create notification record in database (notification will be shown via real-time listener)
     const { createNotificationRecord } = await import('./notifications');
     await createNotificationRecord(
       `Subscription ${isActive ? 'Activated' : 'Deactivated'}`,
