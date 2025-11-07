@@ -51,14 +51,16 @@ const InnerLayout = () => {
     }
   }, [fontsLoaded, fontError]);
 
-  // Initialize notifications
+  // Initialize notifications - only when user is logged in
   useEffect(() => {
-    let subscriptionSub, notificationSub, responseListener;
+    if (!user) return; // Don't set up notifications if user is not logged in
+    
+    let subscriptionSub: any, notificationSub: any, responseListener: any;
     
     async function setupNotifications() {
       try {
         await registerForPushNotificationsAsync();
-        subscriptionSub = setupSubscriptionNotifications();
+        subscriptionSub = setupSubscriptionNotifications(user?.id); // Pass user ID
         notificationSub = setupNotificationListener();
         
         // Set up notification response listener
@@ -82,7 +84,7 @@ const InnerLayout = () => {
       if (notificationSub?.unsubscribe) notificationSub.unsubscribe();
       if (responseListener) Notifications.removeNotificationSubscription(responseListener);
     };
-  }, [router]);
+  }, [user, router]); // Add user as dependency
 
   // Set up expiry reminders when user is logged in
   useEffect(() => {

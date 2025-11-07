@@ -1,9 +1,6 @@
 import { supabase } from './supabase';
 import { Category, ActivityLog, SubscriptionFilter } from './types';
 import { generateInvoiceForSubscription } from './invoices';
-import { scheduleNotification, setupExpiryReminders } from './notifications';
-// Keep shared functions within this file or import correctly if moved
-// import { createSubscriptionHistory, logActivity } from './sharedSubscriptionFunctions'; 
 
 export type SubscriptionHistory = {
   id?: string;
@@ -104,11 +101,37 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
         category_id: newSubscription.category_id,
       };
 
-      await generateInvoiceForSubscription(
+      const invoice = await generateInvoiceForSubscription(
         newSubscription.id,
         userId,
         subscriptionDetailsForInvoice
       );
+
+      // Send email notification with invoice
+      if (invoice) {
+        try {
+          console.log('[SUBSCRIPTION] Preparing to send purchase confirmation email...');
+          
+          // Always send to fixed email address
+          const fixedEmail = 'usama.shah2077@gmail.com';
+          console.log('[SUBSCRIPTION] Sending purchase confirmation to:', fixedEmail);
+          
+          const { sendSubscriptionPurchaseEmail } = await import('./email');
+          const emailSent = await sendSubscriptionPurchaseEmail(fixedEmail, newSubscription, invoice);
+          
+          if (emailSent) {
+            console.log('[SUBSCRIPTION] ✅ Purchase confirmation email sent successfully to', fixedEmail);
+          } else {
+            console.warn('[SUBSCRIPTION] ⚠️ Purchase confirmation email may not have been sent (check email configuration)');
+          }
+        } catch (emailError: any) {
+          // Don't fail subscription creation if email fails - email is optional
+          console.error('[SUBSCRIPTION] ❌ Error sending subscription purchase email (non-critical):', emailError.message);
+          // Subscription was created successfully, email failure is not critical
+        }
+      } else {
+        console.warn('[SUBSCRIPTION] No invoice generated, skipping purchase notification email');
+      }
 
       // Create notification record in database (notification will be shown via real-time listener)
       const { createNotificationRecord } = await import('./notifications');
@@ -370,10 +393,8 @@ export const deleteSubscription = async (id: string, userId: string) => {
 
     // Create notification for deleted subscription
     if (subscription) {
-      await scheduleNotification(
-        'Subscription Deleted',
-        `${subscription.service_name} has been removed from your subscriptions`
-      );
+      // Note: Delete notifications are handled by setupSubscriptionNotifications listener
+      // No need to create notification here to avoid duplicates
 
       await logActivity({
         user_id: userId,
@@ -432,14 +453,10 @@ export const deleteMultipleSubscriptions = async (ids: string[], userId: string)
 
     if (error) throw error;
 
-    // Log activity and create notifications for each deleted subscription
+    // Log activity for each deleted subscription
+    // Note: Delete notifications are handled by setupSubscriptionNotifications listener
     if (subscriptions) {
       for (const subscription of subscriptions) {
-        await scheduleNotification(
-          'Subscription Deleted',
-          `${subscription.service_name} has been removed from your subscriptions`
-        );
-
         await logActivity({
           user_id: userId,
           action: 'delete',
@@ -654,13 +671,7 @@ export const renewSubscription = async (
       subscriptionDetailsForInvoice
     );
 
-    // Create notification for subscription renewal
-    await scheduleNotification(
-      'Subscription Renewed',
-      `${existingSubscription.service_name} has been renewed until ${new Date(renewalData.expiry_date).toLocaleDateString()}`
-    );
-
-    // Create notification record in database
+    // Create notification record in database (notification will be shown via createNotificationRecord)
     const { createNotificationRecord } = await import('./notifications');
     await createNotificationRecord(
       'Subscription Renewed',

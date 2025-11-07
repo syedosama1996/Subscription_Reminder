@@ -75,6 +75,8 @@ module.exports = {
     extra: {
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+      resendApiKey: process.env.EXPO_PUBLIC_RESEND_API_KEY,
+      fromEmail: process.env.EXPO_PUBLIC_FROM_EMAIL || 'noreply@subscriptionreminder.app',
       eas: {
         projectId: "a6b04bbf-baa0-4b2e-9abd-1beb06b3609e"
       }

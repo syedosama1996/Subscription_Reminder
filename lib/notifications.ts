@@ -309,6 +309,32 @@ export async function setupExpiryReminders(subscription: any) {
         if (notificationId) {
           scheduledDays.add(reminder.days_before);
           console.log(`- Scheduled ${reminder.days_before} day reminder`);
+          
+          // Also send email reminder if it matches today's days until expiry
+          const now = new Date();
+          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          if (daysUntilExpiry === reminder.days_before) {
+            try {
+              // Get user email
+              const { data: userProfile } = await supabase
+                .from('profiles')
+                .select('email')
+                .eq('id', subscription.user_id)
+                .single();
+
+              if (userProfile?.email) {
+                const { sendSubscriptionExpiryReminderEmail } = await import('./email');
+                await sendSubscriptionExpiryReminderEmail(
+                  userProfile.email,
+                  subscription,
+                  reminder.days_before
+                );
+              }
+            } catch (emailError) {
+              // Don't fail notification scheduling if email fails
+              console.error('Error sending expiry reminder email:', emailError);
+            }
+          }
         }
       } catch (error) {
         console.error(`- Failed to schedule ${reminder.days_before} day reminder:`, error);
@@ -460,15 +486,22 @@ export async function setupAllExpiryReminders(subscriptions: any[]) {
 }
 
 // Listen for subscription changes from Supabase
-export function setupSubscriptionNotifications() {
+// Only listens to changes for the current user to prevent cross-user notifications
+export function setupSubscriptionNotifications(userId?: string) {
+  if (!userId) {
+    console.warn('setupSubscriptionNotifications called without userId - notifications disabled');
+    return null;
+  }
+
   const subscription = supabase
-    .channel('subscription-changes')
+    .channel(`subscription-changes-${userId}`)
     .on(
       'postgres_changes',
       {
         event: '*',
         schema: 'public',
         table: 'subscriptions',
+        filter: `user_id=eq.${userId}`, // Only listen to this user's subscriptions
       },
       async (payload) => {
         const { new: newRecord, old: oldRecord, eventType } = payload;
@@ -478,8 +511,19 @@ export function setupSubscriptionNotifications() {
         // Skip notifications for INSERT and UPDATE events since we handle them manually
         // Only handle DELETE events here
         if (eventType === 'DELETE' && oldSubscription) {
+          // Double-check user_id matches (security)
+          if ((oldSubscription as any).user_id !== userId) {
+            console.warn('Notification blocked: user_id mismatch', {
+              oldUserId: (oldSubscription as any).user_id,
+              currentUserId: userId
+            });
+            return;
+          }
+
+          // Ensure we have valid notification text
+          const serviceName = (oldSubscription as any).service_name || 'A subscription';
           const title = 'Subscription Removed';
-          const message = `${oldSubscription.service_name || 'A subscription'} has been removed from your subscriptions`;
+          const message = `${serviceName} has been removed from your subscriptions`;
           
           // Create notification record (which will also schedule the notification)
           await createNotificationRecord(
@@ -487,7 +531,7 @@ export function setupSubscriptionNotifications() {
             message,
             'general',
             oldSubscription.id,
-            oldSubscription.user_id
+            userId // Use the passed userId, not oldSubscription.user_id for extra safety
           ).catch(err => {
             console.error('Error creating delete notification:', err);
           });
@@ -500,6 +544,8 @@ export function setupSubscriptionNotifications() {
 }
 
 // Listen for notification changes from Supabase
+// NOTE: This listener is currently disabled to prevent duplicate notifications
+// since createNotificationRecord already calls scheduleNotification
 export function setupNotificationListener() {
   const subscription = supabase
     .channel('notification-changes')
@@ -511,15 +557,9 @@ export function setupNotificationListener() {
         table: 'notifications',
       },
       async (payload) => {
-        const { new: notification } = payload;
-        const newNotification = notification as Notification;
-        if (newNotification && !newNotification.read) {
-          await scheduleNotification(newNotification.title, newNotification.message, {
-            notificationId: newNotification.id,
-            subscriptionId: newNotification.subscription_id,
-            type: newNotification.type,
-          });
-        }
+        // Disabled to prevent duplicate notifications
+        // createNotificationRecord already handles showing the notification
+        console.log('Notification change detected:', payload);
       }
     )
     .subscribe();

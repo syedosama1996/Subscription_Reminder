@@ -65,7 +65,7 @@ export function NotificationsList() {
   const handleNotificationPress = (notification: Notification) => {
     // Mark as read first
     markAsRead(notification.id);
-    
+
     // If notification has subscription_id, navigate to subscription detail
     if (notification.subscription_id) {
       router.push(`/subscription/${notification.subscription_id}`);

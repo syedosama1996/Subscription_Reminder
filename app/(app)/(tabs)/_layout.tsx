@@ -128,7 +128,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="expiring"
         options={{
-          title: 'Expiring',
+          title: 'Expired',
           tabBarIcon: ({ color, size }: TabBarIconProps) => (
             <CalendarClock size={size} color={color} strokeWidth={2.5} />
           ),
@@ -138,7 +138,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="past"
         options={{
-          title: 'Past',
+          title: 'In-Active',
           tabBarIcon: ({ color, size }: TabBarIconProps) => (
             <Archive size={size} color={color} strokeWidth={2.5} />
           ),

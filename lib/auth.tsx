@@ -492,16 +492,137 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Send password reset email
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: Platform.OS === 'web' 
-          ? `${window.location.origin}/reset-password` 
-          : 'myapp://reset-password',
-      });
+      // Try to send password reset email via Supabase Auth
+      let authError = null;
+      let resetToken = null;
+      
+      try {
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: Platform.OS === 'web' 
+            ? `${window.location.origin}/reset-password` 
+            : 'myapp://reset-password',
+        });
 
-      if (error) {
-        console.error('Password reset error:', error);
-        throw new Error('Failed to send password reset email. Please try again.');
+        if (error) {
+          authError = error;
+          console.warn('Supabase Auth SMTP failed, trying custom email function...');
+        } else {
+          // Success! Supabase Auth SMTP worked
+          resetToken = data;
+        }
+      } catch (err: any) {
+        authError = err;
+        console.warn('Supabase Auth SMTP error, trying custom email function...');
+      }
+
+      // If Supabase Auth SMTP failed, try custom email function as fallback
+      if (authError) {
+        const errorMsgLower = authError.message?.toLowerCase() || '';
+        const isEmailSendingError = 
+          errorMsgLower.includes('recovery email') || 
+          errorMsgLower.includes('sending') ||
+          errorMsgLower.includes('smtp') ||
+          errorMsgLower.includes('mail') ||
+          (authError.status === 500 && (
+            errorMsgLower.includes('email') ||
+            errorMsgLower.includes('mail') ||
+            errorMsgLower.includes('smtp') ||
+            authError.name === 'AuthApiError'
+          ));
+
+        if (isEmailSendingError || authError.status === 500) {
+          // Try custom email function as fallback (OTP method)
+          console.log('⚠️ Supabase Auth SMTP failed. Using custom email function with OTP...');
+          
+          try {
+            // Generate OTP code (6 digits)
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // Store OTP in database for verification (expires in 10 minutes)
+            const expiresAt = new Date();
+            expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+            
+            // Try to store OTP in database (optional - for verification)
+            try {
+              const { error: otpError } = await supabase
+                .from('password_reset_otps')
+                .upsert({
+                  email: email,
+                  otp: otp,
+                  expires_at: expiresAt.toISOString(),
+                  used: false,
+                }, {
+                  onConflict: 'email'
+                });
+
+              if (otpError) {
+                console.warn('Could not store OTP in database (RLS or table missing), but will still try to send email:', otpError.message);
+                // Continue anyway - OTP will still be sent via email
+              } else {
+                console.log('OTP stored in database successfully');
+              }
+            } catch (otpStorageError: any) {
+              console.warn('OTP storage failed (non-critical):', otpStorageError.message);
+              // Continue anyway - email will still be sent
+            }
+            
+            // Send OTP via custom email function
+            const otpEmailSent = await sendPasswordResetOtpEmail(email, otp);
+            
+            if (otpEmailSent) {
+              console.log('✅ OTP email sent successfully via custom email function');
+              Toast.show({
+                type: 'success',
+                text1: 'Password reset code sent',
+                text2: 'Check your email for the 6-digit code.',
+              });
+              
+              // Log password reset request (optional - don't fail if this errors)
+              try {
+                await ActivityLogger.log({
+                  user_id: userData.id,
+                  action: 'password_reset_request',
+                  entity_type: 'account',
+                  entity_id: userData.id,
+                  details: {
+                    email: email,
+                    method: 'otp_custom_email'
+                  }
+                });
+              } catch (logError: any) {
+                // Non-critical - log but don't fail
+                console.warn('Could not log activity (non-critical):', logError.message);
+              }
+              
+              return; // Exit early, OTP sent successfully
+            } else {
+              throw new Error('Failed to send password reset email. Please check your email configuration (Resend API or SMTP).');
+            }
+          } catch (fallbackError: any) {
+            console.error('❌ Custom email fallback also failed:', fallbackError);
+            
+            // Show comprehensive error message
+          throw new Error(
+            'Unable to send password reset email.\n\n' +
+            'SMTP Configuration Checklist:\n' +
+            '1. Go to Supabase Dashboard → Settings → Auth → SMTP Settings\n' +
+            '2. Make sure "Enable Custom SMTP" toggle is ON ✅\n' +
+            '3. For Gmail: Use 16-character App Password (NOT regular password)\n' +
+            '4. Wait 2 minutes after saving SMTP settings\n' +
+            '5. Verify SMTP settings are correct\n\n' +
+            'OR set up Resend API:\n' +
+            'supabase secrets set RESEND_API_KEY=re_your_key'
+          );
+          }
+        } else if (authError.status === 400) {
+          throw new Error('Invalid email address or request. Please check your email and try again.');
+        } else if (authError.status === 429) {
+          throw new Error('Too many password reset requests. Please wait a few minutes before trying again.');
+        } else if (authError.status === 404) {
+          throw new Error('User not found. Please check your email address.');
+        } else {
+          throw new Error(authError.message || 'Failed to send password reset email.');
+        }
       }
 
       // Log password reset request
@@ -527,6 +648,102 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw error;
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Helper function to generate and send OTP email (optional - for custom OTP flow)
+  const sendPasswordResetOtpEmail = async (email: string, otp: string): Promise<boolean> => {
+    try {
+      const { sendEmail } = require('./email');
+      
+      const otpEmailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; }
+    .container { background: #f5f5f5; padding: 40px 20px; }
+    .card { background: white; padding: 40px; border-radius: 10px; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 { color: #333; margin: 0; }
+    .otp-box { 
+      background: #f0f7ff; 
+      border: 2px solid #667eea; 
+      border-radius: 8px; 
+      padding: 30px; 
+      text-align: center; 
+      margin: 30px 0;
+    }
+    .otp-code { 
+      font-size: 48px; 
+      font-weight: bold; 
+      color: #667eea; 
+      letter-spacing: 10px; 
+      font-family: monospace;
+    }
+    .otp-expiry { 
+      color: #999; 
+      font-size: 14px; 
+      margin-top: 10px; 
+    }
+    .warning { 
+      background: #fff3cd; 
+      border: 1px solid #ffc107; 
+      border-radius: 6px; 
+      padding: 15px; 
+      margin: 20px 0;
+      color: #856404;
+    }
+    .footer { 
+      text-align: center; 
+      color: #999; 
+      font-size: 12px; 
+      margin-top: 30px; 
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <h1>🔐 Password Reset Code</h1>
+      </div>
+      
+      <p>Hello,</p>
+      <p>We received a request to reset your password. Use the code below to reset your password:</p>
+      
+      <div class="otp-box">
+        <div class="otp-code">${otp}</div>
+        <div class="otp-expiry">This code expires in 10 minutes</div>
+      </div>
+      
+      <div class="warning">
+        <strong>⚠️ Security Notice:</strong> If you didn't request this, please ignore this email. Your password will remain unchanged.
+      </div>
+      
+      <p><strong>Next Steps:</strong></p>
+      <ol>
+        <li>Copy the code above</li>
+        <li>Go back to the app</li>
+        <li>Paste the code and enter your new password</li>
+      </ol>
+      
+      <div class="footer">
+        <p>This is an automated email. Please do not reply.</p>
+        <p>&copy; 2025 Subscription Reminder. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+      `;
+
+      const subject = '🔐 Your Password Reset Code';
+      return await sendEmail(email, subject, otpEmailHtml);
+    } catch (error) {
+      console.error('Error sending OTP email:', error);
+      return false;
     }
   };
 

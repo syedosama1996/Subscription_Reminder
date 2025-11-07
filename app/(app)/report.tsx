@@ -945,7 +945,7 @@ const styles = StyleSheet.create({
   },
   modalScrollView: {
     width: '100%',
-    maxHeight: '90%',
+    maxHeight: '97%',
   },
   modalScrollContent: {
     flexGrow: 1,
@@ -994,15 +994,15 @@ const styles = StyleSheet.create({
       backgroundColor: '#1976D2',
   },
    modalButtonClose: {
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 0,
+    marginBottom: 20,
     backgroundColor: '#fff',
     borderWidth: 2,
     borderColor: '#e74c3c',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 25,
-    minWidth: 150,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    // minWidth: 150,
     width: '90%',
    },
   modalButtonText: {
@@ -1112,7 +1112,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    marginTop: 10,
+    marginTop: 2,
   },
   applyCustomDateButtonText: {
     fontFamily: 'Inter-Medium',

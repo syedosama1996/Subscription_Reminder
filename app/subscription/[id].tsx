@@ -432,22 +432,28 @@ export default function SubscriptionDetailScreen() {
               {getStatusText()}
             </Text>
           </View>
-          <TouchableOpacity 
-            style={styles.toggleButton}
-            onPress={handleToggleStatus}
-            disabled={loading}
-          >
-            <Power 
-              size={20} 
-              color={subscription?.is_active ? '#2ecc71' : '#e74c3c'} 
-            />
-            <Text style={[
-              styles.toggleButtonText,
-              { color: subscription?.is_active ? '#2ecc71' : '#e74c3c' }
-            ]}>
-              {subscription?.is_active ? 'Deactivate' : 'Activate'}
-            </Text>
-          </TouchableOpacity>
+          {subscription && days >= 0 && (
+            <TouchableOpacity 
+              style={[
+                styles.toggleButton,
+                loading && styles.toggleButtonDisabled
+              ]}
+              onPress={handleToggleStatus}
+              disabled={loading}
+              activeOpacity={0.7}
+            >
+              <Power 
+                size={16} 
+                color={subscription.is_active ? '#2ecc71' : '#e74c3c'} 
+              />
+              <Text style={[
+                styles.toggleButtonText,
+                { color: subscription.is_active ? '#2ecc71' : '#e74c3c' }
+              ]}>
+                {subscription.is_active ? 'Deactivate' : 'Activate'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -1061,22 +1067,33 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
+    fontSize: 13,
   },
   toggleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#f5f6fa',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e1e5e9',
+    minWidth: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  toggleButtonDisabled: {
+    opacity: 0.5,
   },
   toggleButtonText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 10,
-    marginLeft: 8,
+    fontSize: 11,
+    marginLeft: 6,
+    fontWeight: '600',
   },
   section: {
     backgroundColor: '#fff',

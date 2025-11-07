@@ -40,10 +40,33 @@ export const generateInvoiceNumber = (): string => {
   return `INV-${year}-${random}`;
 };
 
+// Helper function to round and validate numeric values
+const roundToTwoDecimals = (value: number): number => {
+  return Math.round(value * 100) / 100;
+};
+
+// Helper function to ensure value is within numeric(15,2) limits
+const validateNumericValue = (value: number, fieldName: string): number => {
+  const rounded = roundToTwoDecimals(value);
+  const maxValue = 999999999999999.99; // Maximum for numeric(15,2)
+  const minValue = -999999999999999.99;
+  
+  if (rounded > maxValue) {
+    console.warn(`${fieldName} value ${rounded} exceeds maximum ${maxValue}, truncating`);
+    return maxValue;
+  }
+  if (rounded < minValue) {
+    console.warn(`${fieldName} value ${rounded} exceeds minimum ${minValue}, truncating`);
+    return minValue;
+  }
+  return rounded;
+};
+
 // Create a new invoice
 export const createInvoice = async (invoiceData: Partial<Invoice>): Promise<Invoice | null> => {
   try {
     // Ensure required fields are present and map to DB columns
+    // Round and validate all numeric values to prevent overflow
     const invoicePayload = {
       user_id: invoiceData.user_id,
       invoice_no: invoiceData.invoice_no || generateInvoiceNumber(),
@@ -55,10 +78,10 @@ export const createInvoice = async (invoiceData: Partial<Invoice>): Promise<Invo
       vendor_link: invoiceData.vendor_link,
       notes: invoiceData.notes,
       category_id: invoiceData.category_id,
-      purchase_amount: invoiceData.purchase_amount ?? 0,
-      service_charges: invoiceData.service_charges ?? 0,
-      subscription_charges: invoiceData.subscription_charges ?? 0,
-      total_amount: invoiceData.total_amount ?? 0,
+      purchase_amount: validateNumericValue(invoiceData.purchase_amount ?? 0, 'purchase_amount'),
+      service_charges: validateNumericValue(invoiceData.service_charges ?? 0, 'service_charges'),
+      subscription_charges: validateNumericValue(invoiceData.subscription_charges ?? 0, 'subscription_charges'),
+      total_amount: validateNumericValue(invoiceData.total_amount ?? 0, 'total_amount'),
       status: invoiceData.status || 'pending',
       due_date: invoiceData.due_date || new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split('T')[0],
       subscription_id: invoiceData.subscription_id,
@@ -100,8 +123,10 @@ export const generateInvoiceForSubscription = async (
   serviceCharges: number = 0
 ): Promise<Invoice | null> => {
   try {
-    const subscriptionCharges = subscriptionDetails.purchase_amount_pkr;
-    const totalAmount = subscriptionCharges + serviceCharges;
+    // Round and validate amounts to prevent overflow
+    const subscriptionCharges = roundToTwoDecimals(subscriptionDetails.purchase_amount_pkr);
+    const serviceChargesRounded = roundToTwoDecimals(serviceCharges);
+    const totalAmount = roundToTwoDecimals(subscriptionCharges + serviceChargesRounded);
 
     const invoiceData: Partial<Invoice> = {
       user_id: userId,
@@ -115,7 +140,7 @@ export const generateInvoiceForSubscription = async (
       vendor_link: subscriptionDetails.vendor_link,
       category_id: subscriptionDetails.category_id,
       purchase_amount: 0,
-      service_charges: serviceCharges,
+      service_charges: serviceChargesRounded,
       subscription_charges: subscriptionCharges,
       total_amount: totalAmount,
       status: 'paid',
@@ -212,6 +237,20 @@ export const updateInvoice = async (
     }
     delete updatePayload.subscription;
     delete updatePayload.subscription_name;
+
+    // Validate and round numeric values if they exist
+    if ('purchase_amount' in updatePayload && typeof updatePayload.purchase_amount === 'number') {
+      updatePayload.purchase_amount = validateNumericValue(updatePayload.purchase_amount, 'purchase_amount');
+    }
+    if ('service_charges' in updatePayload && typeof updatePayload.service_charges === 'number') {
+      updatePayload.service_charges = validateNumericValue(updatePayload.service_charges, 'service_charges');
+    }
+    if ('subscription_charges' in updatePayload && typeof updatePayload.subscription_charges === 'number') {
+      updatePayload.subscription_charges = validateNumericValue(updatePayload.subscription_charges, 'subscription_charges');
+    }
+    if ('total_amount' in updatePayload && typeof updatePayload.total_amount === 'number') {
+      updatePayload.total_amount = validateNumericValue(updatePayload.total_amount, 'total_amount');
+    }
 
     const { data, error } = await supabase
       .from('invoices')

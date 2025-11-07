@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   content: {
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 90,
   },
   header: {
     flexDirection: 'row',
