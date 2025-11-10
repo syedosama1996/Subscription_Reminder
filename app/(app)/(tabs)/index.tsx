@@ -492,6 +492,16 @@ export default function HomeScreen() {
         </View>
       </View>
       <SafeAreaView style={styles.safeArea} >
+        {/* BulkActionBar - Fixed above content, outside ScrollView */}
+        {selectedSubscriptions.length > 0 && (
+          <BulkActionBar
+            selectedCount={selectedSubscriptions.length}
+            onCancel={handleCancelSelection}
+            onDelete={handleBulkDelete}
+            onToggleStatus={handleBulkToggleStatus}
+          />
+        )}
+        
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
@@ -505,7 +515,6 @@ export default function HomeScreen() {
           overScrollMode="never"
         >
           <View style={styles.mainContent}>
-
             {categories.length > 0 && (
               <View style={styles.categoriesWrapper}>
                 <ScrollView
@@ -637,14 +646,6 @@ export default function HomeScreen() {
           {/* <CustomLoader visible={toggleLoading} /> */}
         </ScrollView>
       </SafeAreaView>
-
-      {/* BulkActionBar - Fixed at bottom, outside ScrollView */}
-      <BulkActionBar
-        selectedCount={selectedSubscriptions.length}
-        onCancel={handleCancelSelection}
-        onDelete={handleBulkDelete}
-        onToggleStatus={handleBulkToggleStatus}
-      />
 
       <FilterModal
         visible={filterModalVisible}

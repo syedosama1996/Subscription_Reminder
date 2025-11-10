@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
-import { X, Trash2, Power } from 'lucide-react-native';
-import { BlurView } from 'expo-blur';
+import { X, Trash2, Power, PowerOff } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
+
 type BulkActionBarProps = {
   selectedCount: number;
   onCancel: () => void;
@@ -18,126 +18,95 @@ export default function BulkActionBar({
 }: BulkActionBarProps) {
   if (selectedCount === 0) return null;
 
-  const Content = () => (
-    <View style={styles.content}>
-      <View style={styles.infoContainer}>
-        <Text style={styles.selectedText}>{selectedCount} selected</Text>
-        <TouchableOpacity 
-          style={styles.cancelButton}
-          onPress={onCancel}
-        >
-          <X size={20} color="#fff" />
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => onToggleStatus(true)}
-        >
-          <Power size={14} color="#fff" />
-          <Text style={styles.actionText}>Activate</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => onToggleStatus(false)}
-        >
-          <Power size={14} color="#fff" />
-          <Text style={styles.actionText}>Deactivate</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.deleteButton]}
-          onPress={onDelete}
-        >
-          <Trash2 size={14} color="#fff" />
-          <Text style={styles.actionText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
-          <Content />
-        </BlurView>
-      ) : (
-        <View style={styles.androidContainer}>
-          <Content />
+      <View style={styles.barContent}>
+        <View style={styles.leftSection}>
+          <TouchableOpacity
+            style={styles.closeIcon}
+            onPress={onCancel}
+            activeOpacity={0.7}
+          >
+            <X size={20} color="#2c3e50" />
+          </TouchableOpacity>
+          <Text style={styles.selectedText}>{selectedCount} selected</Text>
         </View>
-      )}
+
+        <View style={styles.actionIcons}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => onToggleStatus(true)}
+            activeOpacity={0.7}
+          >
+            <Power size={18} color="#2ecc71" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => onToggleStatus(false)}
+            activeOpacity={0.7}
+          >
+            <PowerOff size={18} color="#95a5a6" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={onDelete}
+            activeOpacity={0.7}
+          >
+            <Trash2 size={18} color="#e74c3c" />
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 9999,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  blurContainer: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    // overflow: 'hidden',
-  },
-  androidContainer: {
-    backgroundColor: 'grey',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  content: {
-    paddingHorizontal: 0,
-    paddingTop: 24,
-    paddingBottom: Platform.OS === 'ios' ? 100 : 110,
-  },
-  infoContainer: {
+  barContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 20,
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  closeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f5f6fa',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   selectedText: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    color: '#fff',
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 14,
+    color: '#2c3e50',
   },
-  cancelButton: {
+  actionIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  iconButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
+    backgroundColor: '#f5f6fa',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 14,
-  },
-  deleteButton: {
-    backgroundColor: 'rgba(231, 76, 60, 0.5)',
-  },
-  actionText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 12,
-    color: '#fff',
-    marginLeft: 4,
   },
 });
