@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   subscriptionName: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 18,
+    fontSize: 10,
     color: '#2c3e50',
     marginBottom: 4,
   },
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   },
   paymentMethod: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 10,
     color: '#7f8c8d',
     marginLeft: 8,
   },
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 12,
+    fontSize: 10,
     color: '#fff',
   },
   purchaseDetails: {
@@ -297,13 +297,13 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontFamily: 'Inter-Regular',
-    fontSize: 12,
+    fontSize: 10,
     color: '#7f8c8d',
     marginBottom: 2,
   },
   dateText: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 14,
+    fontSize: 10,
     color: '#2c3e50',
   },
   expiredDate: {
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   },
   downloadText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 10,
     color: '#4158D0',
     marginLeft: 8,
   },
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 10,
     color: '#e74c3c',
     textAlign: 'center',
     marginBottom: 16,
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 10,
     color: '#fff',
   },
   emptyContainer: {
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 10,
     color: '#7f8c8d',
     textAlign: 'center',
     marginTop: 16,

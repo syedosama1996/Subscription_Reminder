@@ -298,14 +298,14 @@ export default function ActivityLogScreen() {
               backgroundColor: iconColor
             }
           ]}>
-            <ActionIcon size={22} color="#FFFFFF" strokeWidth={2.5} />
+            <ActionIcon size={18} color="#FFFFFF" strokeWidth={2.5} />
           </View>
           <View style={styles.activityInfo}>
             <Text style={[styles.activityTitle, { color: description.color }]}>
               {description.text}
             </Text>
             <View style={styles.activityFooter}>
-              <Clock size={14} color="#9CA3AF" />
+              <Clock size={12} color="#9CA3AF" />
               <Text style={styles.timestamp}>{relativeTime}</Text>
             </View>
           </View>
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 16,
+    fontSize: 14,
     color: '#7f8c8d',
     fontFamily: 'Inter-Regular',
   },
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 24,
+    fontSize: 21,
     color: '#fff',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.8)',
   },
   activeFilterText: {
@@ -534,9 +534,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -547,14 +547,14 @@ const styles = StyleSheet.create({
   },
   activityTitle: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 15,
+    fontSize: 13,
     lineHeight: 22,
     marginBottom: 8,
     letterSpacing: -0.2,
   },
   activityDescription: {
     fontFamily: 'Inter-Regular',
-    fontSize: 13,
+    fontSize: 11,
     color: '#6B7280',
     lineHeight: 18,
     marginTop: 4,
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontFamily: 'Inter-Medium',
-    fontSize: 12,
+    fontSize: 10,
     color: '#9CA3AF',
     marginLeft: 6,
     letterSpacing: 0.2,
@@ -579,14 +579,14 @@ const styles = StyleSheet.create({
     marginTop: 60,
   },
   emptyText: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Inter-SemiBold',
     color: '#374151',
     marginTop: 20,
     letterSpacing: -0.3,
   },
   emptySubtext: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
     color: '#9CA3AF',
     marginTop: 8,
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     marginLeft: 8,
-    fontSize: 14,
+    fontSize: 12,
     color: '#7f8c8d',
     fontFamily: 'Inter-Regular',
   },
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(65, 88, 208, 0.1)',
   },
   filterMenuText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#374151',
     letterSpacing: -0.2,

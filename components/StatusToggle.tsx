@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
+import {  StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
 import { Subscription } from '../lib/subscriptions';
 import { Check, X } from 'lucide-react-native';
 

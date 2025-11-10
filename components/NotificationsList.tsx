@@ -131,17 +131,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 4,
   },
   message: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     marginBottom: 4,
   },
   date: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#999',
   },
   emptyContainer: {
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666',
   },
 }); 

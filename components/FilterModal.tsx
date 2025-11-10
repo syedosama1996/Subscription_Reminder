@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 20,
+    fontSize: 18,
     color: '#1f2937',
   },
   closeButton: {
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 14,
     color: '#374151',
     flex: 1,
   },
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   statusIcon: {
-    fontSize: 16,
+    fontSize: 14,
     marginRight: 8,
     color: '#6b7280',
   },
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 14,
     color: '#dc2626',
   },
   applyButton: {
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   applyButtonText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 14,
     color: '#ffffff',
   },
 });

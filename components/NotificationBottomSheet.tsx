@@ -113,7 +113,6 @@ export default function NotificationBottomSheet({
       );
     } catch (error) {
       console.error('Error marking notification as read:', error);
-      // Update locally for demo
       setNotifications(prev =>
         prev.map(notification =>
           notification.id === notificationId
@@ -278,7 +277,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Inter-Bold',
     color: '#2c3e50',
   },
@@ -290,7 +289,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   markAllText: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'Inter-Medium',
     color: '#4158D0',
   },
@@ -308,7 +307,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    fontSize: 16,
+    fontSize: 10,
     fontFamily: 'Inter-Regular',
     color: '#7f8c8d',
   },
@@ -317,14 +316,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'Inter-Bold',
     color: '#2c3e50',
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: 10,
     fontFamily: 'Inter-Regular',
     color: '#7f8c8d',
     textAlign: 'center',
@@ -360,7 +359,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 10,
     fontFamily: 'Inter-Medium',
     color: '#2c3e50',
     marginBottom: 4,
@@ -369,14 +368,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
   },
   message: {
-    fontSize: 14,
+    fontSize: 10,
     fontFamily: 'Inter-Regular',
     color: '#7f8c8d',
     marginBottom: 4,
     lineHeight: 18,
   },
   date: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'Inter-Regular',
     color: '#95a5a6',
   },
@@ -388,7 +387,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   clickableHint: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'Inter-Medium',
     color: '#3498db',
     marginTop: 4,

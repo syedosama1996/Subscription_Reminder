@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 10,
     color: '#2c3e50',
     fontFamily: 'Inter-Regular',
   },
@@ -796,7 +796,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 26,
+    fontSize: 22,
     color: '#fff',
     marginTop: Platform.OS === 'ios' ? -4 : 4,
   },
@@ -856,7 +856,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 12,
+    fontSize: 10,
     color: '#4158D0',
   },
   activeBadgeText: {
@@ -864,7 +864,7 @@ const styles = StyleSheet.create({
   },
   categoryTabText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 10,
     color: '#4158D0',
     textAlign: 'center',
   },
@@ -894,7 +894,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
+    fontSize: 10,
     color: '#2c3e50',
   },
   countBadge: {
@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
   countText: {
     fontFamily: 'Inter-Medium',
     color: '#fff',
-    fontSize: 12,
+    fontSize: 10,
   },
   emptyContainer: {
     flex: 1,
@@ -924,7 +924,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 10,
     color: '#7f8c8d',
     textAlign: 'center',
     marginBottom: 24,
@@ -948,7 +948,7 @@ const styles = StyleSheet.create({
   addFirstText: {
     fontFamily: 'Inter-Medium',
     color: '#fff',
-    fontSize: 14,
+    fontSize: 10,
   },
   errorContainer: {
     margin: 20,
@@ -961,7 +961,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Inter-Regular',
     color: '#e74c3c',
-    fontSize: 14,
+    fontSize: 10,
   },
   actionButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -970,7 +970,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 10,
     fontFamily: 'Inter-Medium',
   },
   activeCategoryTab: {
@@ -1014,7 +1014,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   modalMessage: {
-    fontSize: 16,
+    fontSize: 10,
     fontFamily: 'Inter-Regular',
     color: '#666',
     textAlign: 'center',
@@ -1040,7 +1040,7 @@ const styles = StyleSheet.create({
   modalCancelButtonText: {
     color: '#e74c3c',
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
+    fontSize: 10,
   },
   modalDeleteButton: {
     flex: 1,
@@ -1055,6 +1055,6 @@ const styles = StyleSheet.create({
   modalDeleteButtonText: {
     color: '#fff',
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
+    fontSize: 10,
   },
 });

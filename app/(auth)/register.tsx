@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 28,
+    fontSize: 20,
     color: '#fff',
     marginBottom: 8,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontFamily: 'Inter-Regular',
-    fontSize: 16,
+    fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
   },
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   formTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 24,
+    fontSize: 20,
     color: '#333',
     marginBottom: 24,
     textAlign: 'center',
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Inter-Regular',
     color: '#e74c3c',
-    fontSize: 14,
+    fontSize: 12,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   },
   registerButtonText: {
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
+    fontSize: 14,
     color: '#fff',
     textAlign: 'center',
   },

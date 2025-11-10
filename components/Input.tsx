@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     marginBottom: 6,
     color: '#2c3e50',
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingLeft: 16,
     paddingRight: 12,
-    fontSize: 15,
+    fontSize: 13,
     color: '#1a1a1a',
     borderWidth: 1,
     borderColor: '#e1e5e9',
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   error: {
     color: '#e74c3c',
-    fontSize: 12,
+    fontSize: 10,
     marginTop: 4,
   },
 });

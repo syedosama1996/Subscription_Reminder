@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   avatarText: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: 'Inter-Bold',
     color: '#fff',
   },
@@ -445,13 +445,13 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   name: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: 'Inter-Bold',
     color: '#fff',
     marginBottom: 4,
   },
   email: {
-    fontSize: 16,
+    fontSize: 12,
     fontFamily: 'Inter-Regular',
     color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 16,
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
+    fontSize: 12,
     color: '#2c3e50',
     marginBottom: 20,
   },
@@ -497,13 +497,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 12,
     color: '#7f8c8d',
     marginBottom: 2,
   },
   infoValue: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 12,
     color: '#2c3e50',
   },
   // Modal Styles
@@ -556,13 +556,13 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 12,
     color: '#7f8c8d',
     marginBottom: 8,
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 12,
     fontFamily: 'Inter-Regular',
     color: '#2c3e50',
     backgroundColor: 'transparent',
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
   },
   readOnlyInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 12,
     fontFamily: 'Inter-Regular',
     color: '#95a5a6',
     backgroundColor: 'transparent',
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 12,
     color: '#7f8c8d',
   },
   saveButton: {
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 12,
     color: '#fff',
   },
 }); 

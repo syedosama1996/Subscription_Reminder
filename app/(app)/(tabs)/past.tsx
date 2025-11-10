@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 32,
+    fontSize: 28,
     color: '#fff',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 1, height: 1 },
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Inter-Regular',
     color: '#e74c3c',
-    fontSize: 14,
+    fontSize: 12,
   },
   emptyContainer: {
     flex: 1,
@@ -226,13 +226,13 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 22,
+    fontSize: 20,
     color: '#2c3e50',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontFamily: 'Inter-Regular',
-    fontSize: 16,
+    fontSize: 12,
     color: '#7f8c8d',
     textAlign: 'center',
   },

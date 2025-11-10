@@ -352,7 +352,6 @@ export async function setupExpiryReminders(subscription: any) {
   }
 }
 
-// Update cancelExistingReminders to reliably use subscriptionId from data
 async function cancelExistingReminders(subscriptionId: string) {
   try {
     const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
@@ -486,7 +485,6 @@ export async function setupAllExpiryReminders(subscriptions: any[]) {
 }
 
 // Listen for subscription changes from Supabase
-// Only listens to changes for the current user to prevent cross-user notifications
 export function setupSubscriptionNotifications(userId?: string) {
   if (!userId) {
     console.warn('setupSubscriptionNotifications called without userId - notifications disabled');
@@ -501,17 +499,14 @@ export function setupSubscriptionNotifications(userId?: string) {
         event: '*',
         schema: 'public',
         table: 'subscriptions',
-        filter: `user_id=eq.${userId}`, // Only listen to this user's subscriptions
+        filter: `user_id=eq.${userId}`,
       },
       async (payload) => {
         const { new: newRecord, old: oldRecord, eventType } = payload;
         const newSubscription = newRecord as Subscription;
         const oldSubscription = oldRecord as Subscription;
-        
-        // Skip notifications for INSERT and UPDATE events since we handle them manually
-        // Only handle DELETE events here
+
         if (eventType === 'DELETE' && oldSubscription) {
-          // Double-check user_id matches (security)
           if ((oldSubscription as any).user_id !== userId) {
             console.warn('Notification blocked: user_id mismatch', {
               oldUserId: (oldSubscription as any).user_id,
@@ -520,18 +515,16 @@ export function setupSubscriptionNotifications(userId?: string) {
             return;
           }
 
-          // Ensure we have valid notification text
           const serviceName = (oldSubscription as any).service_name || 'A subscription';
           const title = 'Subscription Removed';
           const message = `${serviceName} has been removed from your subscriptions`;
           
-          // Create notification record (which will also schedule the notification)
           await createNotificationRecord(
             title,
             message,
             'general',
             oldSubscription.id,
-            userId // Use the passed userId, not oldSubscription.user_id for extra safety
+            userId
           ).catch(err => {
             console.error('Error creating delete notification:', err);
           });
@@ -543,9 +536,6 @@ export function setupSubscriptionNotifications(userId?: string) {
   return subscription;
 }
 
-// Listen for notification changes from Supabase
-// NOTE: This listener is currently disabled to prevent duplicate notifications
-// since createNotificationRecord already calls scheduleNotification
 export function setupNotificationListener() {
   const subscription = supabase
     .channel('notification-changes')
@@ -556,9 +546,7 @@ export function setupNotificationListener() {
         schema: 'public',
         table: 'notifications',
       },
-      async (payload) => {
-        // Disabled to prevent duplicate notifications
-        // createNotificationRecord already handles showing the notification
+      async (payload) => {  
         console.log('Notification change detected:', payload);
       }
     )

@@ -231,14 +231,14 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Inter-Bold',
     color: '#1f2937',
     textAlign: 'center',
     marginBottom: 12,
   },
   message: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#6b7280',
     textAlign: 'center',
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-SemiBold',
     textAlign: 'center',
   },

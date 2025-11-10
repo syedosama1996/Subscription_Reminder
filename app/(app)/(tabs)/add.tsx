@@ -6,7 +6,6 @@ import {
   ScrollView, 
   Platform,
   KeyboardAvoidingView,
-  Alert,
   BackHandler,
   TouchableOpacity
 } from 'react-native';
@@ -22,6 +21,7 @@ import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Category } from '../../../lib/types';
+import Toast from 'react-native-toast-message';
 
 export default function AddSubscriptionScreen() {
   const { user } = useAuth();
@@ -205,19 +205,16 @@ export default function AddSubscriptionScreen() {
       // Reset form immediately after successful submission
       resetForm();
 
-      // Show success and navigate back
-      Alert.alert(
-        'Success',
-        'Subscription added successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              router.back();
-            }
-          }
-        ]
-      );
+      // Show success toast and navigate back
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Subscription added successfully!',
+        position: 'top',
+        visibilityTime: 3000,
+      });
+      
+      router.back();
     } catch (err: any) {
       console.error('Error adding subscription:', err);
       setError(err.message || 'Failed to add subscription');
@@ -248,7 +245,7 @@ export default function AddSubscriptionScreen() {
               borderRadius: 16,
               paddingLeft: 16,
               paddingRight: 16,
-              fontSize: 16,
+              fontSize: 12,
               borderWidth: 1,
               borderColor: '#dfe4ea',
               backgroundColor: '#f5f6fa',
@@ -591,7 +588,7 @@ const styles = StyleSheet.create({
  
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 32,
+    fontSize: 28,
     color: '#fff',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
@@ -609,7 +606,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Inter-Medium',
     color: '#d32f2f',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
   },
   scrollView: {
@@ -633,7 +630,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
+    fontSize: 12,
     color: '#1a1a1a',
     marginBottom: 16,
     fontWeight: '600',
@@ -661,7 +658,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   dateLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     marginBottom: 6,
     color: '#2c3e50',
@@ -680,7 +677,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   dateText: {
-    fontSize: 15,
+    fontSize: 13,
     color: '#1a1a1a',
     fontFamily: 'Inter-Regular',
   },
@@ -691,7 +688,7 @@ const styles = StyleSheet.create({
   },
   reminderDescription: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 12,
     color: '#7f8c8d',
     marginBottom: 16,
   },
@@ -706,7 +703,7 @@ const styles = StyleSheet.create({
   },
   reminderText: {
     fontFamily: 'Inter-Regular',
-    fontSize: 16,
+    fontSize: 12,
     color: '#2c3e50',
     marginLeft: 8,
     flex: 1,

@@ -4,7 +4,6 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-// Secure storage implementation for Supabase auth
 const ExpoSecureStoreAdapter = {
   getItem: (key: string) => {
     return SecureStore.getItemAsync(key);
@@ -17,7 +16,6 @@ const ExpoSecureStoreAdapter = {
   },
 };
 
-// We need to use a different storage solution for web
 const webStorage = {
   getItem: (key: string) => {
     const value = localStorage.getItem(key);
@@ -33,7 +31,6 @@ const webStorage = {
   },
 };
 
-// Get environment variables using Expo Constants
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 

@@ -46,6 +46,7 @@ export const touchConfig = {
     activeOpacity: 0.7,
     delayPressIn: 0,
     delayPressOut: 0,
+    
   },
   ios: {
     activeOpacity: 0.6,

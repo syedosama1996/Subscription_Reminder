@@ -55,8 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check if biometric is enabled for this user
       const biometricEnabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
       const hasCredentials = await SecureStore.getItemAsync(CREDENTIALS_KEY);
-      
-      // Only set biometric as enabled if both flags are true
+
       const isEnabled = biometricEnabled === 'true' && !!hasCredentials;
       setIsBiometricEnabled(isEnabled);
       
@@ -71,12 +70,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     checkBiometricSupport();
     
-    // Initialize auth state
-    const initializeAuth = async () => {
+      const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          // Check if it's a configuration error
           if (error.message.includes('Supabase not configured')) {
             console.warn('Supabase not configured, skipping auth initialization');
             setLoading(false);
@@ -91,7 +88,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-        // Don't throw the error, just set loading to false
       } finally {
         setLoading(false);
       }
@@ -99,7 +95,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       try {
         if (session) {
@@ -111,7 +106,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Error in auth state change:', error);
-        // If there's an error, assume no session
         setSession(null);
         setUser(null);
       } finally {
@@ -129,12 +123,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
-      // Check if Supabase is configured
       if (!supabaseUrl || !supabaseAnonKey) {
         throw new Error('Supabase is not configured. Please set up your Supabase credentials.');
       }
       
-      // First check if the email already exists in profiles
       const { data: existingUser, error: checkError } = await supabase
         .from('profiles')
         .select('id, email')
@@ -145,11 +137,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error checking existing user:', checkError);
       } else if (existingUser) {
         console.log('User already exists in profiles table:', existingUser.id);
-        // Continue with sign up even if user exists in profiles
-        // This will create the auth user if it doesn't exist
       }
       
-      // Create the user in Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -165,7 +154,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: error.name
         });
         
-        // If the error is that the user already exists in auth, try to sign in instead
         if (error.message.includes('already registered')) {
           console.log('User already exists in Auth, attempting to sign in...');
           return signIn(email, password);
@@ -180,7 +168,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       
-      // Create a profile record for the user if it doesn't exist
       if (!existingUser) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -188,15 +175,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             {
               id: data.user.id,
               email: email,
-              username: email.split('@')[0], // Default username from email
+              username: email.split('@')[0],
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             }
           ]);
         
         if (profileError) {
-          console.error('Error creating profile:', profileError);
-          // Don't throw here, as the user is already created in Auth
+          console.error('Error creating profile:', profileError);   
         } else {
           console.log('Profile created for user:', data.user.id);
         }
@@ -204,7 +190,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Profile already exists for user:', data.user.id);
       }
 
-      // Log sign up activity
       await ActivityLogger.log({
         user_id: data.user.id,
         action: 'create',
@@ -230,15 +215,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
-      // Check if Supabase is configured
       if (!supabaseUrl || !supabaseAnonKey) {
         throw new Error('Supabase is not configured. Please set up your Supabase credentials.');
       }
 
-      // Log login attempt with email (but not password for security)
       console.log('Login attempt for email:', email);
       
-      // Check if the email exists in the database
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('id, email')
@@ -253,7 +235,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Email found in profiles table:', userData.id);
       }
       
-      // Try to sign in with Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -266,7 +247,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: error.name
         });
         
-        // If the user exists in profiles but not in auth, we need to recreate the auth user
         if (error.message === 'Invalid login credentials' && userData) {
           throw new Error('Invalid login credentials.');
         }
@@ -279,12 +259,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No user data returned');
       }
 
-      // Only trigger biometric if explicitly requested
       if (shouldTriggerBiometric && isBiometricEnabled) {
         await signInWithBiometric();
       }
 
-      // Log sign in activity
       await ActivityLogger.log({
         user_id: data.user.id,
         action: 'login',
@@ -309,10 +287,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
-      // Navigate to login screen before signing out to prevent white screen
       router.replace('/(auth)/login');
 
-      // Log sign out activity before signing out
       if (user) {
         await ActivityLogger.log({
           user_id: user.id,
@@ -328,7 +304,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
-      // Show success toast message only for manual logo
 
     } catch (error: any) {
       console.error('Sign out error:', error);
@@ -340,7 +315,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Add a new function to sign in with a known user ID
   const signInWithId = async (userId: string, password: string) => {
     try {
       setLoading(true);
@@ -360,8 +334,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('No email found for user ID:', userId);
         throw new Error('No email found for user');
       }
-      
-      // Try to sign in with the email
+
       return signIn(userData.email, password);
       
     } catch (error: any) {
@@ -379,7 +352,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Biometric authentication is not supported on this device');
       }
       
-      // Authenticate with biometrics first
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Authenticate to enable fingerprint login',
         fallbackLabel: 'Use password instead',
@@ -389,11 +361,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Biometric authentication failed');
       }
       
-      // Store credentials securely
       await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify({ email, password }));
       await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, 'true');
       
-      // Verify credentials were stored
       const storedCredentials = await SecureStore.getItemAsync(CREDENTIALS_KEY);
       
       setIsBiometricEnabled(true);
@@ -421,7 +391,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       
-      // Retrieve stored credentials
       const credentialsStr = await SecureStore.getItemAsync(CREDENTIALS_KEY);
       
       if (!credentialsStr) {
@@ -432,7 +401,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       const credentials = JSON.parse(credentialsStr);
       
-      // Sign in with stored credentials
       await signIn(credentials.email, credentials.password);
     } catch (error: any) {
       console.error('Error signing in with biometric:', error);
@@ -456,19 +424,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       setError(null);
-
-      // Check if Supabase is configured
       if (!supabaseUrl || !supabaseAnonKey) {
         throw new Error('Supabase is not configured. Please set up your Supabase credentials.');
       }
 
-      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         throw new Error('Please enter a valid email address');
       }
 
-      // Check if the email exists in the database
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('id, email')
@@ -481,9 +445,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       if (!userData) {
-        // Don't reveal if email exists or not for security
-        console.log('Password reset requested for non-existent email:', email);
-        // Still show success toast for security reasons
         Toast.show({
           type: 'success',
           text1: 'Password reset email sent',
@@ -752,7 +713,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
-      // Validate inputs
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         throw new Error('Please enter a valid email address');
@@ -760,7 +720,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!code || code.trim().length < 4) {
         throw new Error('Please enter the verification code');
       }
-      // Validate password strength
       const minLength = 8;
       const hasUpperCase = /[A-Z]/.test(newPassword);
       const hasLowerCase = /[a-z]/.test(newPassword);
@@ -783,7 +742,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Password must contain at least one special character');
       }
 
-      // Verify the recovery code
       const { error: verifyError } = await supabase.auth.verifyOtp({
         email,
         token: code,
@@ -795,7 +753,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Invalid or expired code');
       }
 
-      // Update the password for the now-authenticated recovery session
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });

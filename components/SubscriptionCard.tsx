@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   serviceName: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Inter-Bold',
     color: '#1f2937',
     flex: 1,
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     marginLeft: 10,
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Inter-Regular',
     color: '#7f8c8d',
   },
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   price: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Inter-Bold',
     color: '#2c3e50',
   },
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
   },
   expiryText: {
     marginLeft: 4,
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Inter-SemiBold',
   },
   toggleContainer: {

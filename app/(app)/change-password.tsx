@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 12,
     color: '#e74c3c',
     textAlign: 'center',
   },
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Inter-Medium',
     color: '#2c3e50',
     marginBottom: 8,

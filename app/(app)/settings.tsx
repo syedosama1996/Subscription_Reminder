@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 24,
+    fontSize: 20,
     color: '#fff',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
+    fontSize: 12,
     color: '#2c3e50',
     marginBottom: 16,
   },
@@ -201,12 +201,12 @@ const styles = StyleSheet.create({
   },
   menuText: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
+    fontSize: 12,
     color: '#2c3e50',
   },
   menuValue: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 12,
     color: '#7f8c8d',
     marginTop: 2,
   },
@@ -233,11 +233,11 @@ const styles = StyleSheet.create({
   signOutButtonText: {
     color: '#e74c3c',
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
+    fontSize: 12,
   },
   versionText: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 12,
     color: '#95a5a6',
     textAlign: 'center',
     marginBottom: 40,

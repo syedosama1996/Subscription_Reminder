@@ -31,7 +31,6 @@ export type Invoice = {
   subscription?: { service_name: string };
 };
 
-// Generate a unique invoice number
 export const generateInvoiceNumber = (): string => {
   const date = new Date();
   const year = date.getFullYear();
@@ -40,15 +39,13 @@ export const generateInvoiceNumber = (): string => {
   return `INV-${year}-${random}`;
 };
 
-// Helper function to round and validate numeric values
 const roundToTwoDecimals = (value: number): number => {
   return Math.round(value * 100) / 100;
 };
 
-// Helper function to ensure value is within numeric(15,2) limits
 const validateNumericValue = (value: number, fieldName: string): number => {
   const rounded = roundToTwoDecimals(value);
-  const maxValue = 999999999999999.99; // Maximum for numeric(15,2)
+  const maxValue = 999999999999999.99;
   const minValue = -999999999999999.99;
   
   if (rounded > maxValue) {
@@ -62,11 +59,8 @@ const validateNumericValue = (value: number, fieldName: string): number => {
   return rounded;
 };
 
-// Create a new invoice
 export const createInvoice = async (invoiceData: Partial<Invoice>): Promise<Invoice | null> => {
   try {
-    // Ensure required fields are present and map to DB columns
-    // Round and validate all numeric values to prevent overflow
     const invoicePayload = {
       user_id: invoiceData.user_id,
       invoice_no: invoiceData.invoice_no || generateInvoiceNumber(),
@@ -105,7 +99,6 @@ export const createInvoice = async (invoiceData: Partial<Invoice>): Promise<Invo
   }
 };
 
-// Auto-generate an invoice for a subscription
 export const generateInvoiceForSubscription = async (
   subscriptionId: string,
   userId: string,
@@ -123,7 +116,6 @@ export const generateInvoiceForSubscription = async (
   serviceCharges: number = 0
 ): Promise<Invoice | null> => {
   try {
-    // Round and validate amounts to prevent overflow
     const subscriptionCharges = roundToTwoDecimals(subscriptionDetails.purchase_amount_pkr);
     const serviceChargesRounded = roundToTwoDecimals(serviceCharges);
     const totalAmount = roundToTwoDecimals(subscriptionCharges + serviceChargesRounded);
@@ -154,7 +146,6 @@ export const generateInvoiceForSubscription = async (
   }
 };
 
-// Get all invoices for a user
 export const getUserInvoices = async (
   user_id: string,
   filterStatus?: 'paid' | 'pending' | 'cancelled' | 'all'
@@ -192,7 +183,6 @@ export const getUserInvoices = async (
   }
 };
 
-// Get a single invoice by ID
 export const getInvoice = async (id: string): Promise<Invoice | null> => {
   try {
     const { data, error } = await supabase
@@ -223,7 +213,6 @@ export const getInvoice = async (id: string): Promise<Invoice | null> => {
   }
 };
 
-// Update an invoice
 export const updateInvoice = async (
   id: string,
   updates: Partial<Invoice>
@@ -238,7 +227,6 @@ export const updateInvoice = async (
     delete updatePayload.subscription;
     delete updatePayload.subscription_name;
 
-    // Validate and round numeric values if they exist
     if ('purchase_amount' in updatePayload && typeof updatePayload.purchase_amount === 'number') {
       updatePayload.purchase_amount = validateNumericValue(updatePayload.purchase_amount, 'purchase_amount');
     }
@@ -267,7 +255,6 @@ export const updateInvoice = async (
   }
 };
 
-// Delete an invoice
 export const deleteInvoice = async (id: string): Promise<boolean> => {
   try {
     const { error } = await supabase

@@ -103,13 +103,13 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 14,
     color: '#2c3e50',
     marginBottom: 4,
   },
   timestamp: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 12,
     color: '#7f8c8d',
   },
 });

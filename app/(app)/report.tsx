@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator, Dimensions, Modal, Platform, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { BarChart2, DollarSign, Calendar, TrendingUp, ArrowLeft, Download, Filter, ChevronDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,6 +33,7 @@ interface DateRange {
 
 export default function ReportScreen() {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -585,7 +586,7 @@ export default function ReportScreen() {
                       stroke: "#4158D0"
                     },
                     propsForLabels: {
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: '500'
                     }
                   }}
@@ -654,10 +655,16 @@ export default function ReportScreen() {
         <View style={styles.modalCenteredView}>
           <ScrollView 
             style={styles.modalScrollView}
-            contentContainerStyle={styles.modalScrollContent}
+            contentContainerStyle={[
+              styles.modalScrollContent,
+              { paddingBottom: Math.max(insets.bottom, 10) }
+            ]}
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.modalView}>
+            <View style={[
+              styles.modalView,
+              { paddingBottom: Math.max(insets.bottom + 20, Platform.OS === 'ios' ? 40 : 50) }
+            ]}>
               <Text style={styles.modalTitle}>Select Date Range</Text>
               
               {dateRanges.map((range, index) => (
@@ -830,7 +837,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontFamily: 'Inter-Bold',
     color: '#fff',
   },
@@ -880,13 +887,13 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontFamily: 'Inter-Regular',
-    fontSize: 13,
+    fontSize: 12,
     color: '#555',
     marginBottom: 2,
   },
   statValue: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
+    fontSize: 12,
     color: '#2c3e50',
     flexShrink: 1,
   },
@@ -903,7 +910,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
+    fontSize: 12,
     color: '#333',
     marginBottom: 15,
     borderBottomWidth: 1,
@@ -931,7 +938,7 @@ const styles = StyleSheet.create({
   },
   chartText: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 12,
     color: '#7f8c8d',
   },
   disabledButton: {
@@ -956,8 +963,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 25,
-    paddingBottom: Platform.OS === 'ios' ? 80 : 60,
+    padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -970,9 +976,9 @@ const styles = StyleSheet.create({
     minHeight: 300,
   },
    modalTitle: {
-    fontSize: 18,
+    fontSize: 12,
     fontFamily: 'Inter-SemiBold',
-    marginBottom: 20,
+    marginBottom: 15,
     color: '#333',
   },
   modalButton: {
@@ -994,26 +1000,25 @@ const styles = StyleSheet.create({
       backgroundColor: '#1976D2',
   },
    modalButtonClose: {
-    marginTop: 0,
-    marginBottom: 20,
+    marginTop: 5,
+    marginBottom: 0,
     backgroundColor: '#fff',
     borderWidth: 2,
     borderColor: '#e74c3c',
     borderRadius: 8,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    // minWidth: 150,
     width: '90%',
    },
   modalButtonText: {
     color: 'white',
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 12,
   },
   modalButtonCloseText: {
     color: '#e74c3c',
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
+    fontSize: 12,
     textAlign: 'center',
     letterSpacing: 0.5,
   },
@@ -1049,22 +1054,22 @@ const styles = StyleSheet.create({
   },
   dateRangeText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 12,
     color: '#4158D0',
     marginHorizontal: 8,
   },
   dateRangeDetail: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     textAlign: 'center',
   },
   dateRangeOption: {
     width: '100%',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 6,
     backgroundColor: '#f0f2f5',
   },
   selectedDateRangeOption: {
@@ -1072,7 +1077,7 @@ const styles = StyleSheet.create({
   },
   dateRangeOptionText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 12,
     color: '#333',
     textAlign: 'center',
   },
@@ -1081,42 +1086,42 @@ const styles = StyleSheet.create({
   },
   customDateRangeContainer: {
     width: '100%',
-    marginTop: 15,
-    marginBottom: 15,
-    padding: 15,
+    marginTop: 10,
+    marginBottom: 10,
+    padding: 12,
     backgroundColor: '#f8f9fa',
     borderRadius: 8,
   },
   customDateRangeTitle: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
+    fontSize: 12,
     color: '#333',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   customDateButton: {
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 15,
     backgroundColor: '#fff',
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 6,
     borderWidth: 1,
     borderColor: '#ddd',
   },
   customDateButtonText: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 12,
     color: '#333',
   },
   applyCustomDateButton: {
     backgroundColor: '#4158D0',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
-    marginTop: 2,
+    marginTop: 0,
   },
   applyCustomDateButtonText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 12,
     color: '#fff',
     textAlign: 'center',
   },

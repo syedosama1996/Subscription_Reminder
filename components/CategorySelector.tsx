@@ -17,6 +17,7 @@ import { useAuth } from '../lib/auth';
 import CategoryBadge from './CategoryBadge';
 import { Plus, X, Check } from 'lucide-react-native';
 import { getPlatformConfig } from '../utils/deviceUtils';
+import Toast from 'react-native-toast-message';
 
 type CategorySelectorProps = {
   selectedCategoryId?: string;
@@ -67,11 +68,28 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
   const handleAddCategory = async () => {
     if (!user || !newCategoryName.trim()) return;
     
+    // Check if category name already exists (case-insensitive)
+    const trimmedName = newCategoryName.trim();
+    const existingCategory = categories.find(
+      cat => cat.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    
+    if (existingCategory) {
+      Toast.show({
+        type: 'error',
+        text1: 'Category Already Exists',
+        text2: `A category with the name "${trimmedName}" already exists. Please choose a different name.`,
+        position: 'top',
+        visibilityTime: 4000,
+      });
+      return;
+    }
+    
     try {
       setAddingCategory(true);
       const newCategory = await createCategory({
         user_id: user.id,
-        name: newCategoryName.trim(),
+        name: trimmedName,
         color: newCategoryColor || undefined
       });
       
@@ -80,8 +98,23 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
       setNewCategoryColor('');
       setShowAddForm(false);
       Keyboard.dismiss();
+      
+      Toast.show({
+        type: 'success',
+        text1: 'Category Created',
+        text2: `"${trimmedName}" has been added successfully.`,
+        position: 'top',
+        visibilityTime: 3000,
+      });
     } catch (error) {
       console.error('Error adding category:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to create category. Please try again.',
+        position: 'top',
+        visibilityTime: 4000,
+      });
     } finally {
       setAddingCategory(false);
     }
@@ -319,7 +352,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     marginBottom: 6,
     color: '#2c3e50',
@@ -339,7 +372,7 @@ const styles = StyleSheet.create({
   },
   selectButtonText: {
     color: '#7f8c8d',
-    fontSize: 16,
+    fontSize: 12,
   },
   changeButton: {
     marginLeft: 12,
@@ -348,7 +381,7 @@ const styles = StyleSheet.create({
   changeButtonText: {
     color: '#4158D0',
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 12,
   },
   clearButton: {
     marginLeft: 8,
@@ -375,7 +408,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 20,
+    fontSize: 18,
     color: '#2c3e50',
   },
   modalCloseButton: {
@@ -402,7 +435,7 @@ const styles = StyleSheet.create({
   },
   addCategoryText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 12,
     color: '#4158D0',
   },
   categoriesList: {
@@ -432,7 +465,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    fontSize: 12,
     color: '#7f8c8d',
     textAlign: 'center',
   },
@@ -444,7 +477,7 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 16,
     paddingHorizontal: 16,
-    fontSize: 16,
+    fontSize: 12,
     color: '#2c3e50',
     borderWidth: 1,
     borderColor: 'rgba(223, 228, 234, 0.5)',
@@ -452,7 +485,7 @@ const styles = StyleSheet.create({
   },
   colorLabel: {
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 12,
     color: '#2c3e50',
     marginBottom: 12,
   },
@@ -489,7 +522,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 12,
     color: '#7f8c8d',
   },
   saveButton: {
@@ -505,7 +538,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    fontSize: 12,
     color: '#fff',
   },
   disabledButton: {
