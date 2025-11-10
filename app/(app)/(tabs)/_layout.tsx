@@ -165,14 +165,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: Platform.OS === 'ios' ? 85 : 70,
-    shadowColor: '#4158D0',
-    shadowOffset: {
-      width: 0,
-      height: -4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 10,
   },
   tabBarBackground: {
     ...StyleSheet.absoluteFillObject,

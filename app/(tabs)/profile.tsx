@@ -169,11 +169,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 5,
+  
   },
   avatarGradient: {
     width: 100,
@@ -213,11 +209,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 24,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 5,
+  
   },
   sectionTitle: {
     fontFamily: 'Inter-Bold',

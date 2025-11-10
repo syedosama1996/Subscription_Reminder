@@ -474,11 +474,6 @@ const styles = StyleSheet.create({
     margin: 20,
     padding: 20,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   sectionTitle: {
     fontFamily: 'Inter-Bold',
@@ -519,11 +514,7 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+  
   },
   modalHeader: {
     flexDirection: 'row',

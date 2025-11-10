@@ -121,8 +121,38 @@ export default function HomeScreen() {
         );
       }
 
-      // Count subscriptions per category (based on the truly active ones)
-      const categoryCounts = filteredByCategory.reduce((acc, sub) => {
+      // Sort subscriptions: expiring soon at the top, then by expiry date
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const sortedSubscriptions = filteredByCategory.sort((a, b) => {
+        // Helper function to calculate days until expiry
+        const getDaysUntilExpiry = (sub: Subscription): number => {
+          if (!sub.expiry_date) return Infinity; // No expiry date = sort to bottom
+          const expiryDate = new Date(sub.expiry_date);
+          expiryDate.setHours(0, 0, 0, 0);
+          const diffTime = expiryDate.getTime() - today.getTime();
+          return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        };
+
+        const daysA = getDaysUntilExpiry(a);
+        const daysB = getDaysUntilExpiry(b);
+
+        // Subscriptions expiring within 30 days come first
+        const isAExpiringSoon = daysA <= 30 && daysA > 0;
+        const isBExpiringSoon = daysB <= 30 && daysB > 0;
+
+        // If one is expiring soon and the other isn't, prioritize the one expiring soon
+        if (isAExpiringSoon && !isBExpiringSoon) return -1;
+        if (!isAExpiringSoon && isBExpiringSoon) return 1;
+
+        // If both are expiring soon or both are not, sort by days until expiry (ascending)
+        // Subscriptions expiring sooner come first
+        return daysA - daysB;
+      });
+
+      // Count subscriptions per category (based on the sorted subscriptions)
+      const categoryCounts = sortedSubscriptions.reduce((acc, sub) => {
         if (sub.category_id) {
           acc[sub.category_id] = (acc[sub.category_id] || 0) + 1;
         }
@@ -137,8 +167,8 @@ export default function HomeScreen() {
       }) || [];
 
       setCategories(sortedCategories);
-      setSubscriptions(filteredByCategory);
-      setFilteredSubscriptions(filteredByCategory);
+      setSubscriptions(sortedSubscriptions);
+      setFilteredSubscriptions(sortedSubscriptions);
 
     } catch (err: any) {
       console.error('Error loading data:', err);
@@ -777,11 +807,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 14,
     height: 45,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  
   },
   searchInput: {
     flex: 1,
@@ -937,11 +963,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 16,
-    shadowColor: '#4158D0',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+  
   },
   addFirstIcon: {
     marginRight: 8,
@@ -995,14 +1017,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 25,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
   modalIconContainer: {
     marginBottom: 15,

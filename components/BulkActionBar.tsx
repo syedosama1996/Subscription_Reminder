@@ -8,13 +8,15 @@ type BulkActionBarProps = {
   onCancel: () => void;
   onDelete: () => void;
   onToggleStatus: (active: boolean) => void;
+  showToggleControls?: boolean;
 };
 
 export default function BulkActionBar({ 
   selectedCount, 
   onCancel, 
   onDelete,
-  onToggleStatus
+  onToggleStatus,
+  showToggleControls = true
 }: BulkActionBarProps) {
   if (selectedCount === 0) return null;
 
@@ -33,20 +35,24 @@ export default function BulkActionBar({
         </View>
 
         <View style={styles.actionIcons}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => onToggleStatus(true)}
-            activeOpacity={0.7}
-          >
-            <Power size={18} color="#2ecc71" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => onToggleStatus(false)}
-            activeOpacity={0.7}
-          >
-            <PowerOff size={18} color="#95a5a6" />
-          </TouchableOpacity>
+          {showToggleControls && onToggleStatus && (
+            <>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => onToggleStatus(true)}
+                activeOpacity={0.7}
+              >
+                <Power size={18} color="#2ecc71" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => onToggleStatus(false)}
+                activeOpacity={0.7}
+              >
+                <PowerOff size={18} color="#95a5a6" />
+              </TouchableOpacity>
+            </>
+          )}
           <TouchableOpacity
             style={styles.iconButton}
             onPress={onDelete}
@@ -65,11 +71,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e1e5e9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+   
   },
   barContent: {
     flexDirection: 'row',

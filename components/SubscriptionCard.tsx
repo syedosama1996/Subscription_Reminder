@@ -32,6 +32,7 @@ interface SubscriptionCardProps {
   onPress?: () => void;
   onRefresh?: () => void;
   simpleExpiryDisplay?: boolean;
+  hideToggle?: boolean;
 }
 
 // Global scroll state
@@ -59,6 +60,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   onPress,
   onRefresh,
   simpleExpiryDisplay,
+  hideToggle = false,
 }) => {
   const router = useRouter();
   const [touchStartTime, setTouchStartTime] = useState<number>(0);
@@ -179,7 +181,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         <BlurView
           intensity={80}
           tint="light"
-          style={styles.card}
+          style={[styles.card, days < 0 && styles.expiredCard]}
         >
           {selected && <View style={styles.selectionOverlay} />}
           <View style={styles.cardContent}>
@@ -200,7 +202,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               <Text style={styles.serviceName}>
                 {subscription.service_name}
               </Text>
-              {typeof onToggleStatus === 'function' && (
+              {!hideToggle && typeof onToggleStatus === 'function' && (
                 <TouchableOpacity
                   style={styles.toggleContainer}
                   onPress={handleTogglePress}
@@ -274,7 +276,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           </View>
         </BlurView>
       ) : (
-        <View style={styles.card}>
+        <View style={[styles.card, days < 0 && styles.expiredCard]}>
           <LinearGradient
             colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.9)']}
             style={styles.cardGradient}
@@ -299,7 +301,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                 {subscription.service_name}
                 
               </Text>
-              {typeof onToggleStatus === 'function' && (
+              {!hideToggle && typeof onToggleStatus === 'function' && (
                 <TouchableOpacity
                   style={styles.toggleContainer}
                   onPress={handleTogglePress}
@@ -389,17 +391,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   card: {
-    borderRadius: 24,
+    borderRadius: 14,
     backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 6,
     position: 'relative',
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
   },
   selectedCard: {
     borderWidth: 2.5,
@@ -411,8 +406,10 @@ const styles = StyleSheet.create({
     elevation: 12,
     transform: [{ scale: 1.02 }],
   },
+  expiredCard: {
+  },
   cardContent: {
-    padding: 16,
+    padding: 14,
   },
   cardGradient: {
     position: 'absolute',

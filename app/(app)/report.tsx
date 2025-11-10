@@ -8,6 +8,7 @@ import { getSubscriptions, getSubscriptionHistory, exportSubscriptionsToCSV } fr
 import { getUserInvoices } from '../../lib/invoices';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import * as Print from 'expo-print';
 import { BarChart, LineChart } from 'react-native-chart-kit';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import ViewShot from 'react-native-view-shot';
@@ -375,32 +376,51 @@ export default function ReportScreen() {
         await FileSystem.writeAsStringAsync(tempFilePath, csvContent, { encoding: FileSystem.EncodingType.UTF8 });
         fileUri = tempFilePath;
       } else if (format === 'pdf') {
-        // Check if RNHTMLtoPDF module is loaded
-        if (!RNHTMLtoPDF) {
-          throw new Error('PDF generation module is not available. Please ensure the app is rebuilt after installing react-native-html-to-pdf.');
-        }
-
         const html = generateReportHtml();
-        tempFilePath = `${cacheDir}${finalFileName}`;
-        const options = {
-          html,
-          fileName: baseFileName,
-          // Request base64 output instead of relying on filePath
-          base64: true,
-          // Add directory back to satisfy type definition, even if not strictly needed for base64
-          directory: 'docs' // Or another valid directory name
-        };
+        
+        // Try using expo-print first (more reliable)
+        try {
+          const { uri } = await Print.printToFileAsync({
+            html,
+            base64: false,
+          });
+          
+          if (uri) {
+            tempFilePath = uri;
+            fileUri = uri;
+          } else {
+            throw new Error('Print to file failed');
+          }
+        } catch (printError) {
+          console.log('expo-print failed, trying RNHTMLtoPDF:', printError);
+          
+          // Fallback to RNHTMLtoPDF if available
+          if (RNHTMLtoPDF && RNHTMLtoPDF.convert) {
+            try {
+              tempFilePath = `${cacheDir}${finalFileName}`;
+              const options = {
+                html,
+                fileName: baseFileName,
+                base64: true,
+                directory: 'docs'
+              };
 
-        const pdfResult = await RNHTMLtoPDF.convert(options);
+              const pdfResult = await RNHTMLtoPDF.convert(options);
 
-        if (!pdfResult.base64) {
-            throw new Error('Failed to generate PDF base64 content.');
+              if (pdfResult?.base64) {
+                await FileSystem.writeAsStringAsync(tempFilePath, pdfResult.base64, { encoding: FileSystem.EncodingType.Base64 });
+                fileUri = tempFilePath;
+              } else {
+                throw new Error('PDF generation returned no data');
+              }
+            } catch (pdfError) {
+              console.error('RNHTMLtoPDF error:', pdfError);
+              throw new Error('PDF generation failed. Please try again or use a different format.');
+            }
+          } else {
+            throw new Error('PDF generation is not available. Please use PNG or CSV format.');
+          }
         }
-
-        // Write the base64 content to the temporary file
-        await FileSystem.writeAsStringAsync(tempFilePath, pdfResult.base64, { encoding: FileSystem.EncodingType.Base64 });
-        fileUri = tempFilePath; // Use the URI of the file we just wrote
-
       } else if (format === 'png') {
         if (viewShotRef.current?.capture) {
           const uri = await viewShotRef.current.capture();
@@ -859,11 +879,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+   
   },
   statRow: {
     flexDirection: 'row',
@@ -902,11 +918,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+   
   },
   sectionTitle: {
     fontFamily: 'Inter-Bold',
@@ -952,28 +964,20 @@ const styles = StyleSheet.create({
   },
   modalScrollView: {
     width: '100%',
-    maxHeight: '97%',
+    maxHeight: '100%',
   },
   modalScrollContent: {
     flexGrow: 1,
     justifyContent: 'flex-end',
   },
   modalView: {
+    alignItems: 'center',
     width: '100%',
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-    minHeight: 300,
+    maxHeight: '90%',
   },
    modalTitle: {
     fontSize: 12,
@@ -1036,11 +1040,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
   },
   dateRangeButton: {
     flexDirection: 'row',
