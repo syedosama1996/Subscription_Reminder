@@ -425,7 +425,6 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
-
   safeArea: {
     flex: 1,
   },

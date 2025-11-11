@@ -923,6 +923,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
+    paddingTop: 10,
   },
   purchaseCard: {
     backgroundColor: '#fff',

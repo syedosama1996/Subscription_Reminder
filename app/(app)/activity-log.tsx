@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, ActivityIndicator, RefreshControl, Alert, Modal, TouchableOpacity   } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, ActivityIndicator, RefreshControl, Alert, Modal, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { Activity, Filter, Clock, CheckCircle, AlertCircle, Info, Plus, Trash2, Edit, Power, RefreshCw, ArrowLeft } from 'lucide-react-native';
@@ -457,7 +457,6 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
-
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -514,6 +513,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
+    paddingTop: 10,
     paddingBottom: 40,
   },
   activityCard: {
