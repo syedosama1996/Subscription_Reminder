@@ -603,7 +603,7 @@ export default function PurchaseHistoryScreen() {
   );
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.container}>
           <LinearGradient
             colors={['#4158D0', '#C850C0']}
@@ -613,11 +613,11 @@ export default function PurchaseHistoryScreen() {
           />
           <CustomLoader visible={true} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <LinearGradient
         colors={['#4158D0', '#C850C0']}
         start={{ x: 0, y: 0 }}
@@ -630,7 +630,7 @@ export default function PurchaseHistoryScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color="#fff" />
+          <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Purchase History</Text>
         <View style={styles.headerButtons}>
@@ -642,7 +642,7 @@ export default function PurchaseHistoryScreen() {
               setIsFilterModalVisible(true);
             }}
           >
-            <Filter size={20} color="#fff" />
+            <Filter size={18} color="#fff" />
             {(selectedCategories.length > 0 || selectedStatuses.length > 0) && (
               <View style={styles.filterBadge}>
                 <Text style={styles.filterBadgeText}>
@@ -656,7 +656,7 @@ export default function PurchaseHistoryScreen() {
             onPress={() => setIsExportModalVisible(true)}
             disabled={exporting}
           >
-            {exporting ? <ActivityIndicator size="small" color="#fff" /> : <Download size={20} color="#fff" />}
+            {exporting ? <ActivityIndicator size="small" color="#fff" /> : <Download size={18} color="#fff" />}
           </TouchableOpacity>
         </View>
       </View>
@@ -670,7 +670,7 @@ export default function PurchaseHistoryScreen() {
         </View>
       ) : filteredSubscriptions.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <History size={48} color="#7f8c8d" />
+          <History size={40} color="#7f8c8d" />
           <Text style={styles.emptyText}>
             {selectedCategories.length > 0 || selectedStatuses.length > 0 
               ? 'No subscriptions match your filters' 
@@ -830,7 +830,7 @@ export default function PurchaseHistoryScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+      </View>
   );
 }
 
@@ -845,8 +845,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
@@ -857,19 +857,22 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 160,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    height: 110,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    zIndex: 1000,
   },
   placeholder: {
     width: 40,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    marginTop: 42,
+      zIndex: 1001,
+      position: 'relative',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -877,9 +880,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+      width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -906,9 +909,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
   },
   exportButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+      width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -917,13 +920,13 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: 'Inter-Bold',
     color: '#fff',
   },
   listContent: {
     padding: 20,
-    paddingTop: 10,
+    marginTop: 20,
   },
   purchaseCard: {
     backgroundColor: '#fff',

@@ -170,7 +170,7 @@ export default function ChangePasswordScreen() {
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#fff" />
+          <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Change Password</Text>
         <View style={styles.placeholder} />
@@ -265,23 +265,25 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 120,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    height: 110,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    zIndex: 1000,
   },
   header: {
+    marginTop: 0,
+    zIndex: 1001,
+    position: 'relative',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    marginTop: 5,
-    // marginBottom: 10,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -297,7 +299,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    marginTop: 10,
+    marginTop: 0,
   },
   form: {
     padding: 20,

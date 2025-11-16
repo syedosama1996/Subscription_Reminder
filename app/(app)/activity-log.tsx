@@ -106,7 +106,7 @@ export default function ActivityLogScreen() {
               .select('service_name')
               .eq('id', activity.entity_id)
               .single();
-            
+
             if (subscription?.service_name) {
               return {
                 ...activity,
@@ -293,8 +293,8 @@ export default function ActivityLogScreen() {
       <View style={styles.activityCard}>
         <View style={styles.activityContent}>
           <View style={[
-            styles.iconContainer, 
-            { 
+            styles.iconContainer,
+            {
               backgroundColor: iconColor
             }
           ]}>
@@ -327,7 +327,7 @@ export default function ActivityLogScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.container}>
           <LinearGradient
             colors={['#4158D0', '#C850C0']}
@@ -337,12 +337,12 @@ export default function ActivityLogScreen() {
           />
           <CustomLoader visible={true} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <LinearGradient
         colors={['#4158D0', '#C850C0']}
         start={{ x: 0, y: 0 }}
@@ -355,14 +355,14 @@ export default function ActivityLogScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color="#fff" />
+          <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Activity Log</Text>
         <TouchableOpacity
           style={styles.filterButton}
           onPress={() => setShowFilterMenu(true)}
         >
-          <Filter size={24} color="#fff" />
+          <Filter size={18} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -428,7 +428,7 @@ export default function ActivityLogScreen() {
           ListFooterComponent={renderFooter}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -453,20 +453,23 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 160,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    height: 110,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    zIndex: 1000,
   },
   header: {
+    marginTop: 42,
+    zIndex: 1001,
+    position: 'relative',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
@@ -474,7 +477,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 21,
+    fontSize: 22,
     color: '#fff',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
@@ -482,9 +485,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -513,7 +516,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
-    paddingTop: 10,
+    marginTop: 25,
     paddingBottom: 40,
   },
   activityCard: {

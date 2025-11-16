@@ -400,7 +400,7 @@ export default function InvoiceScreen() {
       >
         <View style={styles.invoiceCardHeader}>
           <View style={styles.invoiceCardTitleContainer}>
-            <FileText size={20} color={styles.invoiceCardTitle.color} style={{ marginRight: 8 }}/>
+            <FileText size={18} color={styles.invoiceCardTitle.color} style={{ marginRight: 8 }}/>
             <Text style={styles.invoiceCardTitle}>{item.name || 'Invoice'}</Text>
           </View>
           <View style={[styles.statusBadgeImproved, { backgroundColor: item.status === 'paid' ? '#e8f9f0' : (item.status === 'pending' ? '#fef5e7' : '#fdecea') }]}>
@@ -569,7 +569,7 @@ export default function InvoiceScreen() {
   };
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.container}>
           <LinearGradient
             colors={['#4158D0', '#C850C0']}
@@ -579,11 +579,11 @@ export default function InvoiceScreen() {
           />
           <CustomLoader visible={true} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <LinearGradient
         colors={['#4158D0', '#8A54C8', '#C850C0']}
         start={{ x: 0, y: 0 }}
@@ -596,11 +596,12 @@ export default function InvoiceScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color="#fff" />
+          <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Invoices</Text>
         <View style={styles.placeholder} />
       </View>
+      <View style={styles.safeArea} >
 
         <FlatList
           data={invoices}
@@ -617,7 +618,8 @@ export default function InvoiceScreen() {
         />
 
       {renderInvoiceDetails()}
-    </SafeAreaView>
+      </View>
+    </View>
   );
 }
 
@@ -626,10 +628,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f0f2f5',
   },
-
+  safeArea: {
+    flex: 1,
+    marginTop: 20,
+  },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
@@ -640,28 +645,32 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 160,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    height: 110,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    zIndex: 1000,
   },
   placeholder: {
     width: 40,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+      marginTop: 42,
+      zIndex: 1001,
+      position: 'relative',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: 'Inter-Bold',
     color: '#fff',
   },
   listContent: {
-    padding: 16,
-    paddingTop: 10,
+      padding: 20,
+    marginTop: 20,
+    paddingBottom: 40,
   },
   invoiceCardImproved: {
     backgroundColor: '#fff',

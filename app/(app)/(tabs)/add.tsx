@@ -267,7 +267,7 @@ export default function AddSubscriptionScreen() {
         style={styles.headerGradient}
       />
       
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <View style={styles.safeArea}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}
@@ -555,7 +555,7 @@ export default function AddSubscriptionScreen() {
             />
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
@@ -570,14 +570,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 130,
+    height: 110,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    // zIndex: 1000,
+    zIndex: 1000,
   },
   safeArea: {
     flex: 1,
-  },
+      marginTop: 42,
+    zIndex: 1001,
+    position: 'relative',
+    },
   keyboardAvoidingView: {
     flex: 1,
   },

@@ -30,13 +30,12 @@ export default function SettingsScreen() {
         style={styles.headerGradient}
       />
       
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color="#fff" />
+          <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Settings</Text>
         <View style={styles.placeholder} />
@@ -116,7 +115,6 @@ export default function SettingsScreen() {
 
           <Text style={styles.versionText}>Version 2.0.0</Text>
         </ScrollView>
-      </SafeAreaView>
     </View>
   );
 }
@@ -127,9 +125,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -139,14 +137,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-      height: 160,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
-  safeArea: {
-    flex: 1,
+    height: 110,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    zIndex: 1000,
   },
   header: {
+    marginTop: 42,
+    zIndex: 1001,
+    position: 'relative',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -155,7 +154,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 20,
+    fontSize: 22,
     color: '#fff',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
@@ -167,6 +166,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    marginTop: 25,
   },
   section: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',

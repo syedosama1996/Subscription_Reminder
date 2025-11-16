@@ -464,7 +464,7 @@ export default function HomeScreen() {
             style={styles.menuButton}
             onPress={() => navigation.toggleDrawer()}
           >
-            <Menu size={24} color="#fff" />
+            <Menu size={22} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerActions}>
             {!selectionMode ? (

@@ -247,7 +247,7 @@ export default function ExpiringSubscriptionsScreen() {
         style={styles.headerGradient}
       />
       
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <View style={styles.safeArea}>
         <View style={styles.headerContainer}>
           <View style={styles.header}>
             <View style={styles.headerLeft}>
@@ -352,7 +352,7 @@ export default function ExpiringSubscriptionsScreen() {
             }
           />
         )}
-      </SafeAreaView>
+      </View>
 
       <FilterModal
         visible={filterModalVisible}
@@ -421,24 +421,29 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 210,
+    height: 110,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-  },
-  safeArea: {
-    flex: 1,
+    zIndex: 1000,
   },
   headerContainer: {
-    marginTop: 30,
+    marginTop: 0,
     zIndex: 1001,
     position: 'relative',
-  },
-  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
+  },
+  header: {
+    marginTop: 42,
+    zIndex: 1001,
+    position: 'relative',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
   headerLeft: {
     flex: 1,

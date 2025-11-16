@@ -496,7 +496,7 @@ export default function ReportScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <LinearGradient
         colors={['#4158D0', '#C850C0']}
         start={{ x: 0, y: 0 }}
@@ -509,7 +509,7 @@ export default function ReportScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color="#fff" />
+          <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Reports</Text>
         <View style={styles.headerButtons}>
@@ -519,7 +519,7 @@ export default function ReportScreen() {
             onPress={() => setIsExportModalVisible(true)}
             disabled={exporting}
           >
-             {exporting ? <ActivityIndicator size="small" color="#fff" /> : <Download size={24} color="#fff" />}
+             {exporting ? <ActivityIndicator size="small" color="#fff" /> : <Download size={18} color="#fff" />}
           </TouchableOpacity>
         </View>
       </View>
@@ -812,7 +812,7 @@ export default function ReportScreen() {
         </View>
       </Modal>
 
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -828,8 +828,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f2f5',
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
@@ -840,17 +840,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: 160,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    height: 110,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    zIndex: 1000,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 15 : 10,
-    paddingBottom: 10,
+    marginTop: 42,
+      zIndex: 1001,
+      position: 'relative',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -862,9 +864,9 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   exportButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -872,7 +874,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 15,
-    paddingTop: 10,
+    marginTop: 55,
   },
   statsCard: {
     backgroundColor: '#fff',
