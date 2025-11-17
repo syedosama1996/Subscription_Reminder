@@ -426,6 +426,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
     zIndex: 1000,
   },
+  safeArea: {
+    flex: 1,
+  },
   headerContainer: {
     marginTop: 0,
     zIndex: 1001,
@@ -504,7 +507,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: Platform.OS === 'android' ? 90 : 100,
-    marginBottom:20
   },
   cardWrapper: {
     marginBottom: 20,

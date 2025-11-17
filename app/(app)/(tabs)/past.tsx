@@ -414,6 +414,7 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     marginBottom: 20,
+
   },  
   safeArea: {
     flex: 1,
@@ -493,7 +494,9 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   listContent: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: Platform.OS === 'android' ? 90 : 100,
   },
   errorContainer: {
     margin: 20,
