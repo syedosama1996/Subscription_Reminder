@@ -483,8 +483,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
     letterSpacing: -0.5,
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 10,
+
     textAlign: 'center',
   },
   filterButton: {
@@ -519,7 +518,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
-    marginTop: 25,
+    paddingTop: 20,
     paddingBottom: 40,
   },
   activityCard: {

@@ -670,6 +670,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
     letterSpacing: -0.5,
+    textAlign:'center'
   },
   listContent: {
     padding: 20,

@@ -161,7 +161,7 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaTop} edges={['top']}>
         <View style={styles.headerContainer}>
           <View style={styles.header}>
@@ -261,7 +261,7 @@ export default function ChangePasswordScreen() {
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -306,6 +306,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
     letterSpacing: -0.5,
+    textAlign:'center'
   },
   content: {
     flex: 1,

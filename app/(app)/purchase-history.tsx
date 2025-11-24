@@ -925,10 +925,13 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
     letterSpacing: -0.5,
+    textAlign:'center'
+
   },
   listContent: {
     padding: 20,
-    marginTop: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   purchaseCard: {
     backgroundColor: '#fff',

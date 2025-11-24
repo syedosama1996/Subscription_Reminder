@@ -126,7 +126,7 @@ export default function HomeScreen() {
       // Sort subscriptions: expiring soon at the top, then by expiry date
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const sortedSubscriptions = filteredByCategory.sort((a, b) => {
         // Helper function to calculate days until expiry
         const getDaysUntilExpiry = (sub: Subscription): number => {
@@ -493,7 +493,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </SafeAreaView>
-      <SafeAreaView style={styles.safeArea} >
+      <View style={styles.safeArea} >
         {/* BulkActionBar - Fixed above content, outside ScrollView */}
         {selectedSubscriptions.length > 0 && (
           <BulkActionBar
@@ -503,7 +503,7 @@ export default function HomeScreen() {
             onToggleStatus={handleBulkToggleStatus}
           />
         )}
-        
+
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
@@ -647,7 +647,7 @@ export default function HomeScreen() {
 
           {/* <CustomLoader visible={toggleLoading} /> */}
         </ScrollView>
-      </SafeAreaView>
+      </View>
 
       <FilterModal
         visible={filterModalVisible}
@@ -682,7 +682,7 @@ export default function HomeScreen() {
             <Text style={styles.modalMessage}>
               Are you sure you want to delete {selectedSubscriptions.length} subscription(s)? This action cannot be undone.
             </Text>
-            
+
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity
                 style={styles.modalCancelButton}
@@ -691,7 +691,7 @@ export default function HomeScreen() {
               >
                 <Text style={styles.modalCancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={styles.modalDeleteButton}
                 onPress={confirmBulkDelete}
@@ -722,15 +722,14 @@ const styles = StyleSheet.create({
   },
   safeAreaTop: {
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e1e5e9',
   },
   safeArea: {
     flex: 1,
+    marginTop: 10
   },
   headerContainer: {
     backgroundColor: '#fff',
-    paddingTop: 8,
+    paddingTop: 4,
     paddingBottom: 0,
   },
   header: {
@@ -769,7 +768,8 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     paddingHorizontal: 20,
-    marginBottom: 0,
+    marginBottom: 10,
+    marginTop: 10
   },
   searchBar: {
     flexDirection: 'row',
@@ -934,7 +934,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 16,
-  
+
   },
   addFirstIcon: {
     marginRight: 8,
