@@ -31,12 +31,14 @@ import NotificationBottomSheet from '../../../components/NotificationBottomSheet
 import NotificationIcon from '../../../components/NotificationIcon';
 import { Search, Bell, Plus, Filter, Download, CheckSquare, Menu, CheckCircle2, XCircle, TrendingUp, Calendar, DollarSign, AlertTriangle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { Category, SubscriptionFilter } from '../../../lib/types';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import CustomLoader from '../../../components/CustomLoader';
 import { setScrolling } from '../../../components/SubscriptionCard';
 import { TouchableOpacity } from 'react-native';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../../../constants/Typography';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -306,36 +308,6 @@ export default function HomeScreen() {
     }
   };
 
-  const handleExportData = async () => {
-    if (!user || Platform.OS === 'web') {
-      Alert.alert('Export not available', 'Exporting is not available on web platform');
-      return;
-    }
-
-    try {
-      setExporting(true);
-
-      // Generate CSV content
-      const csvContent = exportSubscriptionsToCSV(subscriptions);
-
-      // Create a temporary file
-      const fileUri = `${FileSystem.documentDirectory}subscriptions_${new Date().toISOString().split('T')[0]}.csv`;
-      await FileSystem.writeAsStringAsync(fileUri, csvContent);
-
-      // Share the file
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri);
-      } else {
-        Alert.alert('Sharing not available', 'Sharing is not available on this device');
-      }
-    } catch (error) {
-      console.error('Error exporting data:', error);
-      Alert.alert('Export Error', 'Failed to export subscription data');
-    } finally {
-      setExporting(false);
-    }
-  };
-
   const toggleSubscriptionSelection = (id: string) => {
     if (selectedSubscriptions.includes(id)) {
       setSelectedSubscriptions(selectedSubscriptions.filter(subId => subId !== id));
@@ -439,12 +411,6 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <LinearGradient
-          colors={['#4158D0', '#C850C0']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.headerGradient}
-        />
         <CustomLoader visible={true} />
       </View>
     );
@@ -452,75 +418,81 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      />
-      <View style={styles.headerContainer}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => navigation.toggleDrawer()}
-          >
-            <Menu size={22} color="#fff" />
-          </TouchableOpacity>
-          <View style={styles.headerActions}>
-            {!selectionMode ? (
-              <>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => setSelectionMode(true)}
+      <SafeAreaView style={styles.safeAreaTop} edges={['top']}>
+        <View style={styles.headerContainer}>
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <TouchableOpacity
+                style={styles.menuButton}
+                onPress={() => navigation.toggleDrawer()}
+              >
+                <Menu size={22} color="#2c3e50" />
+              </TouchableOpacity>
+              <MaskedView
+                maskElement={<Text style={styles.title}>Active Subscriptions</Text>}
+              >
+                <LinearGradient
+                  colors={['#4158D0', '#C850C0']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
                 >
-                  <CheckSquare size={22} color="#fff" />
-                </TouchableOpacity>
-                <NotificationIcon
-                  style={styles.iconButton}
-                  onPress={() => setNotificationBottomSheetVisible(true)}
-                  userId={user?.id}
-                  size={22}
-                  color="#fff"
-                />
-              </>
-            ) : (
-              <>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={handleMarkAll}
-                >
-                  <CheckCircle2 size={22} color="#fff" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={handleRemoveAll}
-                >
-                  <XCircle size={22} color="#fff" />
-                </TouchableOpacity>
-              </>
-            )}
+                  <Text style={[styles.title, { opacity: 0 }]}>Active Subscriptions</Text>
+                </LinearGradient>
+              </MaskedView>
+            </View>
+            <View style={styles.headerActions}>
+              {!selectionMode ? (
+                <>
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => setSelectionMode(true)}
+                  >
+                    <CheckSquare size={22} color="#2c3e50" />
+                  </TouchableOpacity>
+                  <NotificationIcon
+                    style={styles.iconButton}
+                    onPress={() => setNotificationBottomSheetVisible(true)}
+                    userId={user?.id}
+                    size={22}
+                    color="#2c3e50"
+                  />
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={handleMarkAll}
+                  >
+                    <CheckCircle2 size={22} color="#2c3e50" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={handleRemoveAll}
+                  >
+                    <XCircle size={22} color="#2c3e50" />
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
           </View>
-        </View>
 
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
-            <Search size={20} color="#7f8c8d" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search subscriptions..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor="#95a5a6"
-            />
-            <TouchableOpacity style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
-              <Filter size={20} color="#7f8c8d" />
-            </TouchableOpacity>
+          <View style={styles.searchContainer}>
+            <View style={styles.searchBar}>
+              <Search size={20} color="#7f8c8d" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search subscriptions..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#95a5a6"
+              />
+              <TouchableOpacity style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
+                <Filter size={20} color="#7f8c8d" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Active Subscriptions</Text>
-        </View>
-      </View>
+      </SafeAreaView>
       <SafeAreaView style={styles.safeArea} >
         {/* BulkActionBar - Fixed above content, outside ScrollView */}
         {selectedSubscriptions.length > 0 && (
@@ -747,39 +719,38 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
   },
-  headerGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 210,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    zIndex: 1000,
+  safeAreaTop: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
   },
-
   safeArea: {
     flex: 1,
   },
   headerContainer: {
-    marginTop: 30,
-    zIndex: 1001,
-    position: 'relative',
+    backgroundColor: '#fff',
+    paddingTop: 8,
+    paddingBottom: 0,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 15,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
   },
   menuButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -791,29 +762,30 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
   },
   searchContainer: {
-    paddingHorizontal: 10,
-    marginBottom: 10,
+    paddingHorizontal: 20,
+    marginBottom: 0,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f6fa',
     paddingHorizontal: 16,
     borderRadius: 14,
     height: 45,
-  
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
   },
   searchInput: {
     flex: 1,
-    fontSize: 10,
+    fontSize: 14,
     color: '#2c3e50',
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
   },
   searchIcon: {
     marginRight: 12,
@@ -822,13 +794,9 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   title: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
-    color: '#fff',
-    marginTop: Platform.OS === 'ios' ? -4 : 4,
-  },
-  titleContainer: {
-    paddingLeft: 15,
+    letterSpacing: -0.5,
   },
   mainContent: {
     flex: 1,
@@ -837,13 +805,16 @@ const styles = StyleSheet.create({
   },
   categoriesWrapper: {
     borderBottomColor: '#e6e6f0',
+    marginTop: 0,
+    marginHorizontal: 0,
+    paddingHorizontal: 0,
   },
   categoriesContainer: {
     height: 40,
   },
   categoriesScrollContent: {
     flexDirection: 'row',
-    paddingHorizontal: 4,
+    paddingHorizontal: 20,
     alignItems: 'center',
     gap: 10,
   },
@@ -851,7 +822,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: '#e6e6f0',
-    minWidth: 80,
+    minWidth: 40,
     height: 36,
     marginHorizontal: 3,
   },
@@ -882,7 +853,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   badgeText: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 10,
     color: '#4158D0',
   },
@@ -890,14 +861,14 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   categoryTabText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 10,
     color: '#4158D0',
     textAlign: 'center',
   },
   activeCategoryTabText: {
     color: '#fff',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
   },
   listContent: {
     paddingHorizontal: 20,
@@ -920,7 +891,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 10,
     color: '#2c3e50',
   },
@@ -931,7 +902,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   countText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     color: '#fff',
     fontSize: 10,
   },
@@ -943,14 +914,14 @@ const styles = StyleSheet.create({
     marginTop: 100,
   },
   emptyTitle: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 20,
     color: '#2c3e50',
     marginBottom: 12,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 10,
     color: '#7f8c8d',
     textAlign: 'center',
@@ -969,7 +940,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   addFirstText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     color: '#fff',
     fontSize: 10,
   },
@@ -982,7 +953,7 @@ const styles = StyleSheet.create({
     borderLeftColor: '#e74c3c',
   },
   errorText: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     color: '#e74c3c',
     fontSize: 10,
   },
@@ -994,7 +965,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: '#fff',
     fontSize: 10,
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
   },
   activeCategoryTab: {
     // Add definition for the missing style
@@ -1002,7 +973,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     // paddingBottom: Platform.OS === 'android' ? 180 : 200,
-    backgroundColor: '#f8f9fa',
   },
   // Delete Confirmation Modal Styles
   modalCenteredView: {
@@ -1023,14 +993,14 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     color: '#333',
     marginBottom: 10,
     textAlign: 'center',
   },
   modalMessage: {
     fontSize: 10,
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     color: '#666',
     textAlign: 'center',
     lineHeight: 22,
@@ -1054,7 +1024,7 @@ const styles = StyleSheet.create({
   },
   modalCancelButtonText: {
     color: '#e74c3c',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 10,
   },
   modalDeleteButton: {
@@ -1069,7 +1039,7 @@ const styles = StyleSheet.create({
   },
   modalDeleteButtonText: {
     color: '#fff',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 10,
   },
 });

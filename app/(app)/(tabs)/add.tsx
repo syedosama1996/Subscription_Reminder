@@ -18,8 +18,9 @@ import Button from '../../../components/Button';
 import CategorySelector from '../../../components/CategorySelector';
 import { Calendar, DollarSign, Globe, Key, Mail, User, X, Link, Eye, EyeOff } from 'lucide-react-native';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { Category } from '../../../lib/types';
 import Toast from 'react-native-toast-message';
 
@@ -260,21 +261,27 @@ export default function AddSubscriptionScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      />
+      <SafeAreaView style={styles.safeAreaTop} edges={['top']}>
+        <View style={styles.header}>
+          <MaskedView
+            maskElement={<Text style={styles.title}>Add Subscription</Text>}
+          >
+            <LinearGradient
+              colors={['#4158D0', '#C850C0']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Text style={[styles.title, { opacity: 0 }]}>Add Subscription</Text>
+            </LinearGradient>
+          </MaskedView>
+        </View>
+      </SafeAreaView>
       
       <View style={styles.safeArea}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}
         >
-            <View style={styles.header}>
-              <Text style={styles.title}>Add Subscription</Text>
-            </View>
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
             {error && (
               <View style={styles.errorContainer}>
@@ -565,37 +572,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  headerGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 110,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    zIndex: 1000,
+  safeAreaTop: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
   },
   safeArea: {
     flex: 1,
-      marginTop: 42,
-    zIndex: 1001,
-    position: 'relative',
-    },
+  },
   keyboardAvoidingView: {
     flex: 1,
   },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
+    backgroundColor: '#fff',
   },
- 
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 28,
-    color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 10,
+    fontSize: 22,
+    letterSpacing: -0.5,
   },
   errorContainer: {
     marginHorizontal: 20,

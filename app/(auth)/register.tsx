@@ -8,6 +8,7 @@ import { Lock, Mail, Eye, EyeOff } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import PasswordInput from '../../components/PasswordInput';
+import { TEXT_STYLES, FONT_SIZES } from '../../constants/Typography';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -228,8 +229,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 20,
+    ...TEXT_STYLES.h4,
     color: '#fff',
     marginBottom: 8,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
@@ -237,8 +237,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   subtitle: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    ...TEXT_STYLES.bodySmall,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
   },
@@ -254,8 +253,7 @@ const styles = StyleSheet.create({
     backdropFilter: 'blur(10px)',
   },
   formTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 20,
+    ...TEXT_STYLES.h4,
     color: '#333',
     marginBottom: 24,
     textAlign: 'center',
@@ -269,9 +267,9 @@ const styles = StyleSheet.create({
     borderLeftColor: '#e74c3c',
   },
   errorText: {
-    fontFamily: 'Inter-Regular',
+    ...TEXT_STYLES.error,
     color: '#e74c3c',
-    fontSize: 12,
+    fontSize: FONT_SIZES.caption,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -306,8 +304,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   registerButtonText: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 14,
+    ...TEXT_STYLES.button,
     color: '#fff',
     textAlign: 'center',
   },
@@ -318,12 +315,12 @@ const styles = StyleSheet.create({
     marginLeft: 25,
   },
   loginText: {
-    fontFamily: 'Inter-Regular',
+    ...TEXT_STYLES.bodySmall,
     color: '#7f8c8d',
     marginRight: 4,
   },
   loginLink: {
-    fontFamily: 'Inter-Medium',
+    ...TEXT_STYLES.bodySmallMedium,
     color: '#4158D0',
   },
   loginLinkTouchable: {

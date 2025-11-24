@@ -6,7 +6,7 @@ import { Bell, Moon, Sun, Lock, CreditCard, HelpCircle, Shield, Mail, LogOut,Arr
 import { LinearGradient } from 'expo-linear-gradient';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
-
+import { FONT_FAMILY } from '../../constants/Typography'; 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
 
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center', 
   },
   headerGradient: {
     position: 'absolute',
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   title: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
     color: '#fff',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   
   },
   sectionTitle: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 12,
     color: '#2c3e50',
     marginBottom: 16,
@@ -196,12 +196,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuText: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 12,
     color: '#2c3e50',
   },
   menuValue: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 12,
     color: '#7f8c8d',
     marginTop: 2,
@@ -228,11 +228,11 @@ const styles = StyleSheet.create({
   },
   signOutButtonText: {
     color: '#e74c3c',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 12,
   },
   versionText: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 12,
     color: '#95a5a6',
     textAlign: 'center',

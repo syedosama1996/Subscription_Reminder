@@ -1,6 +1,7 @@
 import React, { useState, forwardRef } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Eye, EyeOff, Lock } from 'lucide-react-native';
+import { FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
 
 type PasswordInputProps = {
   placeholder?: string;
@@ -65,7 +66,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f6fa',
     borderRadius: 16,
     paddingHorizontal: 16,
-    fontSize: 16,
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZES.input,
     color: '#2c3e50',
     borderWidth: 1,
     borderColor: 'rgba(223, 228, 234, 0.5)',

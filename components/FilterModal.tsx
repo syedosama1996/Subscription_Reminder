@@ -10,6 +10,7 @@ import {
 import { X, Check } from 'lucide-react-native';
 import { Category } from '../lib/types';
 import CategoryBadge from './CategoryBadge';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
 
 type FilterModalProps = {
   visible: boolean;
@@ -207,8 +208,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
+    ...TEXT_STYLES.h5,
     color: '#1f2937',
   },
   closeButton: {
@@ -226,8 +226,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   sectionTitle: {
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 18,
+    ...TEXT_STYLES.h5,
+    fontFamily: FONT_FAMILY.semiBold,
     color: '#1f2937',
     marginBottom: 16,
   },
@@ -246,8 +246,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   optionText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    ...TEXT_STYLES.bodySmallMedium,
     color: '#374151',
     flex: 1,
   },
@@ -256,7 +255,7 @@ const styles = StyleSheet.create({
     borderColor: '#3b82f6',
   },
   selectedOptionText: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     color: '#1d4ed8',
   },
   statusDot: {
@@ -266,7 +265,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   statusIcon: {
-    fontSize: 14,
+    fontSize: FONT_SIZES.bodySmall,
     marginRight: 8,
     color: '#6b7280',
   },
@@ -297,8 +296,7 @@ const styles = StyleSheet.create({
     borderColor: '#fecaca',
   },
   clearButtonText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    ...TEXT_STYLES.bodySmallMedium,
     color: '#dc2626',
   },
   applyButton: {
@@ -313,8 +311,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   applyButtonText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    ...TEXT_STYLES.bodySmallMedium,
     color: '#ffffff',
   },
 });

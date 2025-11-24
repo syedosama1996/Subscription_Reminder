@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Input from '../../components/Input';
 import PasswordInput from '../../components/PasswordInput';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TEXT_STYLES, FONT_SIZES } from '../../constants/Typography';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -222,8 +223,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 28,
+    ...TEXT_STYLES.h2,
     color: '#fff',
     marginBottom: 8,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
@@ -231,8 +231,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   subtitle: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 16,
+    ...TEXT_STYLES.body,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
   },
@@ -243,8 +242,7 @@ const styles = StyleSheet.create({
    
   },
   formTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 24,
+    ...TEXT_STYLES.h3,
     color: '#333',
     marginBottom: 24,
     textAlign: 'center',
@@ -258,9 +256,8 @@ const styles = StyleSheet.create({
     borderLeftColor: '#e74c3c',
   },
   errorText: {
-    fontFamily: 'Inter-Regular',
+    ...TEXT_STYLES.bodySmall,
     color: '#e74c3c',
-    fontSize: 14,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -288,8 +285,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   resetButtonText: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
+    ...TEXT_STYLES.button,
+    fontSize: FONT_SIZES.large,
     color: '#fff',
     textAlign: 'center',
   },
@@ -308,8 +305,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   backButtonText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    ...TEXT_STYLES.bodyMedium,
     color: '#4158D0',
   },
   disabledButton: {

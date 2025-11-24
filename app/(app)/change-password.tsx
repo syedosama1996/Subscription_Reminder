@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 import Button from '../../components/Button';
 import { ArrowLeft } from 'lucide-react-native';
 import { ActivityLogger } from '../../lib/services/activity-logger';
@@ -21,7 +22,7 @@ import { supabase } from '../../lib/supabase';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import PasswordInput from '@/components/PasswordInput';
 import Toast from 'react-native-toast-message';
-
+import { FONT_FAMILY } from '../../constants/Typography'; 
 type FieldErrors = {
   current?: string | null;
   new?: string | null;
@@ -161,20 +162,29 @@ export default function ChangePasswordScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      />
-
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Change Password</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <SafeAreaView style={styles.safeAreaTop} edges={['top']}>
+        <View style={styles.headerContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <ArrowLeft size={22} color="#2c3e50" />
+            </TouchableOpacity>
+            <View style={styles.headerLeft}>
+              <MaskedView
+                maskElement={<Text style={styles.title}>Change Password</Text>}
+              >
+                <LinearGradient
+                  colors={['#4158D0', '#C850C0']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={[styles.title, { opacity: 0 }]}>Change Password</Text>
+                </LinearGradient>
+              </MaskedView>
+            </View>
+            <View style={styles.placeholder} />
+          </View>
+        </View>
+      </SafeAreaView>
 
       {/* KeyboardAvoidingView ensures inputs move above keyboard on small devices */}
       <KeyboardAvoidingView
@@ -260,42 +270,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  headerGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 110,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    zIndex: 1000,
+  safeAreaTop: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
+  },
+  headerContainer: {
+    backgroundColor: '#fff',
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   header: {
-    marginTop: 0,
-    zIndex: 1001,
-    position: 'relative',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
+  headerLeft: {
+    flex: 1,
+  },
   backButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 10,
   },
   placeholder: {
     width: 40,
   },
   title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 24,
-    color: '#fff',
-    textAlign: 'center',
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: 22,
+    letterSpacing: -0.5,
   },
   content: {
     flex: 1,
@@ -314,7 +324,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(231, 76, 60, 0.3)',
   },
   errorText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 12,
     color: '#e74c3c',
     textAlign: 'center',
@@ -325,7 +335,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     color: '#2c3e50',
     marginBottom: 8,
     marginLeft: 4,
@@ -335,7 +345,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginLeft: 4,
     fontSize: 13,
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
   },
   button: {
     marginTop: 30,

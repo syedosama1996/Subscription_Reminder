@@ -21,6 +21,7 @@ import { BlurView } from 'expo-blur';
 import StatusToggle from './StatusToggle';
 import CategoryBadge from './CategoryBadge';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
 
 interface SubscriptionCardProps {
   subscription: Subscription;
@@ -449,8 +450,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   serviceName: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
+    ...TEXT_STYLES.cardTitle,
+    fontSize: FONT_SIZES.large,
     color: '#1f2937',
     flex: 1,
   },
@@ -467,8 +468,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     marginLeft: 10,
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    ...TEXT_STYLES.caption,
     color: '#7f8c8d',
   },
   footer: {
@@ -485,14 +485,14 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   priceLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
+    ...TEXT_STYLES.caption,
+    fontFamily: FONT_FAMILY.medium,
     color: '#7f8c8d',
     marginRight: 4,
   },
   price: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
+    ...TEXT_STYLES.cardTitle,
+    fontSize: FONT_SIZES.large,
     color: '#2c3e50',
   },
   expiryContainer: {
@@ -509,8 +509,8 @@ const styles = StyleSheet.create({
   },
   expiryText: {
     marginLeft: 4,
-    fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
+    fontSize: FONT_SIZES.caption,
+    fontFamily: FONT_FAMILY.semiBold,
   },
   toggleContainer: {
     marginRight: 12,

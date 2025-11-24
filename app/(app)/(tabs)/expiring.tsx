@@ -18,12 +18,14 @@ import { getSubscriptions, toggleSubscriptionStatus, getCategories, deleteMultip
 import SubscriptionCard from '../../../components/SubscriptionCard';
 import FilterModal from '../../../components/FilterModal';
 import BulkActionBar from '../../../components/BulkActionBar';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Clock, Search, Filter, CheckSquare, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react-native';
 import CustomLoader from '../../../components/CustomLoader';
 import { Subscription } from '../../../lib/subscriptions';
 import { Category } from '../../../lib/types';
 import { useFocusEffect } from 'expo-router';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../../../constants/Typography';
+import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 
 export default function ExpiringSubscriptionsScreen() {
   const { user } = useAuth();
@@ -142,6 +144,7 @@ export default function ExpiringSubscriptionsScreen() {
     applyFilters(subscriptions, searchQuery);
   }, [searchQuery, subscriptions]);
 
+
   useFocusEffect(
     useCallback(() => {
       loadExpiringSubscriptions();
@@ -227,12 +230,6 @@ export default function ExpiringSubscriptionsScreen() {
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <LinearGradient
-          colors={['#4158D0', '#C850C0']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.headerGradient}
-        />
         <CustomLoader visible={true} />
       </View>
     );
@@ -240,18 +237,21 @@ export default function ExpiringSubscriptionsScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      />
-      
-      <View style={styles.safeArea}>
+      <SafeAreaView style={styles.safeAreaTop} edges={['top']}>
         <View style={styles.headerContainer}>
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Text style={styles.title}>Expired</Text>
+              <MaskedView
+                maskElement={<Text style={styles.title}>Expired</Text>}
+              >
+                <LinearGradient
+                  colors={['#4158D0', '#C850C0']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={[styles.title, { opacity: 0 }]}>Expired</Text>
+                </LinearGradient>
+              </MaskedView>
             </View>
             <View style={styles.headerActions}>
               {!selectionMode ? (
@@ -259,7 +259,7 @@ export default function ExpiringSubscriptionsScreen() {
                   style={styles.iconButton}
                   onPress={() => setSelectionMode(true)}
                 >
-                  <CheckSquare size={22} color="#fff" />
+                  <CheckSquare size={22} color="#2c3e50" />
                 </TouchableOpacity>
               ) : (
                 <>
@@ -267,13 +267,13 @@ export default function ExpiringSubscriptionsScreen() {
                     style={styles.iconButton}
                     onPress={handleMarkAll}
                   >
-                    <CheckCircle2 size={22} color="#fff" />
+                    <CheckCircle2 size={22} color="#2c3e50" />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.iconButton}
                     onPress={handleRemoveAll}
                   >
-                    <XCircle size={22} color="#fff" />
+                    <XCircle size={22} color="#2c3e50" />
                   </TouchableOpacity>
                 </>
               )}
@@ -296,6 +296,9 @@ export default function ExpiringSubscriptionsScreen() {
             </View>
           </View>
         </View>
+      </SafeAreaView>
+
+      <View style={styles.safeArea}>
 
         {/* BulkActionBar */}
         {selectedSubscriptions.length > 0 && (
@@ -416,37 +419,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  headerGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 110,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    zIndex: 1000,
+  safeAreaTop: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
   },
   safeArea: {
     flex: 1,
   },
   headerContainer: {
-    marginTop: 0,
-    zIndex: 1001,
-    position: 'relative',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    backgroundColor: '#fff',
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   header: {
-    marginTop: 42,
-    zIndex: 1001,
-    position: 'relative',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   headerLeft: {
     flex: 1,
@@ -459,19 +450,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
   },
   title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 28,
-    color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 10,
-    letterSpacing: 0.5,
+    fontFamily: FONT_FAMILY.bold,
+    fontSize: 22,
+    letterSpacing: -0.5,
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -480,17 +467,18 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f6fa',
     paddingHorizontal: 16,
     borderRadius: 14,
     height: 45,
-
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
     color: '#2c3e50',
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
   },
   searchIcon: {
     marginRight: 12,
@@ -520,7 +508,7 @@ const styles = StyleSheet.create({
     borderLeftColor: '#e74c3c',
   },
   errorText: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     color: '#e74c3c',
     fontSize: 12,
   },
@@ -535,13 +523,13 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   emptyTitle: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 20,
     color: '#2c3e50',
     marginBottom: 8,
   },
   emptySubtitle: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 12,
     color: '#7f8c8d',
     textAlign: 'center',
@@ -566,14 +554,14 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     color: '#333',
     marginBottom: 10,
     textAlign: 'center',
   },
   modalMessage: {
     fontSize: 14,
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     color: '#666',
     textAlign: 'center',
     lineHeight: 22,
@@ -597,7 +585,7 @@ const styles = StyleSheet.create({
   },
   modalCancelButtonText: {
     color: '#e74c3c',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 14,
   },
   modalDeleteButton: {
@@ -612,7 +600,7 @@ const styles = StyleSheet.create({
   },
   modalDeleteButtonText: {
     color: '#fff',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 14,
   },
 });

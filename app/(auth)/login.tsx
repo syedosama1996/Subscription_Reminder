@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Input from '../../components/Input';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import PasswordInput from '../../components/PasswordInput';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../../constants/Typography';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -255,8 +256,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 24,
+    ...TEXT_STYLES.h3,
     color: '#fff',
     marginBottom: 8,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
@@ -264,8 +264,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   subtitle: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    ...TEXT_STYLES.bodySmall,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
   },
@@ -276,8 +275,7 @@ const styles = StyleSheet.create({
    
   },
   formTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 20,
+    ...TEXT_STYLES.h4,
     color: '#333',
     marginBottom: 24,
     textAlign: 'center',
@@ -291,9 +289,9 @@ const styles = StyleSheet.create({
     borderLeftColor: '#e74c3c',
   },
   errorText: {
-    fontFamily: 'Inter-Regular',
+    ...TEXT_STYLES.error,
     color: '#e74c3c',
-    fontSize: 12,
+    fontSize: FONT_SIZES.caption,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -339,8 +337,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   registerButtonText: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 14,
+    ...TEXT_STYLES.button,
     color: '#fff',
     textAlign: 'center',
   },
@@ -351,12 +348,12 @@ const styles = StyleSheet.create({
     marginLeft: 25,
   },
   loginText: {
-    fontFamily: 'Inter-Regular',
+    ...TEXT_STYLES.bodySmall,
     color: '#7f8c8d',
     marginRight: 4,
   },
   loginLink: {
-    fontFamily: 'Inter-Medium',
+    ...TEXT_STYLES.bodySmallMedium,
     color: '#4158D0',
   },
   loginLinkTouchable: {
@@ -374,8 +371,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   forgotPasswordText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    ...TEXT_STYLES.bodySmallMedium,
     color: '#4158D0',
     textDecorationLine: 'underline',
   },
@@ -386,9 +382,8 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   biometricButtonText: {
+    ...TEXT_STYLES.button,
     color: '#7f8c8d',
-    fontSize: 14,
-    fontWeight: 'bold',
   },
   resetBiometricButton: {
     paddingVertical: 10,
@@ -397,8 +392,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   resetBiometricButtonText: {
+    ...TEXT_STYLES.button,
     color: '#e74c3c',
-    fontSize: 14,
-    fontWeight: 'bold',
   },
 });

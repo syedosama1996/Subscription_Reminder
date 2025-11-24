@@ -4,12 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { FileText, Download, Calendar, DollarSign, Filter, User, Package, CreditCard, Share, Clock, Hash, CheckCircle, XCircle, AlertTriangle, ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { format } from 'date-fns';
 import { Invoice, getUserInvoices } from '../../lib/invoices';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
 import CustomLoader from '@/components/CustomLoader';
+import { FONT_FAMILY } from '../../constants/Typography';
 
 interface InvoiceItemProps {
   item: Invoice;
@@ -570,37 +572,38 @@ export default function InvoiceScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.container}>
-          <LinearGradient
-            colors={['#4158D0', '#C850C0']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.headerGradient}
-          />
-          <CustomLoader visible={true} />
-        </View>
+        <CustomLoader visible={true} />
       </View>
     );
   }
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#8A54C8', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      />
-      
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Invoices</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <SafeAreaView style={styles.safeAreaTop} edges={['top']}>
+        <View style={styles.headerContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <ArrowLeft size={22} color="#2c3e50" />
+            </TouchableOpacity>
+            <View style={styles.headerLeft}>
+              <MaskedView
+                maskElement={<Text style={styles.title}>Invoices</Text>}
+              >
+                <LinearGradient
+                  colors={['#4158D0', '#C850C0']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={[styles.title, { opacity: 0 }]}>Invoices</Text>
+                </LinearGradient>
+              </MaskedView>
+            </View>
+            <View style={styles.placeholder} />
+          </View>
+        </View>
+      </SafeAreaView>
       <View style={styles.safeArea} >
 
         <FlatList
@@ -628,48 +631,49 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f0f2f5',
   },
+  safeAreaTop: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
+  },
+  headerContainer: {
+    backgroundColor: '#fff',
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
   safeArea: {
     flex: 1,
-    marginTop: 20,
   },
   backButton: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 110,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    zIndex: 1000,
+    marginRight: 10,
   },
   placeholder: {
     width: 40,
   },
   header: {
-      marginTop: 42,
-      zIndex: 1001,
-      position: 'relative',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  headerLeft: {
+    flex: 1,
   },
   title: {
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
-    fontFamily: 'Inter-Bold',
-    color: '#fff',
+    letterSpacing: -0.5,
   },
   listContent: {
-      padding: 20,
-    marginTop: 20,
+    padding: 20,
+    paddingTop: 20,
     paddingBottom: 40,
   },
   invoiceCardImproved: {
@@ -693,7 +697,7 @@ const styles = StyleSheet.create({
       flexShrink: 1,
   },
   invoiceCardTitle: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 16,
     color: '#34495e',
     marginRight: 10,
@@ -707,7 +711,7 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   statusTextImproved: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 12,
     marginLeft: 5,
     textTransform: 'capitalize',
@@ -722,19 +726,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   invoiceCardLabel: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 14,
     color: '#7f8c8d',
     marginRight: 5,
   },
   invoiceCardValue: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 14,
     color: '#34495e',
     flexShrink: 1,
   },
   invoiceCardAmount: {
-     fontFamily: 'Inter-SemiBold',
+     fontFamily: FONT_FAMILY.semiBold,
      color: '#2c3e50',
   },
    invoiceCardFooter: {
@@ -750,7 +754,7 @@ const styles = StyleSheet.create({
       backgroundColor: '#4158D0',
   },
    viewDetailsButtonText: {
-      fontFamily: 'Inter-Medium',
+      fontFamily: FONT_FAMILY.medium,
       fontSize: 13,
       color: '#fff',
   },
@@ -766,7 +770,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   emptyText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 16,
     color: '#95a5a6',
     marginTop: 16,
@@ -794,13 +798,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalTitle: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
     color: '#2c3e50',
     marginBottom: 4,
   },
    modalSubtitle: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 15,
     color: '#7f8c8d',
   },
@@ -808,7 +812,7 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
    modalSectionTitle: {
-    fontFamily: 'Inter-SemiBold',
+      fontFamily: FONT_FAMILY.semiBold,
     fontSize: 16,
     color: '#34495e',
     marginBottom: 15,
@@ -823,12 +827,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   modalDetailLabel: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 14,
     color: '#555',
   },
   modalDetailValue: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 14,
     color: '#2c3e50',
     textAlign: 'right',
@@ -860,7 +864,7 @@ const styles = StyleSheet.create({
       color: '#333',
   },
   itemsTableHeader: {
-      fontFamily: 'Inter-SemiBold',
+      fontFamily: FONT_FAMILY.semiBold,
       color: '#7f8c8d',
       fontSize: 12,
       textTransform: 'uppercase',
@@ -874,12 +878,12 @@ const styles = StyleSheet.create({
       borderTopColor: '#e0e0e0',
   },
   itemsTotalLabel: {
-      fontFamily: 'Inter-SemiBold',
+      fontFamily: FONT_FAMILY.semiBold,
       fontSize: 16,
       color: '#34495e',
   },
   itemsTotalValue: {
-      fontFamily: 'Inter-Bold',
+      fontFamily: FONT_FAMILY.bold,
       fontSize: 16,
       color: '#4158D0',
   },
@@ -900,19 +904,21 @@ const styles = StyleSheet.create({
 
   },
   modalButtonTextImproved: {
-    fontFamily: 'Inter-SemiBold',
+      fontFamily: FONT_FAMILY.semiBold,
     fontSize: 16,
   },
   closeButtonImproved: {
     backgroundColor: '#e0e6ed',
   },
   closeButtonTextImproved: {
+    fontFamily: FONT_FAMILY.regular,
     color: '#52616B',
   },
   downloadPdfButtonImproved: {
     backgroundColor: '#4158D0',
   },
   downloadPdfButtonTextImproved: {
+    fontFamily: FONT_FAMILY.medium,
     color: '#fff',
   },
 

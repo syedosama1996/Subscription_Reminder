@@ -48,6 +48,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { TouchableOpacity } from 'react-native';
+import { FONT_FAMILY } from '../../constants/Typography'; 
 
 export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -1010,7 +1011,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 20,
     color: '#2c3e50',
   },
@@ -1066,7 +1067,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   statusText: {
-    fontFamily: 'Inter-SemiBold',
+      fontFamily: FONT_FAMILY.semiBold,
     fontSize: 13,
   },
   toggleButton: {
@@ -1090,7 +1091,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   toggleButtonText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 11,
     marginLeft: 6,
     fontWeight: '600',
@@ -1108,7 +1109,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   sectionTitle: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 18,
     color: '#2c3e50',
     marginBottom: 16,
@@ -1125,23 +1126,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   detailLabel: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 14,
     color: '#7f8c8d',
     marginBottom: 2,
   },
   detailValue: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 16,
     color: '#2c3e50',
   },
   detailLink: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 16,
     color: '#3498db',
   },
   editInput: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 16,
     color: '#2c3e50',
     borderWidth: 1,
@@ -1152,7 +1153,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f6fa',
   },
   editNotesInput: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 16,
     color: '#2c3e50',
     borderWidth: 1,
@@ -1172,12 +1173,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   showPasswordText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 14,
     color: '#3498db',
   },
   notesText: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 16,
     color: '#2c3e50',
     lineHeight: 24,
@@ -1196,7 +1197,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 16,
     color: '#e74c3c',
     marginBottom: 20,
@@ -1225,7 +1226,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f1f2f6',
   },
   modalTitle: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 20,
     color: '#2c3e50',
   },
@@ -1241,13 +1242,13 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalLabel: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 16,
     color: '#2c3e50',
     marginBottom: 8,
   },
   modalInput: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 16,
     color: '#2c3e50',
     borderWidth: 1,
@@ -1273,7 +1274,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   modalDateText: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 16,
     color: '#2c3e50',
   },
@@ -1298,7 +1299,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4158D0',
   },
   vendorToggleText: {
-    fontFamily: 'Inter-Medium',
+      fontFamily: FONT_FAMILY.medium,
     fontSize: 16,
     color: '#7f8c8d',
   },
@@ -1317,7 +1318,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   historyButtonText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     color: '#3498db',
   },
   historyItem: {
@@ -1333,12 +1334,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   historyDate: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 16,
     color: '#2c3e50',
   },
   historyVendor: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 14,
     color: '#7f8c8d',
   },
@@ -1352,25 +1353,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   historyLabel: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 14,
     color: '#7f8c8d',
     width: 100,
   },
   historyValue: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 14,
     color: '#2c3e50',
     flex: 1,
   },
   historyLink: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 14,
     color: '#3498db',
     flex: 1,
   },
   noHistoryText: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 16,
     color: '#7f8c8d',
     textAlign: 'center',
@@ -1380,7 +1381,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   dateLabel: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 16,
     color: '#2c3e50',
     marginBottom: 8,

@@ -4,6 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../lib/auth';
 import { BarChart2, DollarSign, Calendar, TrendingUp, ArrowLeft, Download, Filter, ChevronDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { getSubscriptions, getSubscriptionHistory, exportSubscriptionsToCSV } from '../../lib/subscriptions';
 import { getUserInvoices } from '../../lib/invoices';
 import * as FileSystem from 'expo-file-system';
@@ -16,6 +17,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { router } from 'expo-router';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import CustomLoader from '@/components/CustomLoader';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../../constants/Typography';
 interface CategoryData {
   name: string;
   count: number;
@@ -484,12 +486,6 @@ export default function ReportScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <LinearGradient
-          colors={['#4158D0', '#C850C0']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.headerGradient}
-        />
         <CustomLoader visible={true} />
       </View>
     );
@@ -497,32 +493,40 @@ export default function ReportScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      />
-
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Reports</Text>
-        <View style={styles.headerButtons}>
-      
-          <TouchableOpacity
-            style={[styles.exportButton, exporting && styles.disabledButton]}
-            onPress={() => setIsExportModalVisible(true)}
-            disabled={exporting}
-          >
-             {exporting ? <ActivityIndicator size="small" color="#fff" /> : <Download size={18} color="#fff" />}
-          </TouchableOpacity>
+      <SafeAreaView style={styles.safeAreaTop} edges={['top']}>
+        <View style={styles.headerContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <ArrowLeft size={22} color="#2c3e50" />
+            </TouchableOpacity>
+            <View style={styles.headerLeft}>
+              <MaskedView
+                maskElement={<Text style={styles.title}>Reports</Text>}
+              >
+                <LinearGradient
+                  colors={['#4158D0', '#C850C0']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={[styles.title, { opacity: 0 }]}>Reports</Text>
+                </LinearGradient>
+              </MaskedView>
+            </View>
+            <View style={styles.headerButtons}>
+              <TouchableOpacity
+                style={[styles.exportButton, exporting && styles.disabledButton]}
+                onPress={() => setIsExportModalVisible(true)}
+                disabled={exporting}
+              >
+                {exporting ? <ActivityIndicator size="small" color="#2c3e50" /> : <Download size={18} color="#2c3e50" />}
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
 
       <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 0.9 }} style={{ flex: 1 }}>
         <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 20 }}>
@@ -828,54 +832,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f0f2f5',
   },
+  safeAreaTop: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
+  },
+  headerContainer: {
+    backgroundColor: '#fff',
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
   backButton: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 110,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    zIndex: 1000,
+    marginRight: 10,
   },
   header: {
-    marginTop: 42,
-      zIndex: 1001,
-      position: 'relative',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  headerLeft: {
+    flex: 1,
   },
   headerButtons: {
     flexDirection: 'row',
     gap: 12,
   },
   title: {
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
-    fontFamily: 'Inter-Bold',
-    color: '#fff',
+    letterSpacing: -0.5,
   },
   exportButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
   },
   content: {
     flex: 1,
     paddingHorizontal: 15,
-    marginTop: 55,
+    marginTop: 20,
   },
   statsCard: {
     backgroundColor: '#fff',
@@ -905,13 +911,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   statLabel: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 12,
     color: '#555',
     marginBottom: 2,
   },
   statValue: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 12,
     color: '#2c3e50',
     flexShrink: 1,
@@ -924,7 +930,7 @@ const styles = StyleSheet.create({
    
   },
   sectionTitle: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 12,
     color: '#333',
     marginBottom: 15,
@@ -952,7 +958,7 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
   },
   chartText: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 12,
     color: '#7f8c8d',
   },
@@ -990,7 +996,7 @@ const styles = StyleSheet.create({
   },
    modalTitle: {
     fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     marginBottom: 15,
     color: '#333',
   },
@@ -1026,12 +1032,12 @@ const styles = StyleSheet.create({
    },
   modalButtonText: {
     color: 'white',
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 12,
   },
   modalButtonCloseText: {
     color: '#e74c3c',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 12,
     textAlign: 'center',
     letterSpacing: 0.5,
@@ -1062,13 +1068,13 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   dateRangeText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 12,
     color: '#4158D0',
     marginHorizontal: 8,
   },
   dateRangeDetail: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
@@ -1085,7 +1091,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4158D0',
   },
   dateRangeOptionText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 12,
     color: '#333',
     textAlign: 'center',
@@ -1102,7 +1108,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   customDateRangeTitle: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 12,
     color: '#333',
     marginBottom: 8,
@@ -1117,7 +1123,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   customDateButtonText: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 12,
     color: '#333',
   },
@@ -1129,7 +1135,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   applyCustomDateButtonText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 12,
     color: '#fff',
     textAlign: 'center',

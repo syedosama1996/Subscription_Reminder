@@ -10,6 +10,7 @@ import {
   Tag, 
   Clock 
 } from 'lucide-react-native';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
 
 type ActivityLogItemProps = {
   log: ActivityLog;
@@ -102,14 +103,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    ...TEXT_STYLES.bodySmallMedium,
     color: '#2c3e50',
     marginBottom: 4,
   },
   timestamp: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 12,
+    ...TEXT_STYLES.caption,
     color: '#7f8c8d',
   },
 });

@@ -9,6 +9,7 @@ import {
   View
 } from 'react-native';
 import { TouchableOpacity } from 'react-native';
+import { TEXT_STYLES, FONT_FAMILY } from '../constants/Typography';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -125,8 +126,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   text: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TEXT_STYLES.button,
   },
   primaryText: {
     color: '#fff',

@@ -8,6 +8,7 @@ import {
   ViewStyle,
   TextStyle
 } from 'react-native';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -63,8 +64,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 12,
-    fontWeight: '500',
+    ...TEXT_STYLES.label,
+    fontSize: FONT_SIZES.caption,
     marginBottom: 6,
     color: '#2c3e50',
   },
@@ -77,11 +78,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingLeft: 16,
     paddingRight: 12,
+    ...TEXT_STYLES.input,
     fontSize: 13,
     color: '#1a1a1a',
     borderWidth: 1,
     borderColor: '#e1e5e9',
-    fontFamily: 'Inter-Regular',
   },
   multilineInput: {
     height: 100,
@@ -92,8 +93,9 @@ const styles = StyleSheet.create({
     borderColor: '#e74c3c',
   },
   error: {
+    ...TEXT_STYLES.error,
     color: '#e74c3c',
-    fontSize: 10,
+    fontSize: FONT_SIZES.tiny,
     marginTop: 4,
   },
 });

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Bell } from 'lucide-react-native';
 import { useNotificationCount } from '../lib/hooks/useNotificationCount';
+import { FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
 
 interface NotificationIconProps {
   onPress: () => void;
@@ -59,8 +60,8 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: '#fff',
-    fontSize: 11,
-    fontFamily: 'Inter-Bold',
+    fontSize: FONT_SIZES.tiny + 1,
+    fontFamily: FONT_FAMILY.bold,
     textAlign: 'center',
   },
 });

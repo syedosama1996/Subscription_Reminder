@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { X, Trash2, Power, PowerOff } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
 
 type BulkActionBarProps = {
   selectedCount: number;
@@ -94,8 +95,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   selectedText: {
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 14,
+    fontFamily: FONT_FAMILY.semiBold,
+    fontSize: FONT_SIZES.bodySmall,
     color: '#2c3e50',
   },
   actionIcons: {

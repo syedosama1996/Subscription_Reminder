@@ -4,6 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../lib/auth';
 import { History, Filter, Calendar, CreditCard, ArrowLeft, Download, X, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { getSubscriptions, Subscription, exportSubscriptionsToCSV, getCategories } from '../../lib/subscriptions';
 import { Category } from '../../lib/types';
 import { router } from 'expo-router';
@@ -16,6 +17,7 @@ import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import CategoryBadge from '@/components/CategoryBadge';
+import { FONT_FAMILY } from '../../constants/Typography';     
 
 const STATUS_OPTIONS = [
   { id: 'active', label: 'Active', color: '#10b981' },
@@ -604,62 +606,63 @@ export default function PurchaseHistoryScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.container}>
-          <LinearGradient
-            colors={['#4158D0', '#C850C0']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.headerGradient}
-          />
-          <CustomLoader visible={true} />
-        </View>
+        <CustomLoader visible={true} />
       </View>
     );
   }
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      />
- 
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Purchase History</Text>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={[styles.filterButton, (selectedCategories.length > 0 || selectedStatuses.length > 0) && styles.filterButtonActive]}
-            onPress={() => {
-              setLocalSelectedCategories(selectedCategories);
-              setLocalSelectedStatuses(selectedStatuses);
-              setIsFilterModalVisible(true);
-            }}
-          >
-            <Filter size={18} color="#fff" />
-            {(selectedCategories.length > 0 || selectedStatuses.length > 0) && (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>
-                  {selectedCategories.length + selectedStatuses.length}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.exportButton, exporting && styles.disabledButton]}
-            onPress={() => setIsExportModalVisible(true)}
-            disabled={exporting}
-          >
-            {exporting ? <ActivityIndicator size="small" color="#fff" /> : <Download size={18} color="#fff" />}
-          </TouchableOpacity>
+      <SafeAreaView style={styles.safeAreaTop} edges={['top']}>
+        <View style={styles.headerContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <ArrowLeft size={22} color="#2c3e50" />
+            </TouchableOpacity>
+            <View style={styles.headerLeft}>
+              <MaskedView
+                maskElement={<Text style={styles.title}>Purchase History</Text>}
+              >
+                <LinearGradient
+                  colors={['#4158D0', '#C850C0']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={[styles.title, { opacity: 0 }]}>Purchase History</Text>
+                </LinearGradient>
+              </MaskedView>
+            </View>
+            <View style={styles.headerButtons}>
+              <TouchableOpacity
+                style={[styles.filterButton, (selectedCategories.length > 0 || selectedStatuses.length > 0) && styles.filterButtonActive]}
+                onPress={() => {
+                  setLocalSelectedCategories(selectedCategories);
+                  setLocalSelectedStatuses(selectedStatuses);
+                  setIsFilterModalVisible(true);
+                }}
+              >
+                <Filter size={18} color="#2c3e50" />
+                {(selectedCategories.length > 0 || selectedStatuses.length > 0) && (
+                  <View style={styles.filterBadge}>
+                    <Text style={styles.filterBadgeText}>
+                      {selectedCategories.length + selectedStatuses.length}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.exportButton, exporting && styles.disabledButton]}
+                onPress={() => setIsExportModalVisible(true)}
+                disabled={exporting}
+              >
+                {exporting ? <ActivityIndicator size="small" color="#2c3e50" /> : <Download size={18} color="#2c3e50" />}
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
       
       { error ? (
         <View style={styles.errorContainer}>
@@ -844,35 +847,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  safeAreaTop: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
+  },
+  headerContainer: {
+    backgroundColor: '#fff',
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
   backButton: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 110,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    zIndex: 1000,
-  },
-  placeholder: {
-    width: 40,
+    marginRight: 10,
   },
   header: {
-    marginTop: 42,
-      zIndex: 1001,
-      position: 'relative',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  headerLeft: {
+    flex: 1,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -880,16 +882,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filterButton: {
-      width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   filterButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#e8e9ea',
   },
   filterBadge: {
     position: 'absolute',
@@ -906,13 +908,13 @@ const styles = StyleSheet.create({
   filterBadgeText: {
     color: '#fff',
     fontSize: 10,
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
   },
   exportButton: {
-      width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -920,9 +922,9 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   title: {
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
-    fontFamily: 'Inter-Bold',
-    color: '#fff',
+    letterSpacing: -0.5,
   },
   listContent: {
     padding: 20,
@@ -945,7 +947,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   subscriptionName: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 10,
     color: '#2c3e50',
     marginBottom: 4,
@@ -955,7 +957,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   paymentMethod: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 10,
     color: '#7f8c8d',
     marginLeft: 8,
@@ -966,7 +968,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 10,
     color: '#fff',
   },
@@ -984,7 +986,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   amountText: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 22,
     color: '#2c3e50',
   },
@@ -1007,13 +1009,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   dateLabel: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 10,
     color: '#7f8c8d',
     marginBottom: 2,
   },
   dateText: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 10,
     color: '#2c3e50',
   },
@@ -1030,7 +1032,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   downloadText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 10,
     color: '#4158D0',
     marginLeft: 8,
@@ -1042,7 +1044,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 10,
     color: '#e74c3c',
     textAlign: 'center',
@@ -1055,7 +1057,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryButtonText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 10,
     color: '#fff',
   },
@@ -1066,7 +1068,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyText: {
-    fontFamily: 'Inter-Medium',
+      fontFamily: FONT_FAMILY.medium,
     fontSize: 10,
     color: '#7f8c8d',
     textAlign: 'center',
@@ -1094,7 +1096,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     color: '#333',
     textAlign: 'center',
     marginBottom: 20,
@@ -1110,7 +1112,7 @@ const styles = StyleSheet.create({
   },
   filterSectionTitle: {
     fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     color: '#333',
     marginBottom: 12,
   },
@@ -1133,7 +1135,7 @@ const styles = StyleSheet.create({
   },
   filterOptionText: {
     fontSize: 12,
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     color: '#333',
   },
   filterOptionTextSelected: {
@@ -1158,7 +1160,7 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     fontSize: 14,
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     color: '#666',
   },
   applyButton: {

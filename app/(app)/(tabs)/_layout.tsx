@@ -4,6 +4,7 @@ import { View, StyleSheet, Platform, Text, TouchableOpacity } from 'react-native
 import { Zap, PlusCircle, CalendarClock, Archive } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { FONT_FAMILY } from '../../../constants/Typography';
 
 interface TabBarIconProps {
   color: string;
@@ -210,9 +211,8 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 11,
-    fontWeight: '600',
     textAlign: 'center',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
   },
   addButtonContainer: {
     alignItems: 'center',

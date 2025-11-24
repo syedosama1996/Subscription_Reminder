@@ -4,10 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { Activity, Filter, Clock, CheckCircle, AlertCircle, Info, Plus, Trash2, Edit, Power, RefreshCw, ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { ActivityLogger } from '../../lib/services/activity-logger';
 import { useRouter } from 'expo-router';
 import CustomLoader from '@/components/CustomLoader';
 import { supabase } from '../../lib/supabase';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../../constants/Typography';
 
 interface ActivityItem {
   id: string;
@@ -328,43 +330,44 @@ export default function ActivityLogScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.container}>
-          <LinearGradient
-            colors={['#4158D0', '#C850C0']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.headerGradient}
-          />
-          <CustomLoader visible={true} />
-        </View>
+        <CustomLoader visible={true} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#4158D0', '#C850C0']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      />
-
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Activity Log</Text>
-        <TouchableOpacity
-          style={styles.filterButton}
-          onPress={() => setShowFilterMenu(true)}
-        >
-          <Filter size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.safeAreaTop} edges={['top']}>
+        <View style={styles.headerContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <ArrowLeft size={22} color="#2c3e50" />
+            </TouchableOpacity>
+            <View style={styles.headerLeft}>
+              <MaskedView
+                maskElement={<Text style={styles.title}>Activity Log</Text>}
+              >
+                <LinearGradient
+                  colors={['#4158D0', '#C850C0']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={[styles.title, { opacity: 0 }]}>Activity Log</Text>
+                </LinearGradient>
+              </MaskedView>
+            </View>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => setShowFilterMenu(true)}
+            >
+              <Filter size={18} color="#2c3e50" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
 
       <Modal
         visible={showFilterMenu}
@@ -444,51 +447,51 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 14,
+    ...TEXT_STYLES.bodySmall,
     color: '#7f8c8d',
-    fontFamily: 'Inter-Regular',
   },
-  headerGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 110,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    zIndex: 1000,
+  safeAreaTop: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
+  },
+  headerContainer: {
+    backgroundColor: '#fff',
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   header: {
-    marginTop: 42,
-    zIndex: 1001,
-    position: 'relative',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  headerLeft: {
+    flex: 1,
   },
   backButton: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 10,
   },
   title: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
-    color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    letterSpacing: -0.5,
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 10,
     textAlign: 'center',
   },
   filterButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -507,8 +510,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   filterText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 12,
+    ...TEXT_STYLES.caption,
+    fontFamily: FONT_FAMILY.medium,
     color: 'rgba(255, 255, 255, 0.8)',
   },
   activeFilterText: {
@@ -544,14 +547,14 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   activityTitle: {
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: FONT_FAMILY.semiBold,
     fontSize: 13,
     lineHeight: 22,
     marginBottom: 8,
     letterSpacing: -0.2,
   },
   activityDescription: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 11,
     color: '#6B7280',
     lineHeight: 18,
@@ -563,8 +566,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   timestamp: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 10,
+    fontFamily: FONT_FAMILY.medium,
+    fontSize: FONT_SIZES.tiny,
     color: '#9CA3AF',
     marginLeft: 6,
     letterSpacing: 0.2,

@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { router } from 'expo-router';
 import { ActivityLogger } from '../../lib/services/activity-logger';
 import CustomModal from '../../components/CustomModal';
-
+import { FONT_FAMILY } from '../../constants/Typography';
 export default function ProfileScreen() {
   const { user } = useAuth();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 20,
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     color: '#fff',
   },
   headerRight: {
@@ -446,13 +446,13 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 20,
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     color: '#fff',
     marginBottom: 4,
   },
   email: {
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 16,
   },
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   editButtonText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     color: '#4158D0',
     marginLeft: 8,
   },
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   sectionTitle: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 12,
     color: '#2c3e50',
     marginBottom: 20,
@@ -491,13 +491,13 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   infoLabel: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     fontSize: 12,
     color: '#7f8c8d',
     marginBottom: 2,
   },
   infoValue: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 12,
     color: '#2c3e50',
   },
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 20,
     color: '#2c3e50',
   },
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     height: 48,
   },
   inputLabel: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 12,
     color: '#7f8c8d',
     marginBottom: 8,
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     color: '#2c3e50',
     backgroundColor: 'transparent',
     paddingVertical: 14,
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
   readOnlyInput: {
     flex: 1,
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: FONT_FAMILY.regular,
     color: '#95a5a6',
     backgroundColor: 'transparent',
     paddingVertical: 14,
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   cancelButtonText: {
-    fontFamily: 'Inter-Medium',
+        fontFamily: FONT_FAMILY.medium,
     fontSize: 12,
     color: '#7f8c8d',
   },
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   saveButtonText: {
-    fontFamily: 'Inter-Medium',
+    fontFamily: FONT_FAMILY.medium,
     fontSize: 12,
     color: '#fff',
   },

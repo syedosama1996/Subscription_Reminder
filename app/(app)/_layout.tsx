@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { DrawerContentComponentProps as DrawerContentComponentPropsType } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TEXT_STYLES, FONT_SIZES, FONT_FAMILY } from '../../constants/Typography';
 
 function CustomDrawerContent(props: DrawerContentComponentPropsType) {
   const { user, signOut } = useAuth();
@@ -124,8 +125,6 @@ export default function AppLayout() {
   const router = useRouter();
   const [initialRoute, setInitialRoute] = useState<string>('/(tabs)');
 
-
-
   useEffect(() => {
     if (user) {
       setInitialRoute('/(tabs)');
@@ -195,13 +194,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   avatarText: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
+    fontSize: FONT_SIZES.xlarge,
+    fontFamily: FONT_FAMILY.bold,
     color: '#fff',
   },
   emailText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    ...TEXT_STYLES.body,
+    fontFamily: FONT_FAMILY.medium,
     color: '#fff',
     marginBottom: 4,
   },
@@ -210,8 +209,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   viewProfileText: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 14,
+    ...TEXT_STYLES.bodySmall,
     color: 'rgba(255, 255, 255, 0.8)',
   },
   menuContainer: {
@@ -234,8 +232,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     flex: 1,
-    fontFamily: 'Inter-Medium',
-    fontSize: 16,
+    ...TEXT_STYLES.bodyMedium,
     color: '#2c3e50',
     marginLeft: 12,
   },

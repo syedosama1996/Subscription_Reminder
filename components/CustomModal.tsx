@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { X, AlertTriangle, CheckCircle, Info, AlertCircle } from 'lucide-react-native';
+import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
 
 interface CustomModalProps {
   visible: boolean;
@@ -231,15 +232,13 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   title: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
+    ...TEXT_STYLES.h5,
     color: '#1f2937',
     textAlign: 'center',
     marginBottom: 12,
   },
   message: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
+    ...TEXT_STYLES.bodySmall,
     color: '#6b7280',
     textAlign: 'center',
     lineHeight: 24,
@@ -277,8 +276,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   buttonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
+    ...TEXT_STYLES.button,
+    fontFamily: FONT_FAMILY.semiBold,
     textAlign: 'center',
   },
   cancelButtonText: {

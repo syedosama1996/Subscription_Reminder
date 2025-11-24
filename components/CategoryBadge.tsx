@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Category } from '../lib/types';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
 
 interface CategoryBadgeProps {
   category: Category;
@@ -76,8 +77,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 10,
+    fontFamily: FONT_FAMILY.medium,
+    fontSize: FONT_SIZES.tiny,
     color: '#ffffff',
     textAlign: 'center',
   },
