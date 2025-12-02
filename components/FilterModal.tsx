@@ -20,12 +20,10 @@ type FilterModalProps = {
   onSelectCategories: (categoryIds: string[]) => void;
   selectedStatuses: string[];
   onSelectStatuses: (statuses: string[]) => void;
-  onRefresh?: () => void;
 };
 
 const STATUS_OPTIONS = [
   { id: 'active', label: 'Active', color: '#10b981', },
-  { id: 'inactive', label: 'Inactive', color: '#6b7280',  },
   { id: 'expiring_soon', label: 'Expiring Soon',  icon: '⏰' },
 ];
 
@@ -36,8 +34,7 @@ export default function FilterModal({
   selectedCategories,
   onSelectCategories,
   selectedStatuses,
-  onSelectStatuses,
-  onRefresh
+  onSelectStatuses
 }: FilterModalProps) {
   const [localSelectedCategories, setLocalSelectedCategories] = useState<string[]>([]);
   const [localSelectedStatuses, setLocalSelectedStatuses] = useState<string[]>([]);
@@ -66,29 +63,19 @@ export default function FilterModal({
   };
 
   const handleApplyFilters = () => {
+    // Update parent state - this will trigger useEffect in parent component to reload data
     onSelectCategories(localSelectedCategories);
     onSelectStatuses(localSelectedStatuses);
     onClose();
-    
-    if (onRefresh) {
-      setTimeout(() => {
-        onRefresh();
-      }, 100);
-    }
   };
 
   const handleClearFilters = () => {
+    // Clear local and parent state - this will trigger useEffect in parent component to reload data
     setLocalSelectedCategories([]);
     setLocalSelectedStatuses([]);
     onSelectCategories([]);
     onSelectStatuses([]);
     onClose();
-    
-    if (onRefresh) {
-      setTimeout(() => {
-        onRefresh();
-      }, 100);
-    }
   };
 
   const hasActiveFilters = localSelectedCategories.length > 0 || localSelectedStatuses.length > 0;

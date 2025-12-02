@@ -44,8 +44,9 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const navigation = useNavigation();
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [filteredSubscriptions, setFilteredSubscriptions] = useState<Subscription[]>([]);
+  const [allSubscriptions, setAllSubscriptions] = useState<Subscription[]>([]); // Store all subscriptions from API
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]); // Filtered and sorted subscriptions
+  const [filteredSubscriptions, setFilteredSubscriptions] = useState<Subscription[]>([]); // Final filtered by search
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -64,13 +65,19 @@ export default function HomeScreen() {
   const categoriesScrollViewRef = useRef<ScrollView>(null);
 
   // Add focus effect to refresh data when screen comes into focus
+  // Only reload on initial focus to avoid unnecessary reloads when modal closes
+  const hasLoadedRef = useRef(false);
   useFocusEffect(
     useCallback(() => {
-      // Refresh data when screen comes into focus
-      loadData();
+      // Only reload on first focus to avoid unnecessary API calls when filter modal closes
+      if (!hasLoadedRef.current) {
+        hasLoadedRef.current = true;
+        loadData();
+      }
     }, [])
   );
 
+  // Load data from API (only called on initial load or manual refresh)
   const loadData = async () => {
     if (!user) return;
 
@@ -84,93 +91,16 @@ export default function HomeScreen() {
       // Load categories
       const categoriesData = await getCategories(user.id);
 
-      // Load subscriptions with filters
+      // Load all subscriptions from API
       const data = await getSubscriptions(user.id);
+      const subscriptionsData = data || [];
 
-      // Filter only active subscriptions (is_active === true and not expired)
-      const activeSubscriptions = data?.filter(sub => {
-        if (!sub.expiry_date) return sub.is_active === true; // If no expiry date, just check is_active
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Normalize today's date
-        const expiryDate = new Date(sub.expiry_date);
-        expiryDate.setHours(0, 0, 0, 0); // Normalize expiry date
-        return sub.is_active === true && expiryDate >= today;
-      }) || [];
+      // Store all subscriptions
+      setAllSubscriptions(subscriptionsData);
+      setCategories(categoriesData || []);
 
-      // Apply status filters if selected
-      let filteredByStatus = activeSubscriptions;
-      if (selectedStatuses.includes('expiring_soon')) {
-        filteredByStatus = activeSubscriptions.filter(sub => {
-          if (!sub.expiry_date) return false;
-          const today = new Date();
-          const expiryDate = new Date(sub.expiry_date);
-          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
-        });
-      }
-      if (selectedStatuses.includes('inactive')) {
-        filteredByStatus = subscriptions.filter(sub => sub.is_active === false);
-      }
-      if (selectedStatuses.includes('active')) {
-        filteredByStatus = subscriptions.filter(sub => sub.is_active === true);
-      }
-
-      // Apply category filters if selected
-      let filteredByCategory = filteredByStatus;
-      if (selectedCategories.length > 0) {
-        filteredByCategory = filteredByStatus.filter(sub =>
-          selectedCategories.includes(sub.category_id || '')
-        );
-      }
-
-      // Sort subscriptions: expiring soon at the top, then by expiry date
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const sortedSubscriptions = filteredByCategory.sort((a, b) => {
-        // Helper function to calculate days until expiry
-        const getDaysUntilExpiry = (sub: Subscription): number => {
-          if (!sub.expiry_date) return Infinity; // No expiry date = sort to bottom
-          const expiryDate = new Date(sub.expiry_date);
-          expiryDate.setHours(0, 0, 0, 0);
-          const diffTime = expiryDate.getTime() - today.getTime();
-          return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        };
-
-        const daysA = getDaysUntilExpiry(a);
-        const daysB = getDaysUntilExpiry(b);
-
-        // Subscriptions expiring within 30 days come first
-        const isAExpiringSoon = daysA <= 30 && daysA > 0;
-        const isBExpiringSoon = daysB <= 30 && daysB > 0;
-
-        // If one is expiring soon and the other isn't, prioritize the one expiring soon
-        if (isAExpiringSoon && !isBExpiringSoon) return -1;
-        if (!isAExpiringSoon && isBExpiringSoon) return 1;
-
-        // If both are expiring soon or both are not, sort by days until expiry (ascending)
-        // Subscriptions expiring sooner come first
-        return daysA - daysB;
-      });
-
-      // Count subscriptions per category (based on the sorted subscriptions)
-      const categoryCounts = sortedSubscriptions.reduce((acc, sub) => {
-        if (sub.category_id) {
-          acc[sub.category_id] = (acc[sub.category_id] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>);
-
-      // Sort categories by subscription count (descending)
-      const sortedCategories = categoriesData?.sort((a, b) => {
-        const countA = categoryCounts[a.id!] || 0;
-        const countB = categoryCounts[b.id!] || 0;
-        return countB - countA;
-      }) || [];
-
-      setCategories(sortedCategories);
-      setSubscriptions(sortedSubscriptions);
-      setFilteredSubscriptions(sortedSubscriptions);
+      // Apply filters to the loaded data
+      applyFilters(subscriptionsData);
 
     } catch (err: any) {
       console.error('Error loading data:', err);
@@ -185,6 +115,120 @@ export default function HomeScreen() {
     }
   };
 
+  // Apply filters to subscriptions in-memory (no API call)
+  const applyFilters = (subscriptionsToFilter: Subscription[] = allSubscriptions) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const thirtyDaysFromNow = new Date(today);
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+    // Apply status filters if selected
+    let filteredByStatus = subscriptionsToFilter;
+    if (selectedStatuses.length > 0) {
+      filteredByStatus = subscriptionsToFilter.filter(sub => {
+        // Check each selected status - use OR logic (match any selected status)
+        let matches = false;
+
+        if (selectedStatuses.includes('active')) {
+          if (!sub.expiry_date) {
+            matches = matches || sub.is_active === true;
+          } else {
+            const expiryDate = new Date(sub.expiry_date);
+            expiryDate.setHours(0, 0, 0, 0);
+            matches = matches || (sub.is_active === true && expiryDate >= today);
+          }
+        }
+
+        if (selectedStatuses.includes('inactive')) {
+          // Show inactive subscriptions: either explicitly inactive OR expired
+          const isExplicitlyInactive = sub.is_active === false;
+          const isExpired = sub.expiry_date ? (() => {
+            const expiryDate = new Date(sub.expiry_date);
+            expiryDate.setHours(0, 0, 0, 0);
+            return expiryDate < today;
+          })() : false;
+          matches = matches || isExplicitlyInactive || isExpired;
+        }
+
+        if (selectedStatuses.includes('expiring_soon')) {
+          if (sub.expiry_date && sub.is_active) {
+            const expiryDate = new Date(sub.expiry_date);
+            expiryDate.setHours(0, 0, 0, 0);
+            const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            // Match if expiring within 30 days (1 month) and not expired
+            // Include subscriptions expiring today (daysUntilExpiry === 0) as "expiring soon"
+            matches = matches || (daysUntilExpiry <= 30 && daysUntilExpiry >= 0);
+          }
+        }
+
+        return matches;
+      });
+    } else {
+      // Default: show only active subscriptions (is_active === true and not expired)
+      filteredByStatus = subscriptionsToFilter.filter(sub => {
+        if (!sub.expiry_date) return sub.is_active === true;
+        const expiryDate = new Date(sub.expiry_date);
+        expiryDate.setHours(0, 0, 0, 0);
+        return sub.is_active === true && expiryDate >= today;
+      });
+    }
+
+    // Apply category filters if selected
+    let filteredByCategory = filteredByStatus;
+    if (selectedCategories.length > 0) {
+      filteredByCategory = filteredByStatus.filter(sub =>
+        selectedCategories.includes(sub.category_id || '')
+      );
+    }
+
+    // Sort subscriptions: expiring soon at the top, then by expiry date
+    const sortedSubscriptions = filteredByCategory.sort((a, b) => {
+      // Helper function to calculate days until expiry
+      const getDaysUntilExpiry = (sub: Subscription): number => {
+        if (!sub.expiry_date) return Infinity;
+        const expiryDate = new Date(sub.expiry_date);
+        expiryDate.setHours(0, 0, 0, 0);
+        const diffTime = expiryDate.getTime() - today.getTime();
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      };
+
+      const daysA = getDaysUntilExpiry(a);
+      const daysB = getDaysUntilExpiry(b);
+
+      // Subscriptions expiring within 30 days come first
+      const isAExpiringSoon = daysA <= 30 && daysA > 0;
+      const isBExpiringSoon = daysB <= 30 && daysB > 0;
+
+      // If one is expiring soon and the other isn't, prioritize the one expiring soon
+      if (isAExpiringSoon && !isBExpiringSoon) return -1;
+      if (!isAExpiringSoon && isBExpiringSoon) return 1;
+
+      // If both are expiring soon or both are not, sort by days until expiry (ascending)
+      return daysA - daysB;
+    });
+
+    // Count subscriptions per category (based on the sorted subscriptions)
+    const categoryCounts = sortedSubscriptions.reduce((acc, sub) => {
+      if (sub.category_id) {
+        acc[sub.category_id] = (acc[sub.category_id] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Sort categories by subscription count (descending) - use current categories state
+    setCategories(prevCategories => {
+      const sortedCategories = [...prevCategories].sort((a, b) => {
+        const countA = categoryCounts[a.id!] || 0;
+        const countB = categoryCounts[b.id!] || 0;
+        return countB - countA;
+      });
+      return sortedCategories;
+    });
+
+    setSubscriptions(sortedSubscriptions);
+    setFilteredSubscriptions(sortedSubscriptions);
+  };
+
   const onRefresh = useCallback(() => {
     if (!refreshing) {
       setRefreshing(true);
@@ -192,13 +236,22 @@ export default function HomeScreen() {
     }
   }, [refreshing]);
 
+  // Load data only on initial mount or when user changes
   useEffect(() => {
     if (user) {
       loadData();
     } else {
       setLoading(false);
     }
-  }, [user, selectedCategories, selectedStatuses]);
+  }, [user]);
+
+  // Apply filters when filter selections change (no API call)
+  useEffect(() => {
+    if (allSubscriptions.length > 0) {
+      applyFilters(allSubscriptions);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategories, selectedStatuses]);
 
   // Add logging for Expiring Soon filter
   useEffect(() => {
@@ -215,6 +268,7 @@ export default function HomeScreen() {
     }
   }, [selectedStatuses, subscriptions, filteredSubscriptions]);
 
+  // Apply search filter on top of already filtered subscriptions
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredSubscriptions(subscriptions);
@@ -240,8 +294,13 @@ export default function HomeScreen() {
           sub.id === id ? { ...sub, is_active: isActive } : sub
         );
 
-      setSubscriptions(updateSubscriptionState);
-      setFilteredSubscriptions(updateSubscriptionState);
+      // Update all subscriptions (source of truth) and reapply filters
+      setAllSubscriptions(prev => {
+        const updated = updateSubscriptionState(prev);
+        // Reapply filters with updated data
+        setTimeout(() => applyFilters(updated), 0);
+        return updated;
+      });
 
       // Make the API call
       await toggleSubscriptionStatus(id, isActive, user.id);
@@ -436,7 +495,7 @@ export default function HomeScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={[styles.title, { opacity: 0 }]}>Active Subscriptions</Text>
+                  <Text style={[styles.title , { opacity: 0 }]}>Active Subscriptions</Text>
                 </LinearGradient>
               </MaskedView>
             </View>
@@ -447,13 +506,13 @@ export default function HomeScreen() {
                     style={styles.iconButton}
                     onPress={() => setSelectionMode(true)}
                   >
-                    <CheckSquare size={22} color="#2c3e50" />
+                    <CheckSquare size={16} color="#2c3e50" />
                   </TouchableOpacity>
                   <NotificationIcon
                     style={styles.iconButton}
                     onPress={() => setNotificationBottomSheetVisible(true)}
                     userId={user?.id}
-                    size={22}
+                    size={16}
                     color="#2c3e50"
                   />
                 </>
@@ -463,13 +522,13 @@ export default function HomeScreen() {
                     style={styles.iconButton}
                     onPress={handleMarkAll}
                   >
-                    <CheckCircle2 size={22} color="#2c3e50" />
+                    <CheckCircle2 size={16} color="#2c3e50" />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.iconButton}
                     onPress={handleRemoveAll}
                   >
-                    <XCircle size={22} color="#2c3e50" />
+                    <XCircle size={16} color="#2c3e50" />
                   </TouchableOpacity>
                 </>
               )}
@@ -486,8 +545,23 @@ export default function HomeScreen() {
                 onChangeText={setSearchQuery}
                 placeholderTextColor="#95a5a6"
               />
-              <TouchableOpacity style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
-                <Filter size={20} color="#7f8c8d" />
+              <TouchableOpacity 
+                style={styles.filterButton} 
+                onPress={() => setFilterModalVisible(true)}
+              >
+                <View style={styles.filterButtonContainer}>
+                  <Filter 
+                    size={18} 
+                    color={selectedCategories.length > 0 || selectedStatuses.length > 0 ? "#4158D0" : "#7f8c8d"} 
+                  />
+                  {(selectedCategories.length > 0 || selectedStatuses.length > 0) && (
+                    <View style={styles.filterBadge}>
+                      <Text style={styles.filterBadgeText}>
+                        {selectedCategories.length + selectedStatuses.length}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -657,7 +731,6 @@ export default function HomeScreen() {
         onSelectCategories={setSelectedCategories}
         selectedStatuses={selectedStatuses}
         onSelectStatuses={setSelectedStatuses}
-        onRefresh={loadData}
       />
 
       <NotificationBottomSheet
@@ -758,8 +831,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconButton: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
     borderRadius: 20,
     backgroundColor: '#f8f9fa',
     justifyContent: 'center',
@@ -792,11 +865,38 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     padding: 8,
+    position: 'relative',
+  },
+  filterButtonContainer: {
+    position: 'relative',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#4158D0',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  filterBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: FONT_FAMILY.semiBold,
+    lineHeight: 12,
   },
   title: {
     fontFamily: FONT_FAMILY.bold,
     fontSize: 22,
     letterSpacing: -0.5,
+    
+
+
   },
   mainContent: {
     flex: 1,

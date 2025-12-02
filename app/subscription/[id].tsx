@@ -202,9 +202,13 @@ export default function SubscriptionDetailScreen() {
     if (!subscription) return;
     
     // Initialize renewal data with current subscription data
+    // Show the same dates as in subscription detail initially
+    const currentPurchaseDate = new Date(subscription.purchase_date);
+    const currentExpiryDate = new Date(subscription.expiry_date);
+    
     setRenewalData({
-      purchase_date: new Date(),
-      expiry_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      purchase_date: currentPurchaseDate,
+      expiry_date: currentExpiryDate,
       purchase_amount_pkr: subscription.purchase_amount_pkr.toString(),
       purchase_amount_usd: subscription.purchase_amount_usd ? subscription.purchase_amount_usd.toString() : '',
       sameVendor: true,
@@ -551,7 +555,7 @@ export default function SubscriptionDetailScreen() {
           </View>
 
           <View style={styles.detailRow}>
-            <DollarSign size={20} color="#7f8c8d" style={styles.detailIcon} />
+            <Text style={styles.pkrDetailIcon}>₨</Text>
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>Amount (PKR)</Text>
               {isEditing ? (
@@ -799,7 +803,11 @@ export default function SubscriptionDetailScreen() {
                   >
                     <Calendar size={20} color="#4158D0" style={styles.modalDateIcon} />
                     <Text style={styles.modalDateText}>
-                      {renewalData.purchase_date.toLocaleDateString()}
+                      {renewalData.purchase_date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
                     </Text>
                   </TouchableOpacity>
                   
@@ -810,7 +818,11 @@ export default function SubscriptionDetailScreen() {
                   >
                     <Calendar size={20} color="#4158D0" style={styles.modalDateIcon} />
                     <Text style={styles.modalDateText}>
-                      {renewalData.expiry_date.toLocaleDateString()}
+                      {renewalData.expiry_date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
                     </Text>
                   </TouchableOpacity>
                 </>
@@ -820,9 +832,10 @@ export default function SubscriptionDetailScreen() {
                 <RNDateTimePicker
                   value={renewalData.purchase_date}
                   mode="date"
+                  display="default"
                   onChange={(event, selectedDate) => {
                     setShowRenewPurchaseDatePicker(false);
-                    if (selectedDate) {
+                    if (event.type === 'set' && selectedDate) {
                       setRenewalData({...renewalData, purchase_date: selectedDate});
                     }
                   }}
@@ -833,9 +846,10 @@ export default function SubscriptionDetailScreen() {
                 <RNDateTimePicker
                   value={renewalData.expiry_date}
                   mode="date"
+                  display="default"
                   onChange={(event, selectedDate) => {
                     setShowRenewExpiryDatePicker(false);
-                    if (selectedDate) {
+                    if (event.type === 'set' && selectedDate) {
                       setRenewalData({...renewalData, expiry_date: selectedDate});
                     }
                   }}
@@ -843,22 +857,28 @@ export default function SubscriptionDetailScreen() {
               )}
               
               <Text style={styles.modalLabel}>Amount (PKR)</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={renewalData.purchase_amount_pkr}
-                onChangeText={(text) => setRenewalData({...renewalData, purchase_amount_pkr: text})}
-                placeholder="0"
-                keyboardType="numeric"
-              />
+              <View style={styles.modalInputContainer}>
+                <Text style={styles.pkrIcon}>₨</Text>
+                <TextInput
+                  style={styles.modalInputWithIcon}
+                  value={renewalData.purchase_amount_pkr}
+                  onChangeText={(text) => setRenewalData({...renewalData, purchase_amount_pkr: text})}
+                  placeholder="0"
+                  keyboardType="numeric"
+                />
+              </View>
               
               <Text style={styles.modalLabel}>Amount (USD)</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={renewalData.purchase_amount_usd}
-                onChangeText={(text) => setRenewalData({...renewalData, purchase_amount_usd: text})}
-                placeholder="0"
-                keyboardType="numeric"
-              />
+              <View style={styles.modalInputContainer}>
+                <DollarSign size={20} color="#4158D0" style={styles.modalInputIcon} />
+                <TextInput
+                  style={styles.modalInputWithIcon}
+                  value={renewalData.purchase_amount_usd}
+                  onChangeText={(text) => setRenewalData({...renewalData, purchase_amount_usd: text})}
+                  placeholder="0"
+                  keyboardType="numeric"
+                />
+              </View>
               
               <Button
                 title="Renew Subscription"
@@ -1122,6 +1142,13 @@ const styles = StyleSheet.create({
     marginRight: 12,
     marginTop: 2,
   },
+  pkrDetailIcon: {
+    fontSize: 20,
+    color: '#7f8c8d',
+    marginRight: 12,
+    marginTop: 2,
+    fontFamily: FONT_FAMILY.medium,
+  },
   detailContent: {
     flex: 1,
   },
@@ -1258,6 +1285,33 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#f5f6fa',
     marginBottom: 16,
+  },
+  modalInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#dfe4ea',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#f5f6fa',
+    marginBottom: 16,
+  },
+  modalInputIcon: {
+    marginRight: 8,
+  },
+  pkrIcon: {
+    fontSize: 20,
+    color: '#4158D0',
+    marginRight: 8,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  modalInputWithIcon: {
+    flex: 1,
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: 16,
+    color: '#2c3e50',
+    padding: 0,
   },
   modalDateButton: {
     flexDirection: 'row',
