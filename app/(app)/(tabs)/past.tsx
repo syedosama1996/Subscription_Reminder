@@ -42,13 +42,17 @@ export default function PastSubscriptionsScreen() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
   const [deleteConfirmModalVisible, setDeleteConfirmModalVisible] = useState(false);
+  const isInitialLoadRef = React.useRef(true);
 
-  const loadData = async () => {
+  const loadData = async (showLoading: boolean = false) => {
     if (!user) return;
 
     try {
       setError(null);
-      setLoading(true);
+      // Only show loading indicator if requested (initial load or manual refresh)
+      if (showLoading) {
+        setLoading(true);
+      }
       
       // Load categories
       const categoriesData = await getCategories(user.id);
@@ -82,7 +86,9 @@ export default function PastSubscriptionsScreen() {
       setError('Failed to load past subscriptions');
       Alert.alert('Error', 'Failed to load past subscriptions');
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
       setRefreshing(false);
     }
   };
@@ -106,17 +112,29 @@ export default function PastSubscriptionsScreen() {
     applyFilters(subscriptions, searchQuery);
   }, [searchQuery, subscriptions]);
 
-  // Load data when screen comes into focus
+  // Load data on initial mount
+  useEffect(() => {
+    if (user && isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      loadData(true); // Show loading on initial load
+    }
+  }, [user]);
+
+  // Refresh data silently when screen comes into focus (no loading indicator)
   useFocusEffect(
     React.useCallback(() => {
-      loadData();
+      if (!user) return;
+      // Only refresh if not initial load
+      if (!isInitialLoadRef.current) {
+        loadData(false); // Don't show loading when navigating back
+      }
     }, [user, selectedCategories])
   );
 
   const onRefresh = useCallback(() => {
     if (!refreshing) {
       setRefreshing(true);
-      loadData();
+      loadData(true); // Show loading on manual refresh
     }
   }, [refreshing]);
 
@@ -148,7 +166,7 @@ export default function PastSubscriptionsScreen() {
       // Reset selection mode and reload data
       setSelectionMode(false);
       setSelectedSubscriptions([]);
-      loadData();
+      loadData(false); // Don't show loading, already showing it
     } catch (error) {
       console.error('Error deleting subscriptions:', error);
       Alert.alert('Error', 'Failed to delete subscriptions');
@@ -172,7 +190,7 @@ export default function PastSubscriptionsScreen() {
       // Reset selection mode and reload data
       setSelectionMode(false);
       setSelectedSubscriptions([]);
-      loadData();
+      loadData(false); // Don't show loading, already showing it
     } catch (error) {
       console.error('Error bulk toggling subscription status:', error);
       Alert.alert('Error', 'Failed to update subscription statuses');
@@ -206,11 +224,11 @@ export default function PastSubscriptionsScreen() {
       await toggleSubscriptionStatus(id, isActive, user.id);
       
       // Reload data to ensure consistency without showing loader
-      await loadData();
+      await loadData(false);
     } catch (error) {
       console.error('Error toggling subscription status:', error);
       // Revert the local state on error
-      await loadData();
+      await loadData(false);
       Alert.alert('Error', 'Failed to update subscription status');
     }
   };
@@ -350,7 +368,6 @@ export default function PastSubscriptionsScreen() {
         onSelectCategories={setSelectedCategories}
         selectedStatuses={selectedStatuses}
         onSelectStatuses={setSelectedStatuses}
-        onRefresh={loadData}
       />
 
       {/* Delete Confirmation Modal */}

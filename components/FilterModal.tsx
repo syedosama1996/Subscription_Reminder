@@ -23,8 +23,8 @@ type FilterModalProps = {
 };
 
 const STATUS_OPTIONS = [
-  { id: 'active', label: 'Active', color: '#10b981', },
-  { id: 'expiring_soon', label: 'Expiring Soon',  icon: '⏰' },
+  { id: 'active', label: 'Active', color: '#10b981' },
+  { id: 'expiring_soon', label: 'Expiring Soon', icon: '⏰', color: '#f59e0b' },
 ];
 
 export default function FilterModal({ 
@@ -123,7 +123,7 @@ export default function FilterModal({
                       {status.label}
                     </Text>
                     {localSelectedStatuses.includes(status.id) && (
-                      <Check size={16} color={status.color} style={styles.checkIcon} />
+                      <Check size={16} color={status.color || '#3b82f6'} style={styles.checkIcon} />
                     )}
                   </TouchableOpacity>
                 ))}

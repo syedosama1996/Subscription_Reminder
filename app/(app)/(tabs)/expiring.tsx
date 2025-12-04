@@ -42,12 +42,16 @@ export default function ExpiringSubscriptionsScreen() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
   const [deleteConfirmModalVisible, setDeleteConfirmModalVisible] = useState(false);
+  const isInitialLoadRef = React.useRef(true);
 
-  const loadExpiringSubscriptions = async () => {
+  const loadExpiringSubscriptions = async (showLoading: boolean = false) => {
     if (!user) return;
     
     try {
-      setLoading(true);
+      // Only show loading indicator if requested (initial load or manual refresh)
+      if (showLoading) {
+        setLoading(true);
+      }
       setError(null);
       
       // Load categories
@@ -120,7 +124,9 @@ export default function ExpiringSubscriptionsScreen() {
       console.error("Error loading expiring/expired subscriptions:", err);
       setError('Failed to load subscriptions');
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
       setRefreshing(false);
     }
   };
@@ -144,16 +150,28 @@ export default function ExpiringSubscriptionsScreen() {
     applyFilters(subscriptions, searchQuery);
   }, [searchQuery, subscriptions]);
 
+  // Load data on initial mount
+  useEffect(() => {
+    if (user && isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      loadExpiringSubscriptions(true); // Show loading on initial load
+    }
+  }, [user]);
 
+  // Refresh data silently when screen comes into focus (no loading indicator)
   useFocusEffect(
     useCallback(() => {
-      loadExpiringSubscriptions();
+      if (!user) return;
+      // Only refresh if not initial load
+      if (!isInitialLoadRef.current) {
+        loadExpiringSubscriptions(false); // Don't show loading when navigating back
+      }
     }, [user, selectedCategories])
   );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    loadExpiringSubscriptions();
+    loadExpiringSubscriptions(true); // Show loading on manual refresh
   }, [user]);
 
   const toggleSubscriptionSelection = (id: string) => {
@@ -184,7 +202,7 @@ export default function ExpiringSubscriptionsScreen() {
       // Reset selection mode and reload data
       setSelectionMode(false);
       setSelectedSubscriptions([]);
-      loadExpiringSubscriptions();
+      loadExpiringSubscriptions(false); // Don't show loading, already showing it
     } catch (error) {
       console.error('Error deleting subscriptions:', error);
       Alert.alert('Error', 'Failed to delete subscriptions');
@@ -208,7 +226,7 @@ export default function ExpiringSubscriptionsScreen() {
       // Reset selection mode and reload data
       setSelectionMode(false);
       setSelectedSubscriptions([]);
-      loadExpiringSubscriptions();
+      loadExpiringSubscriptions(false); // Don't show loading, already showing it
     } catch (error) {
       console.error('Error bulk toggling subscription status:', error);
       Alert.alert('Error', 'Failed to update subscription statuses');
@@ -365,7 +383,6 @@ export default function ExpiringSubscriptionsScreen() {
         onSelectCategories={setSelectedCategories}
         selectedStatuses={selectedStatuses}
         onSelectStatuses={setSelectedStatuses}
-        onRefresh={loadExpiringSubscriptions}
       />
 
       {/* Delete Confirmation Modal */}

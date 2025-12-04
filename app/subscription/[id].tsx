@@ -27,6 +27,9 @@ import {
 import Button from '../../components/Button';
 import ReminderItem from '../../components/ReminderItem';
 import CustomModal from '../../components/CustomModal';
+import CategorySelector from '../../components/CategorySelector';
+import CategoryBadge from '../../components/CategoryBadge';
+import { Category } from '../../lib/types';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -43,7 +46,8 @@ import {
   History,
   X,
   Check,
-  Power
+  Power,
+  Tag
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
@@ -61,6 +65,7 @@ export default function SubscriptionDetailScreen() {
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
   const [editedSubscription, setEditedSubscription] = useState<Partial<Subscription>>({});
+  const [editedCategory, setEditedCategory] = useState<Category | null>(null);
   
   // Renewal modal state
   const [renewModalVisible, setRenewModalVisible] = useState(false);
@@ -119,8 +124,10 @@ export default function SubscriptionDetailScreen() {
         password: data.password,
         notes: data.notes,
         vendor: data.vendor,
-        vendor_link: data.vendor_link
+        vendor_link: data.vendor_link,
+        category_id: data.category_id
       });
+      setEditedCategory(data.category || null);
       
       // Initialize renewal data
       setRenewalData({
@@ -174,8 +181,10 @@ export default function SubscriptionDetailScreen() {
         password: subscription.password,
         notes: subscription.notes,
         vendor: subscription.vendor,
-        vendor_link: subscription.vendor_link
+        vendor_link: subscription.vendor_link,
+        category_id: subscription.category_id
       });
+      setEditedCategory(subscription.category || null);
     }
     setIsEditing(false);
   };
@@ -185,7 +194,11 @@ export default function SubscriptionDetailScreen() {
     
     try {
       setLoading(true);
-      await updateSubscription(subscription.id, editedSubscription, user.id);
+      const updateData = {
+        ...editedSubscription,
+        category_id: editedCategory?.id || null
+      };
+      await updateSubscription(subscription.id, updateData, user.id);
       await loadSubscription();
       setIsEditing(false);
     } catch (err) {
@@ -494,6 +507,29 @@ export default function SubscriptionDetailScreen() {
                 />
               ) : (
                 <Text style={styles.detailValue}>{subscription.domain_name || 'N/A'}</Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Tag size={20} color="#7f8c8d" style={styles.detailIcon} />
+            <View style={styles.detailContent}>
+              {!isEditing && <Text style={styles.detailLabel}>Category</Text>}
+              {isEditing ? (
+                <CategorySelector
+                  selectedCategoryId={editedCategory?.id}
+                  onSelectCategory={(category) => {
+                    setEditedCategory(category);
+                  }}
+                />
+              ) : (
+                subscription.category ? (
+                  <View style={styles.categoryDisplay}>
+                    <CategoryBadge category={subscription.category} />
+                  </View>
+                ) : (
+                  <Text style={styles.detailValue}>N/A</Text>
+                )
               )}
             </View>
           </View>
@@ -1132,7 +1168,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.semiBold,
     fontSize: 18,
     color: '#2c3e50',
-    marginBottom: 16,
+    marginBottom: 0
   },
   detailRow: {
     flexDirection: 'row',
@@ -1439,5 +1475,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2c3e50',
     marginBottom: 8,
+  },
+  categoryDisplay: {
+    marginTop: 4,
   },
 });

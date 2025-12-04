@@ -125,6 +125,11 @@ export default function AddSubscriptionScreen() {
       return;
     }
 
+    if (!selectedCategory) {
+      setError('Please select a category');
+      return;
+    }
+
     // Validate dates
     if (!purchaseDate || isNaN(purchaseDate.getTime())) {
       setError('Purchase date is required');
@@ -321,7 +326,10 @@ export default function AddSubscriptionScreen() {
 
               <CategorySelector
                 selectedCategoryId={selectedCategory?.id}
-                onSelectCategory={setSelectedCategory}
+                onSelectCategory={(category) => {
+                  setSelectedCategory(category);
+                  clearError();
+                }}
               />
 
               <View style={styles.inputRow}>

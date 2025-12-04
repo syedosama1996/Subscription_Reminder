@@ -63,60 +63,10 @@ export default function HomeScreen() {
   const [notificationBottomSheetVisible, setNotificationBottomSheetVisible] = useState(false);
   const [deleteConfirmModalVisible, setDeleteConfirmModalVisible] = useState(false);
   const categoriesScrollViewRef = useRef<ScrollView>(null);
-
-  // Add focus effect to refresh data when screen comes into focus
-  // Only reload on initial focus to avoid unnecessary reloads when modal closes
-  const hasLoadedRef = useRef(false);
-  useFocusEffect(
-    useCallback(() => {
-      // Only reload on first focus to avoid unnecessary API calls when filter modal closes
-      if (!hasLoadedRef.current) {
-        hasLoadedRef.current = true;
-        loadData();
-      }
-    }, [])
-  );
-
-  // Load data from API (only called on initial load or manual refresh)
-  const loadData = async () => {
-    if (!user) return;
-
-    try {
-      setError(null);
-      // Only set loading if we're not in a toggle operation
-      if (!toggleLoading) {
-        setLoading(true);
-      }
-
-      // Load categories
-      const categoriesData = await getCategories(user.id);
-
-      // Load all subscriptions from API
-      const data = await getSubscriptions(user.id);
-      const subscriptionsData = data || [];
-
-      // Store all subscriptions
-      setAllSubscriptions(subscriptionsData);
-      setCategories(categoriesData || []);
-
-      // Apply filters to the loaded data
-      applyFilters(subscriptionsData);
-
-    } catch (err: any) {
-      console.error('Error loading data:', err);
-      setError('Failed to load data. Please try again.');
-      Alert.alert('Error', 'Failed to load data. Please try again.');
-    } finally {
-      // Only set loading false if we're not in a toggle operation
-      if (!toggleLoading) {
-        setLoading(false);
-      }
-      setRefreshing(false);
-    }
-  };
+  const lastFilterChangeRef = useRef<number>(0);
 
   // Apply filters to subscriptions in-memory (no API call)
-  const applyFilters = (subscriptionsToFilter: Subscription[] = allSubscriptions) => {
+  const applyFilters = useCallback((subscriptionsToFilter: Subscription[] = allSubscriptions) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const thirtyDaysFromNow = new Date(today);
@@ -181,7 +131,7 @@ export default function HomeScreen() {
       );
     }
 
-    // Sort subscriptions: expiring soon at the top, then by expiry date
+    // Sort subscriptions: recently added first, then expiring soon, then by expiry date
     const sortedSubscriptions = filteredByCategory.sort((a, b) => {
       // Helper function to calculate days until expiry
       const getDaysUntilExpiry = (sub: Subscription): number => {
@@ -192,10 +142,31 @@ export default function HomeScreen() {
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       };
 
+      // Helper function to check if subscription was recently added (within last 7 days)
+      const isRecentlyAdded = (sub: Subscription): boolean => {
+        if (!sub.created_at) return false;
+        const createdDate = new Date(sub.created_at);
+        const daysSinceCreation = Math.ceil((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+        return daysSinceCreation <= 7;
+      };
+
       const daysA = getDaysUntilExpiry(a);
       const daysB = getDaysUntilExpiry(b);
+      const isARecentlyAdded = isRecentlyAdded(a);
+      const isBRecentlyAdded = isRecentlyAdded(b);
 
-      // Subscriptions expiring within 30 days come first
+      // Recently added subscriptions come first
+      if (isARecentlyAdded && !isBRecentlyAdded) return -1;
+      if (!isARecentlyAdded && isBRecentlyAdded) return 1;
+
+      // If both are recently added, sort by created_at (newest first)
+      if (isARecentlyAdded && isBRecentlyAdded) {
+        const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return createdB - createdA; // Newest first
+      }
+
+      // Subscriptions expiring within 30 days come next
       const isAExpiringSoon = daysA <= 30 && daysA > 0;
       const isBExpiringSoon = daysB <= 30 && daysB > 0;
 
@@ -204,7 +175,20 @@ export default function HomeScreen() {
       if (!isAExpiringSoon && isBExpiringSoon) return 1;
 
       // If both are expiring soon or both are not, sort by days until expiry (ascending)
-      return daysA - daysB;
+      if (isAExpiringSoon && isBExpiringSoon) {
+        return daysA - daysB;
+      }
+
+      // For non-expiring-soon subscriptions, sort by expiry date (ascending), then by created_at (newest first)
+      const expiryDiff = daysA - daysB;
+      if (expiryDiff !== 0) {
+        return expiryDiff;
+      }
+
+      // If expiry dates are the same, sort by created_at (newest first)
+      const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return createdB - createdA; // Newest first
     });
 
     // Count subscriptions per category (based on the sorted subscriptions)
@@ -227,7 +211,71 @@ export default function HomeScreen() {
 
     setSubscriptions(sortedSubscriptions);
     setFilteredSubscriptions(sortedSubscriptions);
-  };
+  }, [allSubscriptions, selectedStatuses, selectedCategories]);
+
+  // Load data from API (only called on initial load or manual refresh)
+  const loadData = useCallback(async (showLoading: boolean = true) => {
+    if (!user) return;
+
+    try {
+      setError(null);
+      // Only set loading if requested and we're not in a toggle operation
+      if (showLoading && !toggleLoading) {
+        setLoading(true);
+      }
+
+      // Load categories
+      const categoriesData = await getCategories(user.id);
+
+      // Load all subscriptions from API
+      const data = await getSubscriptions(user.id);
+      const subscriptionsData = data || [];
+
+      // Store all subscriptions
+      setAllSubscriptions(subscriptionsData);
+      setCategories(categoriesData || []);
+
+      // Apply filters to the loaded data
+      applyFilters(subscriptionsData);
+
+    } catch (err: any) {
+      console.error('Error loading data:', err);
+      setError('Failed to load data. Please try again.');
+      Alert.alert('Error', 'Failed to load data. Please try again.');
+    } finally {
+      // Always set loading to false if we're not in a toggle operation
+      // This ensures the loader doesn't get stuck
+      if (!toggleLoading) {
+        setLoading(false);
+      }
+      setRefreshing(false);
+    }
+  }, [user, toggleLoading, applyFilters]);
+
+  // Add focus effect to refresh data when screen comes into focus
+  // This ensures new subscriptions appear immediately after creation
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) return;
+      
+      // Don't refresh if filters were just changed (within last 2 seconds)
+      // This prevents race conditions when applying filters
+      const timeSinceFilterChange = Date.now() - lastFilterChangeRef.current;
+      if (timeSinceFilterChange < 2000) {
+        return;
+      }
+      
+      // Always refresh data when screen comes into focus
+      // This ensures data is up-to-date when returning from other screens
+      // Add a small delay to ensure navigation is complete
+      // Don't show loading indicator on focus refresh to avoid flickering
+      const timeoutId = setTimeout(() => {
+        loadData(false); // Pass false to skip loading indicator
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }, [user, loadData])
+  );
 
   const onRefresh = useCallback(() => {
     if (!refreshing) {
@@ -248,6 +296,8 @@ export default function HomeScreen() {
   // Apply filters when filter selections change (no API call)
   useEffect(() => {
     if (allSubscriptions.length > 0) {
+      // Track when filters change to prevent unnecessary refreshes
+      lastFilterChangeRef.current = Date.now();
       applyFilters(allSubscriptions);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
