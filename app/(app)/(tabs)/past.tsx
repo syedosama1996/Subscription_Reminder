@@ -467,8 +467,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: FONT_FAMILY.bold,
-    fontSize: 22,
-    letterSpacing: -0.5,
+    fontSize: 21,
+    letterSpacing: -0.8,
   },
   searchContainer: {
     paddingHorizontal: 20,

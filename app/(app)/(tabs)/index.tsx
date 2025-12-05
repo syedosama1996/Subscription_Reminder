@@ -105,9 +105,9 @@ export default function HomeScreen() {
             const expiryDate = new Date(sub.expiry_date);
             expiryDate.setHours(0, 0, 0, 0);
             const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-            // Match if expiring within 30 days (1 month) and not expired
-            // Include subscriptions expiring today (daysUntilExpiry === 0) as "expiring soon"
-            matches = matches || (daysUntilExpiry <= 30 && daysUntilExpiry >= 0);
+            // Match ONLY if expiring within 30 days (0 to 30 days inclusive)
+            // This ensures only subscriptions expiring within 30 days are shown
+            matches = matches || (daysUntilExpiry >= 0 && daysUntilExpiry <= 30);
           }
         }
 
@@ -942,11 +942,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: FONT_FAMILY.bold,
-    fontSize: 22,
-    letterSpacing: -0.5,
-    
-
-
+    fontSize: 21,
+    letterSpacing: -0.8,
   },
   mainContent: {
     flex: 1,
