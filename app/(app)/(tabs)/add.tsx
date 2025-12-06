@@ -403,12 +403,17 @@ export default function AddSubscriptionScreen() {
                 <RNDateTimePicker
                   value={purchaseDate}
                   mode="date"
-                  display="default"
+                  display={Platform.OS === 'android' ? 'calendar' : 'default'}
                   onChange={(event, selectedDate) => {
-                    setShowPurchaseDatePicker(false);
+                    if (Platform.OS === 'android') {
+                      setShowPurchaseDatePicker(false);
+                    }
                     if (selectedDate) {
                       setPurchaseDate(selectedDate);
                       clearError();
+                    }
+                    if (event.type === 'dismissed') {
+                      setShowPurchaseDatePicker(false);
                     }
                   }}
                 />
@@ -418,12 +423,17 @@ export default function AddSubscriptionScreen() {
                 <RNDateTimePicker
                   value={expiryDate}
                   mode="date"
-                  display="default"
+                  display={Platform.OS === 'android' ? 'calendar' : 'default'}
                   onChange={(event, selectedDate) => {
-                    setShowExpiryDatePicker(false);
+                    if (Platform.OS === 'android') {
+                      setShowExpiryDatePicker(false);
+                    }
                     if (selectedDate) {
                       setExpiryDate(selectedDate);
                       clearError();
+                    }
+                    if (event.type === 'dismissed') {
+                      setShowExpiryDatePicker(false);
                     }
                   }}
                 />

@@ -212,8 +212,10 @@ export default function ReportScreen() {
 
   const handleCustomDateChange = (event: any, selectedDate?: Date, isStartDate: boolean = true) => {
     if (isStartDate) {
-      setShowStartDatePicker(false);
-      if (selectedDate) {
+      if (Platform.OS === 'android') {
+        setShowStartDatePicker(false);
+      }
+      if (event.type === 'set' && selectedDate) {
         setDateRange(prev => ({
           ...prev,
           startDate: selectedDate,
@@ -221,8 +223,10 @@ export default function ReportScreen() {
         }));
       }
     } else {
-      setShowEndDatePicker(false);
-      if (selectedDate) {
+      if (Platform.OS === 'android') {
+        setShowEndDatePicker(false);
+      }
+      if (event.type === 'set' && selectedDate) {
         setDateRange(prev => ({
           ...prev,
           endDate: selectedDate,
@@ -755,7 +759,14 @@ export default function ReportScreen() {
         <RNDateTimePicker
           value={dateRange.startDate}
           mode="date"
-          onChange={(event, date) => handleCustomDateChange(event, date, true)}
+          display={Platform.OS === 'android' ? 'calendar' : 'default'}
+          onChange={(event, date) => {
+            if (Platform.OS === 'android' && event.type === 'dismissed') {
+              setShowStartDatePicker(false);
+              return;
+            }
+            handleCustomDateChange(event, date, true);
+          }}
           maximumDate={dateRange.endDate}
         />
       )}
@@ -764,7 +775,14 @@ export default function ReportScreen() {
         <RNDateTimePicker
           value={dateRange.endDate}
           mode="date"
-          onChange={(event, date) => handleCustomDateChange(event, date, false)}
+          display={Platform.OS === 'android' ? 'calendar' : 'default'}
+          onChange={(event, date) => {
+            if (Platform.OS === 'android' && event.type === 'dismissed') {
+              setShowEndDatePicker(false);
+              return;
+            }
+            handleCustomDateChange(event, date, false);
+          }}
           minimumDate={dateRange.startDate}
         />
       )}

@@ -868,11 +868,15 @@ export default function SubscriptionDetailScreen() {
                 <RNDateTimePicker
                   value={renewalData.purchase_date}
                   mode="date"
-                  display="default"
+                  display={Platform.OS === 'android' ? 'calendar' : 'default'}
                   onChange={(event, selectedDate) => {
-                    setShowRenewPurchaseDatePicker(false);
+                    if (Platform.OS === 'android') {
+                      setShowRenewPurchaseDatePicker(false);
+                    }
                     if (event.type === 'set' && selectedDate) {
                       setRenewalData({...renewalData, purchase_date: selectedDate});
+                    } else if (event.type === 'dismissed') {
+                      setShowRenewPurchaseDatePicker(false);
                     }
                   }}
                 />
@@ -882,11 +886,15 @@ export default function SubscriptionDetailScreen() {
                 <RNDateTimePicker
                   value={renewalData.expiry_date}
                   mode="date"
-                  display="default"
+                  display={Platform.OS === 'android' ? 'calendar' : 'default'}
                   onChange={(event, selectedDate) => {
-                    setShowRenewExpiryDatePicker(false);
+                    if (Platform.OS === 'android') {
+                      setShowRenewExpiryDatePicker(false);
+                    }
                     if (event.type === 'set' && selectedDate) {
                       setRenewalData({...renewalData, expiry_date: selectedDate});
+                    } else if (event.type === 'dismissed') {
+                      setShowRenewExpiryDatePicker(false);
                     }
                   }}
                 />
