@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator, Dimensions, Modal, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator, Dimensions, Modal, Platform, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { BarChart2, DollarSign, Calendar, TrendingUp, ArrowLeft, Download, Filter, ChevronDown } from 'lucide-react-native';
@@ -37,6 +37,7 @@ interface DateRange {
 export default function ReportScreen() {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const windowDimensions = useWindowDimensions();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -122,30 +123,36 @@ export default function ReportScreen() {
       // Get invoices
       const invoices = await getUserInvoices(user?.id || '');
 
-      // Filter invoices by date range
+      // Filter invoices by date range - normalize dates to start/end of day for accurate comparison
+      const startOfStartDate = new Date(dateRange.startDate);
+      startOfStartDate.setHours(0, 0, 0, 0);
+      const endOfEndDate = new Date(dateRange.endDate);
+      endOfEndDate.setHours(23, 59, 59, 999);
+      
       const filteredInvoices = invoices.filter(inv => {
         if (!inv.created_at) return false;
         const invoiceDate = new Date(inv.created_at);
-        return invoiceDate >= dateRange.startDate && invoiceDate <= dateRange.endDate;
+        return invoiceDate >= startOfStartDate && invoiceDate <= endOfEndDate;
       });
 
       // Calculate stats
-      const totalSpent = filteredInvoices.reduce((sum, inv) => sum + inv.total_amount, 0);
+      const totalSpent = filteredInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
       
-      // Calculate days between start and end date for average calculation
-      const daysDiff = Math.ceil((dateRange.endDate.getTime() - dateRange.startDate.getTime()) / (1000 * 60 * 60 * 24));
+      // Calculate days between start and end date for average calculation (inclusive of both dates)
+      const daysDiff = Math.max(1, Math.ceil((endOfEndDate.getTime() - startOfStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
       const dailyAverage = daysDiff > 0 ? totalSpent / daysDiff : 0;
-      const monthlyAverage = dailyAverage * 30; // Approximate monthly average
+      // Calculate monthly average based on actual days in the period
+      const monthlyAverage = dailyAverage * 30.44; // Average days per month (365.25/12)
 
-      // Get top category
+      // Get top category - include all subscriptions, even those without categories
       const categoryCounts: Record<string, number> = {};
       activeSubscriptions.forEach(sub => {
-        if (sub.category?.name) {
-          categoryCounts[sub.category.name] = (categoryCounts[sub.category.name] || 0) + 1;
-        }
+        const categoryName = sub.category?.name || 'Uncategorized';
+        categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
       });
 
       const topCategory = Object.entries(categoryCounts)
+        .filter(([name]) => name !== 'Uncategorized') // Exclude uncategorized from top category
         .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || 'N/A';
 
       setStats({
@@ -162,39 +169,54 @@ export default function ReportScreen() {
       }));
       setCategoryData(categoryChartData);
 
-      // Prepare monthly trend data - Use a Map to preserve order and handle missing months if needed
-      const monthlyTrendsMap = new Map<string, number>();
+      // Prepare monthly trend data - Use a Map with year-month keys to handle year boundaries correctly
+      const monthlyTrendsMap = new Map<string, { month: string; year: number; amount: number }>();
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
       // Initialize map with zero amounts for the months in the date range
-      const startMonth = dateRange.startDate.getMonth();
-      const endMonth = dateRange.endDate.getMonth();
-      const startYear = dateRange.startDate.getFullYear();
-      const endYear = dateRange.endDate.getFullYear();
+      const startMonth = startOfStartDate.getMonth();
+      const endMonth = endOfEndDate.getMonth();
+      const startYear = startOfStartDate.getFullYear();
+      const endYear = endOfEndDate.getFullYear();
       
       // Calculate months between start and end date
       const monthsDiff = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
       
       for (let i = 0; i < monthsDiff; i++) {
         const d = new Date(startYear, startMonth + i, 1);
-        const month = monthNames[d.getMonth()];
-        monthlyTrendsMap.set(month, 0);
+        const month = d.getMonth();
+        const year = d.getFullYear();
+        const monthKey = `${year}-${month}`;
+        monthlyTrendsMap.set(monthKey, {
+          month: monthNames[month],
+          year: year,
+          amount: 0
+        });
       }
 
+      // Aggregate invoice amounts by year-month
       filteredInvoices.forEach(inv => {
         if (inv.created_at) {
           const date = new Date(inv.created_at);
-          const month = monthNames[date.getMonth()];
-          if (monthlyTrendsMap.has(month)) {
-             monthlyTrendsMap.set(month, (monthlyTrendsMap.get(month) || 0) + inv.total_amount);
+          const month = date.getMonth();
+          const year = date.getFullYear();
+          const monthKey = `${year}-${month}`;
+          
+          if (monthlyTrendsMap.has(monthKey)) {
+            const existing = monthlyTrendsMap.get(monthKey)!;
+            existing.amount += (inv.total_amount || 0);
+            monthlyTrendsMap.set(monthKey, existing);
           }
         }
       });
 
-      const monthlyChartData: MonthlyData[] = Array.from(monthlyTrendsMap.entries()).map(([month, amount]) => ({
-        month,
-        amount
-      }));
+      // Convert to array and format labels (include year if range spans multiple years)
+      const needsYearLabel = (endYear - startYear) > 0;
+      const monthlyChartData: MonthlyData[] = Array.from(monthlyTrendsMap.values())
+        .map(({ month, year, amount }) => ({
+          month: needsYearLabel ? `${month} ${year}` : month,
+          amount
+        }));
       setMonthlyData(monthlyChartData);
 
     } catch (error) {
@@ -238,6 +260,16 @@ export default function ReportScreen() {
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  // Smart label truncation based on available space
+  const truncateLabel = (text: string, maxLength: number): string => {
+    if (text.length <= maxLength) {
+      return text;
+    }
+    // Truncate to show first part with ellipsis
+    const truncatedLength = Math.max(1, maxLength - 2); // Reserve 2 chars for ".."
+    return text.substring(0, truncatedLength) + '..';
   };
 
   const generateReportHtml = () => {
@@ -587,42 +619,73 @@ export default function ReportScreen() {
             <Text style={styles.sectionTitle}>Spending by Category</Text>
             {categoryData.length > 0 ? (
               <View style={styles.chartContainer}>
-                <BarChart
-                  data={{
-                    labels: categoryData.map(item => item.name.length > 8 ? item.name.substring(0, 6) + '..' : item.name),
-                    datasets: [{
-                      data: categoryData.map(item => item.count)
-                    }]
-                  }}
-                  width={Dimensions.get('window').width - 60}
-                  height={240}
-                  yAxisLabel=""
-                  yAxisSuffix=""
-                  chartConfig={{
-                    backgroundColor: '#ffffff',
-                    backgroundGradientFrom: '#ffffff',
-                    backgroundGradientTo: '#ffffff',
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(65, 88, 208, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                    style: {
-                      borderRadius: 16
-                    },
-                    propsForDots: {
-                      r: "4",
-                      strokeWidth: "1",
-                      stroke: "#4158D0"
-                    },
-                    propsForLabels: {
-                      fontSize: 10,
-                      fontWeight: '500'
-                    }
-                  }}
-                  style={styles.chart}
-                  verticalLabelRotation={0}
-                  showValuesOnTopOfBars={true}
-                  fromZero={true}
-                />
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingRight: 10 }}
+                >
+                  {(() => {
+                    // Calculate optimal width and label length
+                    const chartWidth = Math.max(
+                      windowDimensions.width - 60,
+                      categoryData.length * Math.max(70, Math.min(90, (windowDimensions.width - 60) / categoryData.length))
+                    );
+                    const widthPerLabel = chartWidth / categoryData.length;
+                    // Estimate max characters per label (roughly 6-7 pixels per character at 10px font)
+                    const maxCharsPerLabel = Math.floor((widthPerLabel * 0.8) / 7);
+                    
+                    return (
+                      <BarChart
+                        data={{
+                          labels: categoryData.map(item => {
+                            // Smart truncation: show full text if fits, otherwise truncate with ellipsis
+                            return truncateLabel(item.name, maxCharsPerLabel);
+                          }),
+                          datasets: [{
+                            data: categoryData.map(item => item.count)
+                          }]
+                        }}
+                        width={chartWidth}
+                        height={260}
+                        yAxisLabel=""
+                        yAxisSuffix=""
+                        yAxisInterval={5}
+                        chartConfig={{
+                          backgroundColor: '#ffffff',
+                          backgroundGradientFrom: '#ffffff',
+                          backgroundGradientTo: '#ffffff',
+                          decimalPlaces: 0,
+                          color: (opacity = 1) => `rgba(65, 88, 208, ${opacity})`,
+                          labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                          style: {
+                            borderRadius: 16
+                          },
+                          propsForDots: {
+                            r: "4",
+                            strokeWidth: "1",
+                            stroke: "#4158D0"
+                          },
+                          propsForLabels: {
+                            fontSize: 8,
+                            fontWeight: '500'
+                          },
+                          propsForVerticalLabels: {
+                            fontSize: 8,
+                            fontWeight: '500'
+                          }
+                        }}
+                        style={styles.chart}
+                        verticalLabelRotation={categoryData.length > 5 ? -30 : 0}
+                        showValuesOnTopOfBars={true}
+                        fromZero={true}
+                        withInnerLines={false}
+                        withVerticalLabels={true}
+                        withHorizontalLabels={true}
+                        segments={5}
+                      />
+                    );
+                  })()}
+                </ScrollView>
               </View>
             ) : (
               <View style={styles.chartPlaceholder}>
@@ -634,37 +697,68 @@ export default function ReportScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Monthly Trends</Text>
             {monthlyData.length > 0 && monthlyData.some(d => d.amount > 0) ? (
-              <LineChart
-                data={{
-                  labels: monthlyData.map(item => item.month),
-                  datasets: [{
-                    data: monthlyData.map(item => item.amount)
-                  }]
-                }}
-                width={Dimensions.get('window').width - (styles.content.paddingHorizontal * 2) - (styles.section.padding * 2)}
-                height={220}
-                yAxisLabel="PKR "
-                yAxisSuffix=""
-                yAxisInterval={1}
-                chartConfig={{
-                  backgroundColor: '#ffffff',
-                  backgroundGradientFrom: '#ffffff',
-                  backgroundGradientTo: '#ffffff',
-                  decimalPlaces: 0,
-                  color: (opacity = 1) => `rgba(200, 80, 192, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                  style: {
-                    borderRadius: 16
-                  },
-                  propsForDots: {
-                     r: "4",
-                     strokeWidth: "1",
-                     stroke: "#C850C0"
-                   }
-                }}
-                bezier
-                style={styles.chart}
-              />
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: 10 }}
+              >
+                {(() => {
+                  // Calculate optimal width and label length for monthly trends
+                  const chartWidth = Math.max(
+                    windowDimensions.width - 60,
+                    monthlyData.length * Math.max(60, Math.min(80, (windowDimensions.width - 60) / monthlyData.length))
+                  );
+                  const widthPerLabel = chartWidth / monthlyData.length;
+                  const maxCharsPerLabel = Math.floor((widthPerLabel * 0.8) / 7);
+                  
+                  return (
+                    <LineChart
+                      data={{
+                        labels: monthlyData.map(item => {
+                          return truncateLabel(item.month, maxCharsPerLabel);
+                        }),
+                        datasets: [{
+                          data: monthlyData.map(item => item.amount)
+                        }]
+                      }}
+                      width={chartWidth}
+                      height={240}
+                      yAxisLabel=""
+                      yAxisSuffix=""
+                      yAxisInterval={1}
+                      chartConfig={{
+                        backgroundColor: '#ffffff',
+                        backgroundGradientFrom: '#ffffff',
+                        backgroundGradientTo: '#ffffff',
+                        decimalPlaces: 0,
+                        color: (opacity = 1) => `rgba(200, 80, 192, ${opacity})`,
+                        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                        style: {
+                          borderRadius: 16
+                        },
+                        propsForDots: {
+                           r: "4",
+                           strokeWidth: "1",
+                           stroke: "#C850C0"
+                         },
+                         propsForLabels: {
+                           fontSize: 9,
+                           fontWeight: '500'
+                         },
+                         propsForVerticalLabels: {
+                           fontSize: 9,
+                           fontWeight: '500'
+                         }
+                      }}
+                      bezier
+                      style={styles.chart}
+                      verticalLabelRotation={monthlyData.length > 6 ? -30 : 0}
+                      withInnerLines={false}
+                      segments={5}
+                    />
+                  );
+                })()}
+              </ScrollView>
             ) : (
               <View style={styles.chartPlaceholder}>
                 <Text style={styles.chartText}>No monthly trend data available</Text>
@@ -961,12 +1055,9 @@ const styles = StyleSheet.create({
   chartContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    overflow: 'hidden',
   },
   chart: {
-    marginVertical: 8,
-    borderRadius: 8,
-    alignSelf: 'center',
   },
   chartPlaceholder: {
     height: 200,

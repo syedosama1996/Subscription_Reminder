@@ -24,7 +24,7 @@ type FilterModalProps = {
 
 const STATUS_OPTIONS = [
   { id: 'active', label: 'Active', color: '#10b981' },
-  { id: 'expiring_soon', label: 'Expiring Soon', icon: '⏰', color: '#f59e0b' },
+  { id: 'expiring_soon', label: 'Expiring Soon', icon: '⏰', color: '#f59e0b', description: 'Expires within 30 days' },
 ];
 
 export default function FilterModal({ 
@@ -114,17 +114,29 @@ export default function FilterModal({
                     onPress={() => toggleStatus(status.id)}
                     activeOpacity={0.7}
                   >
-                    {status.color && <View style={[styles.statusDot, { backgroundColor: status.color }]} />}
-                    {status.icon && <Text style={styles.statusIcon}>{status.icon}</Text>}
-                    <Text style={[
-                      styles.optionText,
-                      localSelectedStatuses.includes(status.id) && styles.selectedOptionText
-                    ]}>
-                      {status.label}
-                    </Text>
-                    {localSelectedStatuses.includes(status.id) && (
-                      <Check size={16} color={status.color || '#3b82f6'} style={styles.checkIcon} />
-                    )}
+                    <View style={styles.optionContent}>
+                      <View style={styles.optionHeader}>
+                        {status.color && !status.icon && <View style={[styles.statusDot, { backgroundColor: status.color }]} />}
+                        {status.icon && <Text style={styles.statusIcon}>{status.icon}</Text>}
+                        <Text style={[
+                          styles.optionText,
+                          localSelectedStatuses.includes(status.id) && styles.selectedOptionText
+                        ]}>
+                          {status.label}
+                        </Text>
+                        {localSelectedStatuses.includes(status.id) && (
+                          <Check size={16} color={status.color || '#3b82f6'} style={styles.checkIcon} />
+                        )}
+                      </View>
+                      {status.description && (
+                        <Text style={[
+                          styles.optionDescription,
+                          localSelectedStatuses.includes(status.id) && styles.selectedOptionDescription
+                        ]}>
+                          {status.description}
+                        </Text>
+                      )}
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -222,8 +234,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   option: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -232,10 +242,28 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     backgroundColor: '#ffffff',
   },
+  optionContent: {
+    flex: 1,
+  },
+  optionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   optionText: {
     ...TEXT_STYLES.bodySmallMedium,
     color: '#374151',
     flex: 1,
+  },
+  optionDescription: {
+    ...TEXT_STYLES.bodySmall,
+    color: '#9ca3af',
+    marginTop: 6,
+    marginLeft: 20,
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: 12,
+  },
+  selectedOptionDescription: {
+    color: '#60a5fa',
   },
   selectedOption: {
     backgroundColor: '#f0f9ff',
