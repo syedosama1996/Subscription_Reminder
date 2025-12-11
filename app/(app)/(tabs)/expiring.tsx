@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -117,9 +117,6 @@ export default function ExpiringSubscriptionsScreen() {
 
       setSubscriptions(sortedSubscriptions);
       setCategories(categoriesData || []);
-      
-      // Apply search filter
-      applyFilters(sortedSubscriptions, searchQuery);
     } catch (err) {
       console.error("Error loading expiring/expired subscriptions:", err);
       setError('Failed to load subscriptions');
@@ -131,24 +128,23 @@ export default function ExpiringSubscriptionsScreen() {
     }
   };
 
-  const applyFilters = (subs: Subscription[], query: string) => {
-    let filtered = subs;
-
-    // Apply search query
-    if (query.trim() !== '') {
-      filtered = filtered.filter(sub =>
-        sub.service_name.toLowerCase().includes(query.toLowerCase()) ||
-        (sub.domain_name && sub.domain_name.toLowerCase().includes(query.toLowerCase())) ||
-        (sub.vendor && sub.vendor.toLowerCase().includes(query.toLowerCase()))
-      );
+  // Memoized filtered subscriptions by search query
+  const filteredSubscriptionsMemo = useMemo(() => {
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery === '') {
+      return subscriptions;
     }
+    const query = trimmedQuery.toLowerCase();
+    return subscriptions.filter(sub => {
+      const serviceName = sub.service_name?.toLowerCase() || '';
+      return serviceName.includes(query);
+    });
+  }, [subscriptions, searchQuery]);
 
-    setFilteredSubscriptions(filtered);
-  };
-
+  // Update filtered subscriptions when memoized value changes
   useEffect(() => {
-    applyFilters(subscriptions, searchQuery);
-  }, [searchQuery, subscriptions]);
+    setFilteredSubscriptions(filteredSubscriptionsMemo);
+  }, [filteredSubscriptionsMemo]);
 
   // Load data on initial mount
   useEffect(() => {
@@ -383,6 +379,7 @@ export default function ExpiringSubscriptionsScreen() {
         onSelectCategories={setSelectedCategories}
         selectedStatuses={selectedStatuses}
         onSelectStatuses={setSelectedStatuses}
+        showStatusFilter={false}
       />
 
       {/* Delete Confirmation Modal */}

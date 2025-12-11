@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -78,9 +78,6 @@ export default function PastSubscriptionsScreen() {
 
       setSubscriptions(sortedSubscriptions);
       setCategories(categoriesData || []);
-      
-      // Apply search filter
-      applyFilters(sortedSubscriptions, searchQuery);
     } catch (err) {
       console.error('Error loading past subscriptions:', err);
       setError('Failed to load past subscriptions');
@@ -93,24 +90,23 @@ export default function PastSubscriptionsScreen() {
     }
   };
 
-  const applyFilters = (subs: Subscription[], query: string) => {
-    let filtered = subs;
-
-    // Apply search query
-    if (query.trim() !== '') {
-      filtered = filtered.filter(sub =>
-        sub.service_name.toLowerCase().includes(query.toLowerCase()) ||
-        (sub.domain_name && sub.domain_name.toLowerCase().includes(query.toLowerCase())) ||
-        (sub.vendor && sub.vendor.toLowerCase().includes(query.toLowerCase()))
-      );
+  // Memoized filtered subscriptions by search query
+  const filteredSubscriptionsMemo = useMemo(() => {
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery === '') {
+      return subscriptions;
     }
+    const query = trimmedQuery.toLowerCase();
+    return subscriptions.filter(sub => {
+      const serviceName = sub.service_name?.toLowerCase() || '';
+      return serviceName.includes(query);
+    });
+  }, [subscriptions, searchQuery]);
 
-    setFilteredSubscriptions(filtered);
-  };
-
+  // Update filtered subscriptions when memoized value changes
   useEffect(() => {
-    applyFilters(subscriptions, searchQuery);
-  }, [searchQuery, subscriptions]);
+    setFilteredSubscriptions(filteredSubscriptionsMemo);
+  }, [filteredSubscriptionsMemo]);
 
   // Load data on initial mount
   useEffect(() => {
@@ -247,14 +243,14 @@ export default function PastSubscriptionsScreen() {
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <MaskedView
-                maskElement={<Text style={styles.title}>Inactive</Text>}
+                maskElement={<Text style={styles.title}>In-Active</Text>}
               >
                 <LinearGradient
                   colors={['#4158D0', '#C850C0']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={[styles.title, { opacity: 0 }]}>Inactive</Text>
+                  <Text style={[styles.title, { opacity: 0 }]}>In- Active</Text>
                 </LinearGradient>
               </MaskedView>
             </View>
@@ -368,6 +364,7 @@ export default function PastSubscriptionsScreen() {
         onSelectCategories={setSelectedCategories}
         selectedStatuses={selectedStatuses}
         onSelectStatuses={setSelectedStatuses}
+        showStatusFilter={false}
       />
 
       {/* Delete Confirmation Modal */}

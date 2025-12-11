@@ -55,50 +55,100 @@ export default function ReportScreen() {
   });
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
-  const [dateRange, setDateRange] = useState<DateRange>({
-    startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-    endDate: new Date(),
-    label: 'Last Month'
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastMonthStart = new Date(today);
+    lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+    lastMonthStart.setDate(1); // First day of last month
+    const lastMonthEnd = new Date(today);
+    lastMonthEnd.setDate(0); // Last day of previous month
+    
+    return {
+      startDate: lastMonthStart,
+      endDate: lastMonthEnd,
+      label: 'Last Month'
+    };
   });
 
   // Predefined date ranges
-  const dateRanges: DateRange[] = [
-    {
-      startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
-      endDate: new Date(),
-      label: 'Last 7 Days'
-    },
-    {
-      startDate: new Date(new Date().setDate(new Date().getDate() - 15)),
-      endDate: new Date(),
-      label: 'Last 15 Days'
-    },
-    {
-      startDate: new Date(new Date().setDate(new Date().getDate() - 30)),
-      endDate: new Date(),
-      label: 'Last 30 Days'
-    },
-    {
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-      label: 'Last Month'
-    },
-    {
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 3)),
-      endDate: new Date(),
-      label: 'Last 3 Months'
-    },
-    {
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 6)),
-      endDate: new Date(),
-      label: 'Last 6 Months'
-    },
-    {
-      startDate: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
-      endDate: new Date(),
-      label: 'Last Year'
-    }
-  ];
+  const getDateRanges = (): DateRange[] => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    return [
+      {
+        startDate: (() => {
+          const date = new Date(today);
+          date.setDate(date.getDate() - 6); // 7 days inclusive (today + 6 days back)
+          return date;
+        })(),
+        endDate: new Date(today),
+        label: 'Last 7 Days'
+      },
+      {
+        startDate: (() => {
+          const date = new Date(today);
+          date.setDate(date.getDate() - 14); // 15 days inclusive
+          return date;
+        })(),
+        endDate: new Date(today),
+        label: 'Last 15 Days'
+      },
+      {
+        startDate: (() => {
+          const date = new Date(today);
+          date.setDate(date.getDate() - 29); // 30 days inclusive
+          return date;
+        })(),
+        endDate: new Date(today),
+        label: 'Last 30 Days'
+      },
+      {
+        startDate: (() => {
+          const date = new Date(today);
+          date.setMonth(date.getMonth() - 1);
+          date.setDate(1); // First day of last month
+          return date;
+        })(),
+        endDate: (() => {
+          const date = new Date(today);
+          date.setDate(0); // Last day of previous month
+          return date;
+        })(),
+        label: 'Last Month'
+      },
+      {
+        startDate: (() => {
+          const date = new Date(today);
+          date.setMonth(date.getMonth() - 3);
+          return date;
+        })(),
+        endDate: new Date(today),
+        label: 'Last 3 Months'
+      },
+      {
+        startDate: (() => {
+          const date = new Date(today);
+          date.setMonth(date.getMonth() - 6);
+          return date;
+        })(),
+        endDate: new Date(today),
+        label: 'Last 6 Months'
+      },
+      {
+        startDate: (() => {
+          const date = new Date(today);
+          date.setFullYear(date.getFullYear() - 1);
+          return date;
+        })(),
+        endDate: new Date(today),
+        label: 'Last Year'
+      }
+    ];
+  };
+  
+  const dateRanges = getDateRanges();
 
   useEffect(() => {
     if (Platform.OS !== 'web') {
@@ -118,17 +168,28 @@ export default function ReportScreen() {
 
       // Get subscriptions
       const subscriptions = await getSubscriptions(user?.id || '');
-      const activeSubscriptions = subscriptions?.filter(sub => sub.is_active) || [];
-
+      
       // Get invoices
       const invoices = await getUserInvoices(user?.id || '');
 
-      // Filter invoices by date range - normalize dates to start/end of day for accurate comparison
+      // Filter by date range - normalize dates to start/end of day for accurate comparison
       const startOfStartDate = new Date(dateRange.startDate);
       startOfStartDate.setHours(0, 0, 0, 0);
       const endOfEndDate = new Date(dateRange.endDate);
       endOfEndDate.setHours(23, 59, 59, 999);
       
+      // Filter subscriptions by purchase_date within the date range
+      const filteredSubscriptions = subscriptions.filter(sub => {
+        if (!sub.purchase_date) return false;
+        const purchaseDate = new Date(sub.purchase_date);
+        purchaseDate.setHours(0, 0, 0, 0);
+        return purchaseDate >= startOfStartDate && purchaseDate <= endOfEndDate;
+      });
+      
+      // Filter active subscriptions within the date range
+      const activeSubscriptions = filteredSubscriptions.filter(sub => sub.is_active) || [];
+      
+      // Filter invoices by date range
       const filteredInvoices = invoices.filter(inv => {
         if (!inv.created_at) return false;
         const invoiceDate = new Date(inv.created_at);
@@ -139,12 +200,21 @@ export default function ReportScreen() {
       const totalSpent = filteredInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
       
       // Calculate days between start and end date for average calculation (inclusive of both dates)
-      const daysDiff = Math.max(1, Math.ceil((endOfEndDate.getTime() - startOfStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+      // Convert both dates to start of day for accurate day counting
+      const startDateOnly = new Date(startOfStartDate.getFullYear(), startOfStartDate.getMonth(), startOfStartDate.getDate());
+      const endDateOnly = new Date(endOfEndDate.getFullYear(), endOfEndDate.getMonth(), endOfEndDate.getDate());
+      const timeDiff = endDateOnly.getTime() - startDateOnly.getTime();
+      const daysDiff = Math.max(1, Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1); // +1 for inclusive counting
+      
+      // Calculate monthly average: projects daily spending to monthly equivalent
+      // Formula: (Total Spent / Days in Range) × 30.44 days per month
+      // This works for all scenarios:
+      // - Short periods (7 days): projects what monthly spending would be
+      // - Long periods (1 year): naturally converges to actual monthly average (Total/365 × 30.44 ≈ Total/12)
       const dailyAverage = daysDiff > 0 ? totalSpent / daysDiff : 0;
-      // Calculate monthly average based on actual days in the period
-      const monthlyAverage = dailyAverage * 30.44; // Average days per month (365.25/12)
+      const monthlyAverage = dailyAverage * 30.44; // Average days per month (365.25/12 = 30.4375, rounded to 30.44)
 
-      // Get top category - include all subscriptions, even those without categories
+      // Get top category - use filtered subscriptions within date range
       const categoryCounts: Record<string, number> = {};
       activeSubscriptions.forEach(sub => {
         const categoryName = sub.category?.name || 'Uncategorized';

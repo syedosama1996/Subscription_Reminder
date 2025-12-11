@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -45,8 +45,6 @@ export default function HomeScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const [allSubscriptions, setAllSubscriptions] = useState<Subscription[]>([]); // Store all subscriptions from API
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]); // Filtered and sorted subscriptions
-  const [filteredSubscriptions, setFilteredSubscriptions] = useState<Subscription[]>([]); // Final filtered by search
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,18 +63,26 @@ export default function HomeScreen() {
   const categoriesScrollViewRef = useRef<ScrollView>(null);
   const lastFilterChangeRef = useRef<number>(0);
 
-  // Apply filters to subscriptions in-memory (no API call)
-  const applyFilters = useCallback((subscriptionsToFilter: Subscription[] = allSubscriptions) => {
+  // Helper function to get days until expiry
+  const getDaysUntilExpiry = useCallback((sub: Subscription, today: Date): number => {
+    if (!sub.expiry_date) return Infinity;
+    const expiryDate = new Date(sub.expiry_date);
+    expiryDate.setHours(0, 0, 0, 0);
+    const diffTime = expiryDate.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }, []);
+
+  // Memoized filtered and sorted subscriptions - single source of truth
+  const subscriptions = useMemo(() => {
+    if (allSubscriptions.length === 0) return [];
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const thirtyDaysFromNow = new Date(today);
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
     // Apply status filters if selected
-    let filteredByStatus = subscriptionsToFilter;
+    let filteredByStatus = allSubscriptions;
     if (selectedStatuses.length > 0) {
-      filteredByStatus = subscriptionsToFilter.filter(sub => {
-        // Check each selected status - use OR logic (match any selected status)
+      filteredByStatus = allSubscriptions.filter(sub => {
         let matches = false;
 
         if (selectedStatuses.includes('active')) {
@@ -90,7 +96,6 @@ export default function HomeScreen() {
         }
 
         if (selectedStatuses.includes('inactive')) {
-          // Show inactive subscriptions: either explicitly inactive OR expired
           const isExplicitlyInactive = sub.is_active === false;
           const isExpired = sub.expiry_date ? (() => {
             const expiryDate = new Date(sub.expiry_date);
@@ -102,11 +107,7 @@ export default function HomeScreen() {
 
         if (selectedStatuses.includes('expiring_soon')) {
           if (sub.expiry_date && sub.is_active) {
-            const expiryDate = new Date(sub.expiry_date);
-            expiryDate.setHours(0, 0, 0, 0);
-            const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-            // Match ONLY if expiring within 30 days (0 to 30 days inclusive)
-            // This ensures only subscriptions expiring within 30 days are shown
+            const daysUntilExpiry = getDaysUntilExpiry(sub, today);
             matches = matches || (daysUntilExpiry >= 0 && daysUntilExpiry <= 30);
           }
         }
@@ -115,7 +116,7 @@ export default function HomeScreen() {
       });
     } else {
       // Default: show only active subscriptions (is_active === true and not expired)
-      filteredByStatus = subscriptionsToFilter.filter(sub => {
+      filteredByStatus = allSubscriptions.filter(sub => {
         if (!sub.expiry_date) return sub.is_active === true;
         const expiryDate = new Date(sub.expiry_date);
         expiryDate.setHours(0, 0, 0, 0);
@@ -131,87 +132,61 @@ export default function HomeScreen() {
       );
     }
 
-    // Sort subscriptions: recently added first, then expiring soon, then by expiry date
-    const sortedSubscriptions = filteredByCategory.sort((a, b) => {
-      // Helper function to calculate days until expiry
-      const getDaysUntilExpiry = (sub: Subscription): number => {
-        if (!sub.expiry_date) return Infinity;
-        const expiryDate = new Date(sub.expiry_date);
-        expiryDate.setHours(0, 0, 0, 0);
-        const diffTime = expiryDate.getTime() - today.getTime();
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      };
-
-      // Helper function to check if subscription was recently added (within last 7 days)
-      const isRecentlyAdded = (sub: Subscription): boolean => {
-        if (!sub.created_at) return false;
-        const createdDate = new Date(sub.created_at);
-        const daysSinceCreation = Math.ceil((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-        return daysSinceCreation <= 7;
-      };
-
-      const daysA = getDaysUntilExpiry(a);
-      const daysB = getDaysUntilExpiry(b);
-      const isARecentlyAdded = isRecentlyAdded(a);
-      const isBRecentlyAdded = isRecentlyAdded(b);
-
-      // Recently added subscriptions come first
-      if (isARecentlyAdded && !isBRecentlyAdded) return -1;
-      if (!isARecentlyAdded && isBRecentlyAdded) return 1;
-
-      // If both are recently added, sort by created_at (newest first)
-      if (isARecentlyAdded && isBRecentlyAdded) {
-        const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
-        return createdB - createdA; // Newest first
-      }
-
-      // Subscriptions expiring within 30 days come next
-      const isAExpiringSoon = daysA <= 30 && daysA > 0;
-      const isBExpiringSoon = daysB <= 30 && daysB > 0;
-
-      // If one is expiring soon and the other isn't, prioritize the one expiring soon
-      if (isAExpiringSoon && !isBExpiringSoon) return -1;
-      if (!isAExpiringSoon && isBExpiringSoon) return 1;
-
-      // If both are expiring soon or both are not, sort by days until expiry (ascending)
-      if (isAExpiringSoon && isBExpiringSoon) {
-        return daysA - daysB;
-      }
-
-      // For non-expiring-soon subscriptions, sort by expiry date (ascending), then by created_at (newest first)
-      const expiryDiff = daysA - daysB;
-      if (expiryDiff !== 0) {
-        return expiryDiff;
-      }
-
-      // If expiry dates are the same, sort by created_at (newest first)
-      const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return createdB - createdA; // Newest first
+    // Sort subscriptions by days until expiry (ascending)
+    const sorted = [...filteredByCategory].sort((a, b) => {
+      const daysA = getDaysUntilExpiry(a, today);
+      const daysB = getDaysUntilExpiry(b, today);
+      return daysA - daysB;
     });
 
-    // Count subscriptions per category (based on the sorted subscriptions)
-    const categoryCounts = sortedSubscriptions.reduce((acc, sub) => {
+    return sorted;
+  }, [allSubscriptions, selectedStatuses, selectedCategories, getDaysUntilExpiry]);
+
+  // Memoized filtered subscriptions by search query
+  const filteredSubscriptions = useMemo(() => {
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery === '') {
+      return subscriptions;
+    }
+    const query = trimmedQuery.toLowerCase();
+    return subscriptions.filter(sub => {
+      const serviceName = sub.service_name?.toLowerCase() || '';
+      return serviceName.includes(query);
+    });
+  }, [subscriptions, searchQuery]);
+
+  // Memoized filtered subscriptions by active category
+  const finalFilteredSubscriptions = useMemo(() => {
+    if (activeCategory === null) {
+      return filteredSubscriptions;
+    }
+    return filteredSubscriptions.filter(sub => sub.category_id === activeCategory);
+  }, [filteredSubscriptions, activeCategory]);
+
+  // Update categories order based on subscription counts (only when subscriptions change)
+  useEffect(() => {
+    if (subscriptions.length === 0) return;
+
+    const categoryCounts = subscriptions.reduce((acc, sub) => {
       if (sub.category_id) {
         acc[sub.category_id] = (acc[sub.category_id] || 0) + 1;
       }
       return acc;
     }, {} as Record<string, number>);
 
-    // Sort categories by subscription count (descending) - use current categories state
     setCategories(prevCategories => {
       const sortedCategories = [...prevCategories].sort((a, b) => {
         const countA = categoryCounts[a.id!] || 0;
         const countB = categoryCounts[b.id!] || 0;
         return countB - countA;
       });
-      return sortedCategories;
+      // Only update if order actually changed
+      const orderChanged = sortedCategories.some((cat, index) => 
+        prevCategories[index]?.id !== cat.id
+      );
+      return orderChanged ? sortedCategories : prevCategories;
     });
-
-    setSubscriptions(sortedSubscriptions);
-    setFilteredSubscriptions(sortedSubscriptions);
-  }, [allSubscriptions, selectedStatuses, selectedCategories]);
+  }, [subscriptions]);
 
   // Load data from API (only called on initial load or manual refresh)
   const loadData = useCallback(async (showLoading: boolean = true) => {
@@ -231,12 +206,9 @@ export default function HomeScreen() {
       const data = await getSubscriptions(user.id);
       const subscriptionsData = data || [];
 
-      // Store all subscriptions
+      // Store all subscriptions - filters will be applied automatically via useMemo
       setAllSubscriptions(subscriptionsData);
       setCategories(categoriesData || []);
-
-      // Apply filters to the loaded data
-      applyFilters(subscriptionsData);
 
     } catch (err: any) {
       console.error('Error loading data:', err);
@@ -250,7 +222,7 @@ export default function HomeScreen() {
       }
       setRefreshing(false);
     }
-  }, [user, toggleLoading, applyFilters]);
+  }, [user, toggleLoading]);
 
   // Add focus effect to refresh data when screen comes into focus
   // This ensures new subscriptions appear immediately after creation
@@ -293,44 +265,12 @@ export default function HomeScreen() {
     }
   }, [user]);
 
-  // Apply filters when filter selections change (no API call)
+  // Track when filters change to prevent unnecessary refreshes
   useEffect(() => {
     if (allSubscriptions.length > 0) {
-      // Track when filters change to prevent unnecessary refreshes
       lastFilterChangeRef.current = Date.now();
-      applyFilters(allSubscriptions);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategories, selectedStatuses]);
-
-  // Add logging for Expiring Soon filter
-  useEffect(() => {
-    if (selectedStatuses.includes('expiring_soon')) {
-      // Log details of expiring soon subscriptions
-      const expiringSoonSubs = filteredSubscriptions.filter(sub => {
-        if (!sub.expiry_date) return false;
-        const today = new Date();
-        const expiryDate = new Date(sub.expiry_date);
-        const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        return daysUntilExpiry <= 30 && daysUntilExpiry > 0; // Subscriptions expiring in next 30 days
-      });
-
-    }
-  }, [selectedStatuses, subscriptions, filteredSubscriptions]);
-
-  // Apply search filter on top of already filtered subscriptions
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredSubscriptions(subscriptions);
-    } else {
-      const filtered = subscriptions.filter(sub =>
-        sub.service_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (sub.domain_name && sub.domain_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (sub.vendor && sub.vendor.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-      setFilteredSubscriptions(filtered);
-    }
-  }, [searchQuery, subscriptions]);
+  }, [selectedCategories, selectedStatuses, allSubscriptions.length]);
 
   const handleToggleSubscriptionStatus = async (id: string, isActive: boolean) => {
     if (!user) return;
@@ -339,18 +279,12 @@ export default function HomeScreen() {
       setToggleLoading(true);
 
       // Update the local state immediately for better UX
-      const updateSubscriptionState = (prevSubscriptions: Subscription[]) =>
-        prevSubscriptions.map(sub =>
+      // Filters will be reapplied automatically via useMemo
+      setAllSubscriptions(prev =>
+        prev.map(sub =>
           sub.id === id ? { ...sub, is_active: isActive } : sub
-        );
-
-      // Update all subscriptions (source of truth) and reapply filters
-      setAllSubscriptions(prev => {
-        const updated = updateSubscriptionState(prev);
-        // Reapply filters with updated data
-        setTimeout(() => applyFilters(updated), 0);
-        return updated;
-      });
+        )
+      );
 
       // Make the API call
       await toggleSubscriptionStatus(id, isActive, user.id);
@@ -432,38 +366,13 @@ export default function HomeScreen() {
 
   const handleCategoryPress = (categoryId: string | null) => {
     setActiveCategory(activeCategory === categoryId ? null : categoryId);
-
-    // Debug log to check subscription structure
-
-    // Filter existing subscriptions instead of reloading
-    if (categoryId === null) {
-      setFilteredSubscriptions(subscriptions);
-    } else {
-      const filtered = subscriptions.filter(sub => {
-
-        return sub.category_id === categoryId;
-      });
-      setFilteredSubscriptions(filtered);
-    }
+    // Filtering is handled automatically via useMemo (finalFilteredSubscriptions)
   };
-
-  // Add effect to update filtered subscriptions when activeCategory changes
-  useEffect(() => {
-    if (activeCategory === null) {
-      setFilteredSubscriptions(subscriptions);
-    } else {
-      const filtered = subscriptions.filter(sub => {
-
-        return sub.category_id === activeCategory;
-      });
-      setFilteredSubscriptions(filtered);
-    }
-  }, [activeCategory, subscriptions]);
 
   // Update the renderEmptyState function
   const renderEmptyState = () => {
-    const hasNoSubscriptions = subscriptions.length === 0;
-    const hasNoFilteredResults = filteredSubscriptions.length === 0 && subscriptions.length > 0;
+    const hasNoSubscriptions = allSubscriptions.length === 0;
+    const hasNoFilteredResults = finalFilteredSubscriptions.length === 0 && allSubscriptions.length > 0;
 
 
     return (
@@ -508,7 +417,7 @@ export default function HomeScreen() {
   }, [activeCategory, categories]);
 
   const handleMarkAll = () => {
-    const allIds = filteredSubscriptions.map(sub => sub.id!);
+    const allIds = finalFilteredSubscriptions.map(sub => sub.id!);
     setSelectedSubscriptions(allIds);
   };
 
@@ -642,7 +551,10 @@ export default function HomeScreen() {
         >
           <View style={styles.mainContent}>
             {categories.length > 0 && (
-              <View style={styles.categoriesWrapper}>
+              <View style={[
+                styles.categoriesWrapper,
+                selectedSubscriptions.length > 0 && styles.categoriesWrapperWithBulkSelection
+              ]}>
                 <ScrollView
                   ref={categoriesScrollViewRef}
                   horizontal
@@ -729,11 +641,11 @@ export default function HomeScreen() {
             )}
 
             {/* Subscriptions List */}
-            {filteredSubscriptions.length === 0 ? (
+            {finalFilteredSubscriptions.length === 0 ? (
               renderEmptyState()
             ) : (
               <FlatList
-                data={filteredSubscriptions}
+                data={finalFilteredSubscriptions}
                 keyExtractor={(item, index) =>
                   `subscription-${item.id}-${index}`
                 }
@@ -765,6 +677,11 @@ export default function HomeScreen() {
                 scrollEnabled={true}
                 bounces={true}
                 ListEmptyComponent={renderEmptyState}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={10}
+                updateCellsBatchingPeriod={50}
+                initialNumToRender={10}
+                windowSize={10}
               />
             )}
           </View>
@@ -955,6 +872,11 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginHorizontal: 0,
     paddingHorizontal: 0,
+    paddingBottom: 0,
+  },
+  categoriesWrapperWithBulkSelection: {
+    marginTop: 20,
+    paddingBottom: 0,
   },
   categoriesContainer: {
     height: 40,

@@ -52,16 +52,9 @@ function NotificationBottomSheet({
 
   // Track component renders
   renderCountRef.current += 1;
-  console.log(`[NotificationBottomSheet] RENDER #${renderCountRef.current}`, {
-    notificationsCount: notifications.length,
-    loading,
-    scrollY: scrollPositionRef.current,
-    isScrolling: isScrollingRef.current,
-    isUserScrolling: isUserScrollingRef.current,
-  });
+
 
   useEffect(() => {
-    console.log('[NotificationBottomSheet] useEffect - visible/userId changed', { visible, userId });
     if (visible) {
       fetchNotifications();
     } else {
@@ -101,37 +94,24 @@ function NotificationBottomSheet({
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('[NotificationBottomSheet] Real-time INSERT event', {
-            isScrolling: isScrollingRef.current,
-            isUserScrolling: isUserScrollingRef.current,
-            scrollY: scrollPositionRef.current,
-          });
+     
           
           // Completely block updates while user is scrolling
           if (isUserScrollingRef.current || isScrollingRef.current) {
-            console.log('[NotificationBottomSheet] BLOCKED: User is scrolling');
             return;
           }
 
           // Only add new notifications if user is at the top (scroll position < 100)
           if (scrollPositionRef.current < 100 && shouldPreserveScrollRef.current) {
             const newNotif = payload.new as Notification;
-            console.log('[NotificationBottomSheet] Adding new notification', newNotif.id);
             setNotifications(prev => {
               // Check if already exists to avoid duplicates
               if (prev.some(n => n.id === newNotif.id)) {
-                console.log('[NotificationBottomSheet] Notification already exists, skipping');
                 return prev;
               }
-              console.log('[NotificationBottomSheet] setNotifications: Adding new notification');
               return [newNotif, ...prev];
             });
-          } else {
-            console.log('[NotificationBottomSheet] BLOCKED: User scrolled down', {
-              scrollY: scrollPositionRef.current,
-              shouldPreserve: shouldPreserveScrollRef.current,
-            });
-          }
+          } 
         }
       )
       .subscribe();
@@ -161,9 +141,7 @@ function NotificationBottomSheet({
 
       if (error) throw error;
       const newNotifications = data || [];
-      console.log('[NotificationBottomSheet] fetchNotifications: Setting notifications', {
-        count: newNotifications.length,
-      });
+    
       setNotifications(newNotifications);
       shouldPreserveScrollRef.current = true;
     } catch (error) {
@@ -197,22 +175,12 @@ function NotificationBottomSheet({
   }
 
   async function markAsRead(notificationId: string) {
-    console.log('[NotificationBottomSheet] markAsRead called', {
-      notificationId,
-      isScrolling: isScrollingRef.current,
-      isUserScrolling: isUserScrollingRef.current,
-      scrollY: scrollPositionRef.current,
-    });
-    
-    // Don't update if user is actively scrolling
     if (isUserScrollingRef.current) {
-      console.log('[NotificationBottomSheet] markAsRead BLOCKED: User is scrolling');
       return;
     }
 
     const savedScrollY = scrollPositionRef.current;
-    console.log('[NotificationBottomSheet] markAsRead: Saved scrollY', savedScrollY);
-    
+
     try {
       const { error } = await supabase
         .from('notifications')
@@ -222,9 +190,7 @@ function NotificationBottomSheet({
       if (error) throw error;
 
       // Update local state
-      console.log('[NotificationBottomSheet] markAsRead: Calling setNotifications');
       setNotifications(prev => {
-        console.log('[NotificationBottomSheet] markAsRead: setNotifications callback executed');
         return prev.map(notification =>
           notification.id === notificationId
             ? { ...notification, read: true }
@@ -240,28 +206,19 @@ function NotificationBottomSheet({
         }
         
         // Restore scroll after render completes
-        console.log('[NotificationBottomSheet] markAsRead: Scheduling scroll restore', savedScrollY);
         scrollRestoreTimeoutRef.current = setTimeout(() => {
-          console.log('[NotificationBottomSheet] markAsRead: Executing scroll restore', {
-            savedScrollY,
-            currentScrollY: scrollPositionRef.current,
-            flatListExists: !!flatListRef.current,
-          });
           if (flatListRef.current && savedScrollY > 0) {
             flatListRef.current.scrollToOffset({
               offset: savedScrollY,
               animated: false,
             });
             scrollPositionRef.current = savedScrollY;
-            console.log('[NotificationBottomSheet] markAsRead: Scroll restored to', savedScrollY);
           }
         }, 50);
       }
     } catch (error) {
-      console.error('[NotificationBottomSheet] Error marking notification as read:', error);
       // Optimistically update UI only if not scrolling
       if (!isUserScrollingRef.current) {
-        console.log('[NotificationBottomSheet] markAsRead: Optimistic update');
         setNotifications(prev =>
           prev.map(notification =>
             notification.id === notificationId
@@ -286,28 +243,14 @@ function NotificationBottomSheet({
   }
 
   async function handleMarkAllAsRead() {
-    console.log('[NotificationBottomSheet] handleMarkAllAsRead called', {
-      isScrolling: isScrollingRef.current,
-      isUserScrolling: isUserScrollingRef.current,
-      scrollY: scrollPositionRef.current,
-    });
-    
-    // Don't update if user is actively scrolling
-    if (isUserScrollingRef.current) {
-      console.log('[NotificationBottomSheet] handleMarkAllAsRead BLOCKED: User is scrolling');
-      return;
-    }
 
     const savedScrollY = scrollPositionRef.current;
-    console.log('[NotificationBottomSheet] handleMarkAllAsRead: Saved scrollY', savedScrollY);
 
     try {
       await markAllAsRead();
 
       // Update local state
-      console.log('[NotificationBottomSheet] handleMarkAllAsRead: Calling setNotifications');
       setNotifications(prev => {
-        console.log('[NotificationBottomSheet] handleMarkAllAsRead: setNotifications callback executed');
         return prev.map(notification => ({ ...notification, read: true }));
       });
 
@@ -319,28 +262,19 @@ function NotificationBottomSheet({
         }
         
         // Restore scroll after render completes
-        console.log('[NotificationBottomSheet] handleMarkAllAsRead: Scheduling scroll restore', savedScrollY);
         scrollRestoreTimeoutRef.current = setTimeout(() => {
-          console.log('[NotificationBottomSheet] handleMarkAllAsRead: Executing scroll restore', {
-            savedScrollY,
-            currentScrollY: scrollPositionRef.current,
-            flatListExists: !!flatListRef.current,
-          });
           if (flatListRef.current && savedScrollY > 0) {
             flatListRef.current.scrollToOffset({
               offset: savedScrollY,
               animated: false,
             });
             scrollPositionRef.current = savedScrollY;
-            console.log('[NotificationBottomSheet] handleMarkAllAsRead: Scroll restored to', savedScrollY);
           }
         }, 50);
       }
     } catch (error) {
-      console.error('[NotificationBottomSheet] Error marking all notifications as read:', error);
       // Still update UI optimistically if not scrolling
       if (!isUserScrollingRef.current) {
-        console.log('[NotificationBottomSheet] handleMarkAllAsRead: Optimistic update');
         setNotifications(prev =>
           prev.map(notification => ({ ...notification, read: true }))
         );

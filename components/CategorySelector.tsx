@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -18,6 +18,7 @@ import CategoryBadge from './CategoryBadge';
 import { Plus, X, Check } from 'lucide-react-native';
 import { getPlatformConfig } from '../utils/deviceUtils';
 import Toast from 'react-native-toast-message';
+import { FONT_FAMILY } from '../constants/Typography';
 
 type CategorySelectorProps = {
   selectedCategoryId?: string;
@@ -34,6 +35,9 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
   const [addingCategory, setAddingCategory] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [inputKey, setInputKey] = useState(0);
+  const isSelectingColorRef = useRef(false);
+  const categoryInputRef = useRef<TextInput>(null);
 
   const platformConfig = getPlatformConfig();
 
@@ -97,6 +101,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
       setNewCategoryName('');
       setNewCategoryColor('');
       setShowAddForm(false);
+      setInputKey(prev => prev + 1);
       Keyboard.dismiss();
       
       Toast.show({
@@ -199,7 +204,11 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Category</Text>
+              {showAddForm ? (
+                <Text style={styles.modalTitle}>Create Category</Text>
+              ) : (
+                <Text style={styles.modalTitle}>Select Category</Text>
+              )}
               <TouchableOpacity 
                 style={styles.modalCloseButton}
                 onPress={() => {
@@ -222,40 +231,64 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
               <>
                 {showAddForm ? (
                   <View style={styles.addFormContainer}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Category name"
-                      value={newCategoryName}
-                      onChangeText={setNewCategoryName}
-                      autoFocus={true}
-                      returnKeyType="done"
-                      onSubmitEditing={handleAddCategory}
-                      blurOnSubmit={false}
-                      keyboardType="default"
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                      editable={true}
-                      selectTextOnFocus={true}
-                      onFocus={() => console.log('TextInput focused')}
-                      onPress={() => console.log('TextInput pressed')}
-                    />
-                    
-                    <Text style={styles.colorLabel}>Select Color (Optional)</Text>
-                    <View style={styles.colorOptions}>
-                      {colorOptions.map(color => (
-                        <TouchableOpacity
-                          key={color}
-                          style={[
-                            styles.colorOption,
-                            { backgroundColor: color },
-                            newCategoryColor === color && styles.selectedColorOption
-                          ]}
-                          onPress={() => setNewCategoryColor(color)}
-                          activeOpacity={platformConfig.touch.activeOpacity}
-                          delayPressIn={platformConfig.touch.delayPressIn}
-                          delayPressOut={platformConfig.touch.delayPressOut}
+                    <View style={styles.inputWrapper}>
+                      <View style={styles.inputContainer}>
+                        <TextInput
+                          ref={categoryInputRef}
+                          key={inputKey}
+                          style={styles.input}
+                          placeholder="Enter category name"
+                          placeholderTextColor="#95a5a6"
+                          value={newCategoryName}
+                          onChangeText={setNewCategoryName}
+                          autoFocus={true}
+                          returnKeyType="done"
+                          onSubmitEditing={handleAddCategory}
+                          blurOnSubmit={false}
+                          keyboardType="default"
+                          autoCapitalize="words"
+                          autoCorrect={false}
+                          editable={true}
+                          selectTextOnFocus={true}
+                          underlineColorAndroid="transparent"
+                          textContentType="none"
+                          onFocus={() => console.log('TextInput focused')}
+                          onPress={() => console.log('TextInput pressed')}
                         />
-                      ))}
+                      </View>
+                    </View>
+                    
+                    <View
+                      onStartShouldSetResponder={() => true}
+                      onMoveShouldSetResponder={() => false}
+                      onResponderGrant={() => {
+                        // This prevents TextInput blur when touching color area
+                      }}
+                    >
+                      <Text style={styles.colorLabel}>Select Color (Optional)</Text>
+                      <View style={styles.colorOptions}>
+                        {colorOptions.map(color => (
+                          <TouchableOpacity
+                            key={color}
+                            style={[
+                              styles.colorOption,
+                              { backgroundColor: color },
+                              newCategoryColor === color && styles.selectedColorOption
+                            ]}
+                            onPressIn={() => {
+                              // Select color immediately - this fires before TextInput blur
+                              setNewCategoryColor(color);
+                            }}
+                            onPress={() => {
+                              // Dismiss keyboard after selection
+                              Keyboard.dismiss();
+                            }}
+                            activeOpacity={platformConfig.touch.activeOpacity}
+                            delayPressIn={0}
+                            delayPressOut={platformConfig.touch.delayPressOut}
+                          />
+                        ))}
+                      </View>
                     </View>
                     
                     <View style={styles.addFormButtons}>
@@ -265,6 +298,7 @@ export default function CategorySelector({ selectedCategoryId, onSelectCategory 
                           setShowAddForm(false);
                           setNewCategoryName('');
                           setNewCategoryColor('');
+                          setInputKey(prev => prev + 1);
                         }}
                         activeOpacity={platformConfig.touch.activeOpacity}
                         delayPressIn={platformConfig.touch.delayPressIn}
@@ -472,16 +506,38 @@ const styles = StyleSheet.create({
   addFormContainer: {
     padding: 20,
   },
-  input: {
+  inputWrapper: {
+    marginBottom: 16,
+  },
+  inputContainer: {
     backgroundColor: '#f5f6fa',
-    height: 56,
     borderRadius: 16,
-    paddingHorizontal: 16,
-    fontSize: 12,
-    color: '#2c3e50',
     borderWidth: 1,
     borderColor: 'rgba(223, 228, 234, 0.5)',
-    marginBottom: 16,
+    paddingLeft: 16,
+    paddingRight: 16,
+    ...(Platform.OS === 'android' && {
+      paddingStart: 16,
+      paddingEnd: 16,
+    }),
+  },
+  input: {
+    backgroundColor: 'transparent',
+    height: 56,
+    fontSize: 12,
+    fontFamily: FONT_FAMILY.regular,
+    color: '#2c3e50',
+    textAlign: 'left',
+    paddingLeft: 0,
+    paddingRight: 0,
+    ...(Platform.OS === 'android' && {
+      textAlignVertical: 'center',
+      includeFontPadding: false,
+      paddingStart: 0,
+      paddingEnd: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+    }),
   },
   colorLabel: {
     fontFamily: 'Inter-Medium',

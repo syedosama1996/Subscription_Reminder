@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -56,6 +56,9 @@ export default function AddSubscriptionScreen() {
     { days: 14, enabled: true }, // 2 weeks before
     { days: 7, enabled: true }   // 1 week before
   ]);
+
+  // ScrollView ref to scroll to top when screen comes into focus
+  const scrollViewRef = useRef<ScrollView>(null);
 
 
   const handleAddReminder = () => {
@@ -229,6 +232,16 @@ export default function AddSubscriptionScreen() {
     }
   };
 
+  // Scroll to top when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Scroll to top when navigating back to this screen
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      }, 100);
+    }, [])
+  );
+
   // Custom date picker for web platform
   const renderWebDatePicker = (
     currentDate: Date, 
@@ -287,7 +300,11 @@ export default function AddSubscriptionScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}
         >
-          <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          <ScrollView 
+            ref={scrollViewRef}
+            style={styles.scrollView} 
+            contentContainerStyle={styles.scrollContent}
+          >
             {error && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{error}</Text>

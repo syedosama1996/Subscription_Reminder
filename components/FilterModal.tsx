@@ -20,6 +20,7 @@ type FilterModalProps = {
   onSelectCategories: (categoryIds: string[]) => void;
   selectedStatuses: string[];
   onSelectStatuses: (statuses: string[]) => void;
+  showStatusFilter?: boolean; // Optional prop to show/hide status filter section
 };
 
 const STATUS_OPTIONS = [
@@ -34,7 +35,8 @@ export default function FilterModal({
   selectedCategories,
   onSelectCategories,
   selectedStatuses,
-  onSelectStatuses
+  onSelectStatuses,
+  showStatusFilter = true // Default to true for backward compatibility
 }: FilterModalProps) {
   const [localSelectedCategories, setLocalSelectedCategories] = useState<string[]>([]);
   const [localSelectedStatuses, setLocalSelectedStatuses] = useState<string[]>([]);
@@ -78,7 +80,7 @@ export default function FilterModal({
     onClose();
   };
 
-  const hasActiveFilters = localSelectedCategories.length > 0 || localSelectedStatuses.length > 0;
+  const hasActiveFilters = localSelectedCategories.length > 0 || (showStatusFilter && localSelectedStatuses.length > 0);
 
   return (
     <Modal
@@ -101,46 +103,48 @@ export default function FilterModal({
           </View>
 
           <ScrollView style={styles.modalContent}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Status</Text>
-              <View style={styles.optionsContainer}>
-                {STATUS_OPTIONS.map((status) => (
-                  <TouchableOpacity
-                    key={status.id}
-                    style={[
-                      styles.option,
-                      localSelectedStatuses.includes(status.id) && styles.selectedOption
-                    ]}
-                    onPress={() => toggleStatus(status.id)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.optionContent}>
-                      <View style={styles.optionHeader}>
-                        {status.color && !status.icon && <View style={[styles.statusDot, { backgroundColor: status.color }]} />}
-                        {status.icon && <Text style={styles.statusIcon}>{status.icon}</Text>}
-                        <Text style={[
-                          styles.optionText,
-                          localSelectedStatuses.includes(status.id) && styles.selectedOptionText
-                        ]}>
-                          {status.label}
-                        </Text>
-                        {localSelectedStatuses.includes(status.id) && (
-                          <Check size={16} color={status.color || '#3b82f6'} style={styles.checkIcon} />
+            {showStatusFilter && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Status</Text>
+                <View style={styles.optionsContainer}>
+                  {STATUS_OPTIONS.map((status) => (
+                    <TouchableOpacity
+                      key={status.id}
+                      style={[
+                        styles.option,
+                        localSelectedStatuses.includes(status.id) && styles.selectedOption
+                      ]}
+                      onPress={() => toggleStatus(status.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.optionContent}>
+                        <View style={styles.optionHeader}>
+                          {status.color && !status.icon && <View style={[styles.statusDot, { backgroundColor: status.color }]} />}
+                          {status.icon && <Text style={styles.statusIcon}>{status.icon}</Text>}
+                          <Text style={[
+                            styles.optionText,
+                            localSelectedStatuses.includes(status.id) && styles.selectedOptionText
+                          ]}>
+                            {status.label}
+                          </Text>
+                          {localSelectedStatuses.includes(status.id) && (
+                            <Check size={16} color={status.color || '#3b82f6'} style={styles.checkIcon} />
+                          )}
+                        </View>
+                        {status.description && (
+                          <Text style={[
+                            styles.optionDescription,
+                            localSelectedStatuses.includes(status.id) && styles.selectedOptionDescription
+                          ]}>
+                            {status.description}
+                          </Text>
                         )}
                       </View>
-                      {status.description && (
-                        <Text style={[
-                          styles.optionDescription,
-                          localSelectedStatuses.includes(status.id) && styles.selectedOptionDescription
-                        ]}>
-                          {status.description}
-                        </Text>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
+            )}
 
             {categories.length > 0 && (
               <View style={styles.section}>

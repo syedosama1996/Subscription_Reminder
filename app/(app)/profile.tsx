@@ -116,7 +116,9 @@ export default function ProfileScreen() {
       return;
     }
 
-    if (phone.trim() !== 'Not set' && phone.trim().length < 10) {
+    // Only validate phone if user has entered something (not empty and not 'Not set')
+    const phoneValue = phone.trim();
+    if (phoneValue && phoneValue !== 'Not set' && phoneValue.length < 10) {
       setModalTitle('Error');
       setModalMessage('Please enter a valid phone number');
       setModalType('error');
@@ -201,10 +203,22 @@ export default function ProfileScreen() {
   const handlePhoneChange = (text: string) => {
     // Remove all non-numeric characters
     const cleaned = text.replace(/\D/g, '');
-    // Limit to 10 digits
-    if (cleaned.length <= 10) {
+    // Limit to 11 digits (for international numbers)
+    if (cleaned.length <= 11) {
       setPhone(cleaned);
     }
+  };
+
+  // Check if any field has changed from previous values
+  const hasChanges = () => {
+    const currentPhone = phone.trim() === '' ? 'Not set' : phone.trim();
+    const currentLocation = location.trim() === '' ? 'Not set' : location.trim();
+    
+    return (
+      username.trim() !== previousUsername ||
+      currentPhone !== previousPhone ||
+      currentLocation !== previousLocation
+    );
   };
 
   return (
@@ -281,7 +295,13 @@ export default function ProfileScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Edit Profile</Text>
               <TouchableOpacity 
-                onPress={() => setIsModalVisible(false)}
+                onPress={() => {
+                  // Reset to previous values when closing without saving
+                  setUsername(previousUsername);
+                  setPhone(previousPhone === 'Not set' ? 'Not set' : previousPhone);
+                  setLocation(previousLocation === 'Not set' ? 'Not set' : previousLocation);
+                  setIsModalVisible(false);
+                }}
                 style={styles.closeButton}
               >
                 <X size={24} color="#2c3e50" />
@@ -323,6 +343,9 @@ export default function ProfileScreen() {
                     placeholder="Enter phone number"
                     placeholderTextColor="#95a5a6"
                     keyboardType="phone-pad"
+
+
+
                   />
                 </View>
               </View>
@@ -344,14 +367,23 @@ export default function ProfileScreen() {
             <View style={styles.modalFooter}>
               <TouchableOpacity 
                 style={styles.cancelButton}
-                onPress={() => setIsModalVisible(false)}
+                onPress={() => {
+                  // Reset to previous values when canceling
+                  setUsername(previousUsername);
+                  setPhone(previousPhone === 'Not set' ? 'Not set' : previousPhone);
+                  setLocation(previousLocation === 'Not set' ? 'Not set' : previousLocation);
+                  setIsModalVisible(false);
+                }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+                style={[
+                  styles.saveButton, 
+                  (!hasChanges() || isLoading) && styles.saveButtonDisabled
+                ]}
                 onPress={handleSave}
-                disabled={isLoading}
+                disabled={!hasChanges() || isLoading}
               >
                 {isLoading ? (
                   <ActivityIndicator color="#fff" size="small" />
@@ -603,7 +635,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#4158D0',
   },
   saveButtonDisabled: {
-    opacity: 0.7,
+    opacity: 0.5,
+    backgroundColor: '#95a5a6',
   },
   saveButtonText: {
     fontFamily: FONT_FAMILY.medium,
