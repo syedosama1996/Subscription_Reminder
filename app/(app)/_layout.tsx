@@ -21,12 +21,19 @@ import { DrawerContentComponentProps as DrawerContentComponentPropsType } from '
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { TEXT_STYLES, FONT_SIZES, FONT_FAMILY } from '../../constants/Typography';
+import CustomModal from '../../components/CustomModal';
 
 function CustomDrawerContent(props: DrawerContentComponentPropsType) {
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const [signOutModalVisible, setSignOutModalVisible] = useState(false);
 
   const handleSignOut = () => {
+    setSignOutModalVisible(true);
+  };
+
+  const confirmSignOut = () => {
+    setSignOutModalVisible(false);
     signOut();
     props.navigation.navigate('index');
   };
@@ -116,6 +123,19 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
           <View style={[styles.menuArrow, styles.signOutArrow]} />
         </TouchableOpacity>
       </View>
+
+      <CustomModal
+        visible={signOutModalVisible}
+        onClose={() => setSignOutModalVisible(false)}
+        title="Sign Out"
+        message="Are you sure you want to sign out? You will need to log in again to access your account."
+        type="warning"
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        onConfirm={confirmSignOut}
+        showCancel={true}
+        confirmButtonColor="#e74c3c"
+      />
     </View>
   );
 }

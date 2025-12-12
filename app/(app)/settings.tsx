@@ -1,24 +1,25 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { Bell, Moon, Sun, Lock, CreditCard, HelpCircle, Shield, Mail, LogOut,ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
-import { FONT_FAMILY } from '../../constants/Typography'; 
+import { FONT_FAMILY } from '../../constants/Typography';
+import CustomModal from '../../components/CustomModal';
+
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
+  const [signOutModalVisible, setSignOutModalVisible] = useState(false);
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign Out', style: 'destructive', onPress: signOut }
-      ]
-    );
+    setSignOutModalVisible(true);
+  };
+
+  const confirmSignOut = () => {
+    setSignOutModalVisible(false);
+    signOut();
   };
 
   return (
@@ -115,6 +116,19 @@ export default function SettingsScreen() {
 
           <Text style={styles.versionText}>Version 2.0.0</Text>
         </ScrollView>
+
+        <CustomModal
+          visible={signOutModalVisible}
+          onClose={() => setSignOutModalVisible(false)}
+          title="Sign Out"
+          message="Are you sure you want to sign out? You will need to log in again to access your account."
+          type="warning"
+          confirmText="Sign Out"
+          cancelText="Cancel"
+          onConfirm={confirmSignOut}
+          showCancel={true}
+          confirmButtonColor="#e74c3c"
+        />
     </View>
   );
 }

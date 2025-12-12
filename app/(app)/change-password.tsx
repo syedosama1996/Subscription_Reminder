@@ -46,7 +46,8 @@ export default function ChangePasswordScreen() {
   const confirmRef = useRef<any>(null);
   const scrollRef = useRef<ScrollView | null>(null);
 
-  const validatePassword = (password: string): string | null => {
+  const validatePassword = (password: string): string[] => {
+    const errors: string[] = [];
     const minLength = 8;
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
@@ -54,52 +55,62 @@ export default function ChangePasswordScreen() {
     const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
 
     if (password.length < minLength) {
-      return 'Password must be at least 8 characters long';
+      errors.push('Password must be at least 8 characters long');
     }
     if (!hasUpperCase) {
-      return 'Password must contain at least one uppercase letter';
+      errors.push('Password must contain at least one uppercase letter');
     }
     if (!hasLowerCase) {
-      return 'Password must contain at least one lowercase letter';
+      errors.push('Password must contain at least one lowercase letter');
     }
     if (!hasNumbers) {
-      return 'Password must contain at least one number';
+      errors.push('Password must contain at least one number');
     }
     if (!hasSpecialChar) {
-      return 'Password must contain at least one special character';
+      errors.push('Password must contain at least one special character');
     }
-    return null;
+    return errors;
   };
 
   const handleChangePassword = async () => {
     setLoading(true);
     setFieldErrors({}); // clear previous
+    
+    // Validate all fields at once and collect all errors
+    const errors: FieldErrors = {};
+    
+    // Validate current password
+    if (!currentPassword.trim()) {
+      errors.current = 'Please enter your current password';
+    }
+    
+    // Validate new password
+    if (!newPassword.trim()) {
+      errors.new = 'Please enter a new password';
+    } else {
+      // Validate password strength (length and character requirements)
+      const validationErrors = validatePassword(newPassword);
+      if (validationErrors.length > 0) {
+        // Join all validation errors with newlines and bullets
+        errors.new = validationErrors.map(err => `• ${err}`).join('\n');
+      }
+    }
+    
+    // Validate confirm password
+    if (!confirmPassword.trim()) {
+      errors.confirm = 'Please confirm your new password';
+    } else if (newPassword && newPassword !== confirmPassword) {
+      errors.confirm = 'New password and confirmation do not match';
+    }
+    
+    // If there are any validation errors, show them all and return
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setLoading(false);
+      return;
+    }
+    
     try {
-      // Basic client-side checks
-      if (!currentPassword) {
-        setFieldErrors({ current: 'Please enter your current password' });
-        setLoading(false);
-        return;
-      }
-
-      if (!newPassword) {
-        setFieldErrors({ new: 'Please type a new password' });
-        setLoading(false);
-        return;
-      }
-
-      const validationError = validatePassword(newPassword);
-      if (validationError) {
-        setFieldErrors({ new: validationError });
-        setLoading(false);
-        return;
-      }
-
-      if (newPassword !== confirmPassword) {
-        setFieldErrors({ confirm: 'New password and confirmation do not match' });
-        setLoading(false);
-        return;
-      }
 
       // Optional: if you want to reauthenticate with currentPassword before updating,
       // you'd implement that here (Supabase doesn't require it when user is logged in).

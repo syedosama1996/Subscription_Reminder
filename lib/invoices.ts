@@ -61,6 +61,9 @@ const validateNumericValue = (value: number, fieldName: string): number => {
 
 export const createInvoice = async (invoiceData: Partial<Invoice>): Promise<Invoice | null> => {
   try {
+    // Calculate temporary due_date for insertion (will be updated after insertion based on created_at)
+    const tempDueDate = invoiceData.due_date || new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split('T')[0];
+    
     const invoicePayload = {
       user_id: invoiceData.user_id,
       invoice_no: invoiceData.invoice_no || generateInvoiceNumber(),
@@ -77,7 +80,7 @@ export const createInvoice = async (invoiceData: Partial<Invoice>): Promise<Invo
       subscription_charges: validateNumericValue(invoiceData.subscription_charges ?? 0, 'subscription_charges'),
       total_amount: validateNumericValue(invoiceData.total_amount ?? 0, 'total_amount'),
       status: invoiceData.status || 'pending',
-      due_date: invoiceData.due_date || new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split('T')[0],
+      due_date: tempDueDate,
       subscription_id: invoiceData.subscription_id,
     };
 
@@ -92,6 +95,32 @@ export const createInvoice = async (invoiceData: Partial<Invoice>): Promise<Invo
       .single();
 
     if (error) throw error;
+    
+    // Recalculate due_date based on created_at (invoice date) + 14 days if not explicitly provided
+    if (data && !invoiceData.due_date && data.created_at) {
+      const invoiceDate = new Date(data.created_at);
+      const dueDate = new Date(invoiceDate);
+      dueDate.setDate(dueDate.getDate() + 14);
+      const calculatedDueDate = dueDate.toISOString().split('T')[0];
+      
+      // Only update if the calculated date is different from the temporary one
+      if (calculatedDueDate !== tempDueDate) {
+        const { data: updatedData, error: updateError } = await supabase
+          .from('invoices')
+          .update({ due_date: calculatedDueDate })
+          .eq('id', data.id)
+          .select()
+          .single();
+        
+        if (updateError) {
+          console.error('Error updating due_date:', updateError);
+          return data ? (data as Invoice) : null;
+        }
+        
+        return updatedData ? (updatedData as Invoice) : null;
+      }
+    }
+    
     return data ? (data as Invoice) : null;
   } catch (error) {
     console.error('Error creating invoice:', error);
@@ -136,7 +165,8 @@ export const generateInvoiceForSubscription = async (
       subscription_charges: subscriptionCharges,
       total_amount: totalAmount,
       status: 'paid',
-      due_date: new Date().toISOString().split('T')[0],
+      // due_date will be calculated from created_at in createInvoice function
+      due_date: undefined,
     };
 
     return await createInvoice(invoiceData);

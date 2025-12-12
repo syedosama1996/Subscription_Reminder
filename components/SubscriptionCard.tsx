@@ -454,6 +454,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.large,
     color: '#1f2937',
     flex: 1,
+    marginRight: 8,
   },
 
   infoRow: {
@@ -513,7 +514,12 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.semiBold,
   },
   toggleContainer: {
-    marginRight: 12,
+    width: 36,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+    flexShrink: 0,
   },
   selectionOverlay: {
     position: 'absolute',

@@ -55,97 +55,193 @@ export default function ReportScreen() {
   });
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
-  const [dateRange, setDateRange] = useState<DateRange>(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const lastMonthStart = new Date(today);
-    lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
-    lastMonthStart.setDate(1); // First day of last month
-    const lastMonthEnd = new Date(today);
-    lastMonthEnd.setDate(0); // Last day of previous month
-    
-    return {
-      startDate: lastMonthStart,
-      endDate: lastMonthEnd,
-      label: 'Last Month'
-    };
-  });
+  
+  // Get account creation date
+  const getAccountCreationDate = (): Date => {
+    if (user?.created_at) {
+      return new Date(user.created_at);
+    }
+    // Fallback to current date if no creation date (shouldn't happen)
+    return new Date();
+  };
 
-  // Predefined date ranges
-  const getDateRanges = (): DateRange[] => {
+  // Helper function to get today's date normalized
+  const getToday = (): Date => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    today.setHours(0, 0, 0, 0);
+    return today;
+  };
+
+  // Helper function to calculate account age in days
+  const getAccountAgeDays = (): number => {
+    const accountCreationDate = getAccountCreationDate();
+    const creationDate = new Date(accountCreationDate);
+    creationDate.setHours(0, 0, 0, 0);
+    const today = getToday();
+    return Math.floor((today.getTime() - creationDate.getTime()) / (1000 * 60 * 60 * 24));
+  };
+  
+  // Initialize default date range based on account age
+  const getDefaultDateRange = (): DateRange => {
+    const today = getToday();
+    const creationDate = new Date(getAccountCreationDate());
+    creationDate.setHours(0, 0, 0, 0);
+    const accountAgeDays = getAccountAgeDays();
     
-    return [
-      {
-        startDate: (() => {
-          const date = new Date(today);
-          date.setDate(date.getDate() - 6); // 7 days inclusive (today + 6 days back)
-          return date;
-        })(),
-        endDate: new Date(today),
+    // If account is less than 7 days old, show all available data
+    if (accountAgeDays < 7) {
+      return {
+        startDate: creationDate,
+        endDate: today,
+        label: 'All Time'
+      };
+    }
+    // If account is less than 15 days old, show last 7 days
+    else if (accountAgeDays < 15) {
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - 6);
+      // Ensure start date is not before account creation
+      const actualStartDate = startDate < creationDate ? creationDate : startDate;
+      return {
+        startDate: actualStartDate,
+        endDate: today,
         label: 'Last 7 Days'
-      },
-      {
-        startDate: (() => {
-          const date = new Date(today);
-          date.setDate(date.getDate() - 14); // 15 days inclusive
-          return date;
-        })(),
-        endDate: new Date(today),
+      };
+    }
+    // If account is less than 30 days old, show last 15 days
+    else if (accountAgeDays < 30) {
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - 14);
+      const actualStartDate = startDate < creationDate ? creationDate : startDate;
+      return {
+        startDate: actualStartDate,
+        endDate: today,
         label: 'Last 15 Days'
-      },
-      {
-        startDate: (() => {
-          const date = new Date(today);
-          date.setDate(date.getDate() - 29); // 30 days inclusive
-          return date;
-        })(),
-        endDate: new Date(today),
-        label: 'Last 30 Days'
-      },
-      {
-        startDate: (() => {
-          const date = new Date(today);
-          date.setMonth(date.getMonth() - 1);
-          date.setDate(1); // First day of last month
-          return date;
-        })(),
-        endDate: (() => {
-          const date = new Date(today);
-          date.setDate(0); // Last day of previous month
-          return date;
-        })(),
+      };
+    }
+    // Otherwise, show last month (but ensure it doesn't go before account creation)
+    else {
+      const lastMonthStart = new Date(today);
+      lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+      lastMonthStart.setDate(1);
+      const lastMonthEnd = new Date(today);
+      lastMonthEnd.setDate(0);
+      
+      const actualStartDate = lastMonthStart < creationDate ? creationDate : lastMonthStart;
+      return {
+        startDate: actualStartDate,
+        endDate: lastMonthEnd < creationDate ? today : lastMonthEnd,
         label: 'Last Month'
-      },
-      {
-        startDate: (() => {
-          const date = new Date(today);
-          date.setMonth(date.getMonth() - 3);
-          return date;
-        })(),
-        endDate: new Date(today),
+      };
+    }
+  };
+
+  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
+
+  // Predefined date ranges - adjusted based on account creation date
+  const getDateRanges = (): DateRange[] => {
+    const today = getToday();
+    const creationDate = new Date(getAccountCreationDate());
+    creationDate.setHours(0, 0, 0, 0);
+    const accountAgeDays = getAccountAgeDays();
+    
+    const ranges: DateRange[] = [];
+    
+    // Helper function to ensure date is not before account creation
+    const ensureNotBeforeCreation = (date: Date): Date => {
+      return date < creationDate ? creationDate : date;
+    };
+    
+    // Last 7 Days - only show if account is at least 7 days old
+    if (accountAgeDays >= 6) {
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - 6);
+      ranges.push({
+        startDate: ensureNotBeforeCreation(startDate),
+        endDate: today,
+        label: 'Last 7 Days'
+      });
+    }
+    
+    // Last 15 Days - only show if account is at least 15 days old
+    if (accountAgeDays >= 14) {
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - 14);
+      ranges.push({
+        startDate: ensureNotBeforeCreation(startDate),
+        endDate: today,
+        label: 'Last 15 Days'
+      });
+    }
+    
+    // Last 30 Days - only show if account is at least 30 days old
+    if (accountAgeDays >= 29) {
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - 29);
+      ranges.push({
+        startDate: ensureNotBeforeCreation(startDate),
+        endDate: today,
+        label: 'Last 30 Days'
+      });
+    }
+    
+    // Last Month - only show if account is at least 1 month old
+    if (accountAgeDays >= 30) {
+      const lastMonthStart = new Date(today);
+      lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+      lastMonthStart.setDate(1);
+      const lastMonthEnd = new Date(today);
+      lastMonthEnd.setDate(0);
+      
+      ranges.push({
+        startDate: ensureNotBeforeCreation(lastMonthStart),
+        endDate: lastMonthEnd < creationDate ? today : lastMonthEnd,
+        label: 'Last Month'
+      });
+    }
+    
+    // Last 3 Months - only show if account is at least 3 months old
+    if (accountAgeDays >= 90) {
+      const startDate = new Date(today);
+      startDate.setMonth(startDate.getMonth() - 3);
+      ranges.push({
+        startDate: ensureNotBeforeCreation(startDate),
+        endDate: today,
         label: 'Last 3 Months'
-      },
-      {
-        startDate: (() => {
-          const date = new Date(today);
-          date.setMonth(date.getMonth() - 6);
-          return date;
-        })(),
-        endDate: new Date(today),
+      });
+    }
+    
+    // Last 6 Months - only show if account is at least 6 months old
+    if (accountAgeDays >= 180) {
+      const startDate = new Date(today);
+      startDate.setMonth(startDate.getMonth() - 6);
+      ranges.push({
+        startDate: ensureNotBeforeCreation(startDate),
+        endDate: today,
         label: 'Last 6 Months'
-      },
-      {
-        startDate: (() => {
-          const date = new Date(today);
-          date.setFullYear(date.getFullYear() - 1);
-          return date;
-        })(),
-        endDate: new Date(today),
+      });
+    }
+    
+    // Last Year - only show if account is at least 1 year old
+    if (accountAgeDays >= 365) {
+      const startDate = new Date(today);
+      startDate.setFullYear(startDate.getFullYear() - 1);
+      ranges.push({
+        startDate: ensureNotBeforeCreation(startDate),
+        endDate: today,
         label: 'Last Year'
-      }
-    ];
+      });
+    }
+    
+    // Always show "All Time" option
+    ranges.push({
+      startDate: creationDate,
+      endDate: today,
+      label: 'All Time'
+    });
+    
+    return ranges;
   };
   
   const dateRanges = getDateRanges();
@@ -155,6 +251,14 @@ export default function ReportScreen() {
       requestMediaLibraryPermission();
     }
   }, []);
+
+  // Reset date range when user changes to ensure it's valid
+  useEffect(() => {
+    if (user) {
+      const newDefaultRange = getDefaultDateRange();
+      setDateRange(newDefaultRange);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) {
@@ -303,14 +407,32 @@ export default function ReportScreen() {
   };
 
   const handleCustomDateChange = (event: any, selectedDate?: Date, isStartDate: boolean = true) => {
+    if (!selectedDate) return;
+    
+    const creationDate = new Date(getAccountCreationDate());
+    creationDate.setHours(0, 0, 0, 0);
+    const today = getToday();
+    today.setHours(23, 59, 59, 999);
+    
+    // Normalize selected date
+    const normalizedDate = new Date(selectedDate);
+    normalizedDate.setHours(0, 0, 0, 0);
+    
     if (isStartDate) {
       if (Platform.OS === 'android') {
         setShowStartDatePicker(false);
       }
-      if (event.type === 'set' && selectedDate) {
+      if (event.type === 'set') {
+        // Ensure start date is not before account creation
+        const validStartDate = normalizedDate < creationDate ? creationDate : normalizedDate;
+        // Ensure start date is not after end date
+        const endDate = new Date(dateRange.endDate);
+        endDate.setHours(0, 0, 0, 0);
+        const finalStartDate = validStartDate > endDate ? endDate : validStartDate;
+        
         setDateRange(prev => ({
           ...prev,
-          startDate: selectedDate,
+          startDate: finalStartDate,
           label: 'Custom Range'
         }));
       }
@@ -318,10 +440,19 @@ export default function ReportScreen() {
       if (Platform.OS === 'android') {
         setShowEndDatePicker(false);
       }
-      if (event.type === 'set' && selectedDate) {
+      if (event.type === 'set') {
+        // Ensure end date is not in the future
+        const validEndDate = normalizedDate > today ? today : normalizedDate;
+        // Ensure end date is not before start date
+        const startDate = new Date(dateRange.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        const finalEndDate = validEndDate < startDate ? startDate : validEndDate;
+        // Ensure end date is not before account creation
+        const finalEndDate2 = finalEndDate < creationDate ? creationDate : finalEndDate;
+        
         setDateRange(prev => ({
           ...prev,
-          endDate: selectedDate,
+          endDate: finalEndDate2,
           label: 'Custom Range'
         }));
       }
@@ -704,6 +835,11 @@ export default function ReportScreen() {
                     // Estimate max characters per label (roughly 6-7 pixels per character at 10px font)
                     const maxCharsPerLabel = Math.floor((widthPerLabel * 0.8) / 7);
                     
+                    // Calculate max value for Y-axis
+                    const maxValue = Math.max(...categoryData.map(item => item.count), 1);
+                    // Calculate appropriate segments based on max value
+                    const segments = maxValue <= 5 ? Math.max(2, maxValue) : 5;
+                    
                     return (
                       <BarChart
                         data={{
@@ -716,10 +852,9 @@ export default function ReportScreen() {
                           }]
                         }}
                         width={chartWidth}
-                        height={260}
+                        height={200}
                         yAxisLabel=""
                         yAxisSuffix=""
-                        yAxisInterval={5}
                         chartConfig={{
                           backgroundColor: '#ffffff',
                           backgroundGradientFrom: '#ffffff',
@@ -727,6 +862,10 @@ export default function ReportScreen() {
                           decimalPlaces: 0,
                           color: (opacity = 1) => `rgba(65, 88, 208, ${opacity})`,
                           labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                          formatYLabel: (value) => {
+                            const num = parseInt(value);
+                            return num.toString();
+                          },
                           style: {
                             borderRadius: 16
                           },
@@ -751,7 +890,7 @@ export default function ReportScreen() {
                         withInnerLines={false}
                         withVerticalLabels={true}
                         withHorizontalLabels={true}
-                        segments={5}
+                        segments={segments}
                       />
                     );
                   })()}
@@ -766,7 +905,41 @@ export default function ReportScreen() {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Monthly Trends</Text>
-            {monthlyData.length > 0 && monthlyData.some(d => d.amount > 0) ? (
+            {(() => {
+              // Check if date range should show monthly trends
+              // Show only if:
+              // 1. Selected range is "Last 3 Months" or "Last 6 Months"
+              // 2. OR custom range spans at least 2 months
+              const shouldShowMonthlyTrends = (): boolean => {
+                const rangeLabel = dateRange.label;
+                
+                // Check if it's "Last 3 Months" or "Last 6 Months"
+                if (rangeLabel === 'Last 3 Months' || rangeLabel === 'Last 6 Months') {
+                  return true;
+                }
+                
+                // For custom range or other ranges, check if it spans at least 2 months
+                const startDate = new Date(dateRange.startDate);
+                const endDate = new Date(dateRange.endDate);
+                
+                // Calculate months difference
+                const startYear = startDate.getFullYear();
+                const startMonth = startDate.getMonth();
+                const endYear = endDate.getFullYear();
+                const endMonth = endDate.getMonth();
+                
+                // Calculate total months difference
+                const monthsDiff = (endYear - startYear) * 12 + (endMonth - startMonth);
+                
+                // Also check if the actual date range is at least 60 days (approximately 2 months)
+                const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                
+                // Show if at least 2 months difference OR at least 60 days
+                return monthsDiff >= 1 || daysDiff >= 60;
+              };
+              
+              return monthlyData.length > 0 && monthlyData.some(d => d.amount > 0) && shouldShowMonthlyTrends();
+            })() ? (
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
@@ -780,6 +953,72 @@ export default function ReportScreen() {
                   );
                   const widthPerLabel = chartWidth / monthlyData.length;
                   const maxCharsPerLabel = Math.floor((widthPerLabel * 0.8) / 7);
+                  
+                  // Calculate max and min values for Y-axis
+                  const maxValue = Math.max(...monthlyData.map(item => item.amount), 0);
+                  const minValue = Math.min(...monthlyData.map(item => item.amount), 0);
+                  const valueRange = maxValue - minValue;
+                  
+                  // Format Y-axis labels to show readable numbers with PKR prefix
+                  // This function is called by react-native-chart-kit for each Y-axis label
+                  // Y-axis values are calculated automatically by the library:
+                  // 1. It finds min and max values in the dataset
+                  // 2. Divides the range into 'segments' number of parts
+                  // 3. Calculates evenly spaced values between min and max
+                  // 4. Calls formatYLabel for each calculated value
+                  const formatYLabel = (value: string | number): string => {
+                    try {
+                      // Handle both string and number inputs
+                      let num: number;
+                      if (typeof value === 'string') {
+                        // Remove any commas, spaces, or formatting characters
+                        const cleanValue = value.replace(/[,\s]/g, '').trim();
+                        num = parseFloat(cleanValue);
+                      } else {
+                        num = value;
+                      }
+                      
+                      // Handle zero, NaN, or invalid values
+                      if (num === 0 || isNaN(num) || !isFinite(num)) {
+                        return 'PKR 0';
+                      }
+                      
+                      // Format large numbers with K (thousands) or M (millions)
+                      // Use absolute value to handle negative numbers
+                      const absNum = Math.abs(num);
+                      
+                      if (absNum >= 1000000) {
+                        const formatted = (num / 1000000).toFixed(1);
+                        // Remove trailing zero if it's .0 (e.g., "3.0M" -> "3M")
+                        const valueStr = formatted.replace(/\.0$/, '') + 'M';
+                        return 'PKR ' + valueStr;
+                      } else if (absNum >= 1000) {
+                        const formatted = (num / 1000).toFixed(1);
+                        const valueStr = formatted.replace(/\.0$/, '') + 'K';
+                        return 'PKR ' + valueStr;
+                      } else {
+                        // For numbers less than 1000, show as integer
+                        return 'PKR ' + Math.round(num).toString();
+                      }
+                    } catch (error) {
+                      // Fallback to original value if formatting fails
+                      return String(value);
+                    }
+                  };
+                  
+                  // Calculate appropriate segments based on data range
+                  // More segments for larger ranges, fewer for smaller
+                  let segments = 5;
+                  if (valueRange > 0) {
+                    // Adjust segments based on the magnitude of the range
+                    if (maxValue >= 1000000) {
+                      segments = 5; // For millions, 5 segments is good
+                    } else if (maxValue >= 10000) {
+                      segments = 5; // For thousands, 5 segments
+                    } else {
+                      segments = Math.min(5, Math.max(2, Math.ceil(maxValue / 1000))); // For smaller values
+                    }
+                  }
                   
                   return (
                     <LineChart
@@ -795,7 +1034,7 @@ export default function ReportScreen() {
                       height={240}
                       yAxisLabel=""
                       yAxisSuffix=""
-                      yAxisInterval={1}
+                      formatYLabel={formatYLabel}
                       chartConfig={{
                         backgroundColor: '#ffffff',
                         backgroundGradientFrom: '#ffffff',
@@ -824,14 +1063,27 @@ export default function ReportScreen() {
                       style={styles.chart}
                       verticalLabelRotation={monthlyData.length > 6 ? -30 : 0}
                       withInnerLines={false}
-                      segments={5}
+                      segments={segments}
                     />
                   );
                 })()}
               </ScrollView>
             ) : (
               <View style={styles.chartPlaceholder}>
-                <Text style={styles.chartText}>No monthly trend data available</Text>
+                <Text style={styles.chartText}>
+                  {(() => {
+                    // Check if it's because of date range requirement
+                    const rangeLabel = dateRange.label;
+                    const startDate = new Date(dateRange.startDate);
+                    const endDate = new Date(dateRange.endDate);
+                    const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    if (rangeLabel !== 'Last 3 Months' && rangeLabel !== 'Last 6 Months' && daysDiff < 60) {
+                      return 'Monthly trends are available for date ranges of 2 months or more';
+                    }
+                    return 'No monthly trend data available';
+                  })()}
+                </Text>
               </View>
             )}
           </View>
@@ -919,37 +1171,55 @@ export default function ReportScreen() {
       </Modal>
 
       {/* Date Pickers */}
-      {showStartDatePicker && Platform.OS !== 'web' && (
-        <RNDateTimePicker
-          value={dateRange.startDate}
-          mode="date"
-          display={Platform.OS === 'android' ? 'calendar' : 'default'}
-          onChange={(event, date) => {
-            if (Platform.OS === 'android' && event.type === 'dismissed') {
-              setShowStartDatePicker(false);
-              return;
-            }
-            handleCustomDateChange(event, date, true);
-          }}
-          maximumDate={dateRange.endDate}
-        />
-      )}
+      {showStartDatePicker && Platform.OS !== 'web' && (() => {
+        const creationDate = new Date(getAccountCreationDate());
+        creationDate.setHours(0, 0, 0, 0);
+        const today = getToday();
+        today.setHours(23, 59, 59, 999);
+        const maxDate = dateRange.endDate < today ? dateRange.endDate : today;
+        
+        return (
+          <RNDateTimePicker
+            value={dateRange.startDate}
+            mode="date"
+            display={Platform.OS === 'android' ? 'calendar' : 'default'}
+            onChange={(event, date) => {
+              if (Platform.OS === 'android' && event.type === 'dismissed') {
+                setShowStartDatePicker(false);
+                return;
+              }
+              handleCustomDateChange(event, date, true);
+            }}
+            minimumDate={creationDate}
+            maximumDate={maxDate}
+          />
+        );
+      })()}
       
-      {showEndDatePicker && Platform.OS !== 'web' && (
-        <RNDateTimePicker
-          value={dateRange.endDate}
-          mode="date"
-          display={Platform.OS === 'android' ? 'calendar' : 'default'}
-          onChange={(event, date) => {
-            if (Platform.OS === 'android' && event.type === 'dismissed') {
-              setShowEndDatePicker(false);
-              return;
-            }
-            handleCustomDateChange(event, date, false);
-          }}
-          minimumDate={dateRange.startDate}
-        />
-      )}
+      {showEndDatePicker && Platform.OS !== 'web' && (() => {
+        const creationDate = new Date(getAccountCreationDate());
+        creationDate.setHours(0, 0, 0, 0);
+        const today = getToday();
+        today.setHours(23, 59, 59, 999);
+        const minDate = dateRange.startDate > creationDate ? dateRange.startDate : creationDate;
+        
+        return (
+          <RNDateTimePicker
+            value={dateRange.endDate}
+            mode="date"
+            display={Platform.OS === 'android' ? 'calendar' : 'default'}
+            onChange={(event, date) => {
+              if (Platform.OS === 'android' && event.type === 'dismissed') {
+                setShowEndDatePicker(false);
+                return;
+              }
+              handleCustomDateChange(event, date, false);
+            }}
+            minimumDate={minDate}
+            maximumDate={today}
+          />
+        );
+      })()}
 
       <Modal
         animationType="slide"

@@ -112,17 +112,23 @@ export default function PurchaseHistoryScreen() {
         const expiryDate = new Date(sub.expiry_date);
         expiryDate.setHours(0, 0, 0, 0);
 
-        if (selectedStatuses.includes('active')) {
-          if (sub.is_active && expiryDate > thirtyDaysFromNow) return true;
-        }
-        if (selectedStatuses.includes('inactive')) {
-          if (!sub.is_active) return true;
-        }
+        // Check if expired first
+        const isExpired = expiryDate < today;
+
         if (selectedStatuses.includes('expired')) {
-          if (sub.is_active && expiryDate < today) return true;
+          if (isExpired) return true;
         }
         if (selectedStatuses.includes('expiring_soon')) {
-          if (sub.is_active && expiryDate >= today && expiryDate <= thirtyDaysFromNow) return true;
+          // Expiring within 30 days and not expired yet
+          if (!isExpired && expiryDate >= today && expiryDate <= thirtyDaysFromNow) return true;
+        }
+        if (selectedStatuses.includes('active')) {
+          // Active and not expired and not expiring soon (more than 30 days away)
+          if (!isExpired && sub.is_active && expiryDate > thirtyDaysFromNow) return true;
+        }
+        if (selectedStatuses.includes('inactive')) {
+          // Inactive and not expired
+          if (!isExpired && !sub.is_active) return true;
         }
         return false;
       });
@@ -562,7 +568,31 @@ export default function PurchaseHistoryScreen() {
     }
   };
 
-  const renderSubscriptionItem = ({ item }: { item: Subscription }) => (
+  const renderSubscriptionItem = ({ item }: { item: Subscription }) => {
+    // Check if subscription has expired
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiryDate = item.expiry_date ? new Date(item.expiry_date) : null;
+    expiryDate?.setHours(0, 0, 0, 0);
+    
+    let statusText = '';
+    let statusColor = '';
+    
+    if (expiryDate && expiryDate < today) {
+      // Subscription has expired
+      statusText = 'Expired';
+      statusColor = '#ef4444';
+    } else if (item.is_active) {
+      // Subscription is active
+      statusText = 'Active';
+      statusColor = '#2ecc71';
+    } else {
+      // Subscription is inactive
+      statusText = 'Inactive';
+      statusColor = '#e74c3c';
+    }
+
+    return (
     <View style={styles.purchaseCard}>
       <View style={styles.purchaseHeader}>
         <View style={styles.purchaseInfo}>
@@ -572,8 +602,8 @@ export default function PurchaseHistoryScreen() {
             <Text style={styles.paymentMethod}>{item.vendor || 'Unknown Vendor'}</Text>
           </View>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: item.is_active ? '#2ecc71' : '#e74c3c' }]}>
-          <Text style={styles.statusText}>{item.is_active ? 'Active' : 'Inactive'}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+          <Text style={styles.statusText}>{statusText}</Text>
         </View>
       </View>
       
@@ -602,7 +632,8 @@ export default function PurchaseHistoryScreen() {
         </View>
       </View>
     </View>
-  );
+    );
+  };
   if (loading) {
     return (
       <View style={styles.container}>

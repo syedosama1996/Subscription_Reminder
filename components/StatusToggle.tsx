@@ -30,7 +30,7 @@ export default function StatusToggle({ subscription, onToggle, disabled = false 
 
   const translateX = slideAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 20],
+    outputRange: [0, 16],
   });
 
   return (
@@ -49,9 +49,9 @@ export default function StatusToggle({ subscription, onToggle, disabled = false 
         { transform: [{ translateX }] }
       ]}>
         {isActive ? (
-          <Check size={12} color="#ffffff" style={styles.icon} />
+          <Check size={10} color="#ffffff" style={styles.icon} />
         ) : (
-          <X size={12} color="#ffffff" style={styles.icon} />
+          <X size={10} color="#ffffff" style={styles.icon} />
         )}
       </Animated.View>
     </TouchableOpacity>
@@ -60,20 +60,20 @@ export default function StatusToggle({ subscription, onToggle, disabled = false 
 
 const styles = StyleSheet.create({
   container: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
+    width: 36,
+    height: 20,
+    borderRadius: 10,
     padding: 2,
     justifyContent: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
       },
       android: {
-        elevation: 4,
+        elevation: 2,
       },
     }),
   },
@@ -89,9 +89,9 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   toggle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ffffff',
@@ -99,11 +99,11 @@ const styles = StyleSheet.create({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
+        shadowOpacity: 0.15,
+        shadowRadius: 1.5,
       },
       android: {
-        elevation: 3,
+        elevation: 2,
       },
     }),
   },
