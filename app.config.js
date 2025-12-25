@@ -1,14 +1,14 @@
 module.exports = {
   expo: {
-    name: "Subscription Reminder",
+    name: "Subreminder",
     slug: "subscriptionreminder",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/icon.png",
+    icon: "./assets/images/icon.jpg",
     scheme: "myapp",
     userInterfaceStyle: "light",
     splash: {
-      image: "./assets/images/icon.png",
+      image: "./assets/images/icon.jpg",
       resizeMode: "contain",
       backgroundColor: "#ffffff",
       imageResizeMode: "contain"
@@ -27,11 +27,11 @@ module.exports = {
       }
     },
     android: {
-      icon: "./assets/images/icon.png",
+      icon: "./assets/images/icon.jpg",
       package: "com.yourcompany.subscriptionreminder",
       versionCode: 1,
       adaptiveIcon: {
-        foregroundImage: "./assets/images/icon.png",
+        foregroundImage: "./assets/images/icon.jpg",
         backgroundColor: "#ffffff"
       },
       permissions: [
@@ -43,7 +43,7 @@ module.exports = {
       splash: {
         backgroundColor: "#ffffff",
         resizeMode: "contain",
-        image: "./assets/images/icon.png"
+        image: "./assets/images/icon.jpg"
       }
     },
     web: {
@@ -63,7 +63,7 @@ module.exports = {
       [
         "expo-notifications",
         {
-          icon: "./assets/images/icon.png",
+          icon: "./assets/images/icon.jpg",
           color: "#ffffff"
         }
       ]

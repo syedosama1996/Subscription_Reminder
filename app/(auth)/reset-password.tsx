@@ -104,8 +104,9 @@ export default function ResetPasswordScreen() {
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1633409361618-c73427e4e206?q=80&w=200&auto=format&fit=crop' }}
+              source={require('../../assets/images/mainLcon.png')}
               style={styles.logo}
+              resizeMode="contain"
             />
             <Text style={styles.title}>Enter Reset Code</Text>
             <Text style={styles.subtitle}>Check your email for the code, then set a new password</Text>
@@ -215,12 +216,8 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: 100,
-    height: 100,
-    borderRadius: 30,
-    marginBottom: 16,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    width: 350,
+    height: 150,
   },
   title: {
     ...TEXT_STYLES.h2,

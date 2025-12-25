@@ -5,12 +5,10 @@
     <key>EXUpdatesCheckOnLaunch</key>
     <string>ALWAYS</string>
     <key>EXUpdatesEnabled</key>
-    <true/>
+    <false/>
     <key>EXUpdatesLaunchWaitMs</key>
     <integer>0</integer>
     <key>EXUpdatesRuntimeVersion</key>
     <string>exposdk:52.0.0</string>
-    <key>EXUpdatesURL</key>
-    <string>https://exp.host/@shah2077/subscriptionreminder</string>
   </dict>
 </plist>

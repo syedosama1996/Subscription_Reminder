@@ -1,3 +1,5 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
 buildscript {
     ext {
         buildToolsVersion = findProperty('android.buildToolsVersion') ?: '35.0.0'
@@ -22,14 +24,6 @@ buildscript {
 apply plugin: "com.facebook.react.rootproject"
 
 allprojects {
-    // Memory optimizations for all projects
-    configurations.all {
-        resolutionStrategy {
-            cacheChangingModulesFor 0, 'seconds'
-            cacheDynamicVersionsFor 0, 'seconds'
-        }
-    }
-    
     repositories {
         maven {
             // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm

@@ -21,7 +21,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
   }
 }
 
-rootProject.name = 'Subscription Reminder'
+rootProject.name = 'Subreminder'
 
 dependencyResolutionManagement {
   versionCatalogs {
