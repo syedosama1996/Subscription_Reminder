@@ -13,7 +13,8 @@ import {
   registerForPushNotificationsAsync, 
   setupSubscriptionNotifications, 
   setupNotificationListener,
-  setupAllExpiryReminders
+  setupAllExpiryReminders,
+  setupAllRecurringPaymentReminders
 } from '../lib/notifications';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
@@ -86,20 +87,23 @@ const InnerLayout = () => {
     };
   }, [user, router]); // Add user as dependency
 
-  // Set up expiry reminders when user is logged in
+  // Set up expiry reminders and recurring payment reminders when user is logged in
   useEffect(() => {
-    async function setupExpirySubs() {
+    async function setupReminders() {
       if (!user) return;
       try {
         const subscriptions = await getSubscriptions(user.id);
         if (subscriptions && subscriptions.length > 0) {
+          // Setup expiry reminders
           await setupAllExpiryReminders(subscriptions);
+          // Setup recurring payment reminders
+          await setupAllRecurringPaymentReminders(subscriptions);
         }
       } catch (error) {
-        console.error('Error setting up expiry reminders:', error);
+        console.error('Error setting up reminders:', error);
       }
     }
-    setupExpirySubs();
+    setupReminders();
   }, [user]);
 
   if (!fontsLoaded && !fontError) {

@@ -16,13 +16,14 @@ import { createSubscription, createReminder } from '../../../lib/subscriptions';
 import Input from '../../../components/Input';
 import Button from '../../../components/Button';
 import CategorySelector from '../../../components/CategorySelector';
-import { Calendar, DollarSign, Globe, Key, Mail, User, X, Link, Eye, EyeOff } from 'lucide-react-native';
+import { Calendar, DollarSign, Globe, Key, Mail, User, X, Link, Eye, EyeOff, CreditCard, Building2 } from 'lucide-react-native';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { Category } from '../../../lib/types';
 import Toast from 'react-native-toast-message';
+import { Switch } from 'react-native';
 
 export default function AddSubscriptionScreen() {
   const { user } = useAuth();
@@ -45,6 +46,11 @@ export default function AddSubscriptionScreen() {
   const [vendorLink, setVendorLink] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [bankName, setBankName] = useState('');
+  const [cardHolderName, setCardHolderName] = useState('');
+  const [cardLastFour, setCardLastFour] = useState('');
+  const [autoRenewal, setAutoRenewal] = useState(false);
+  const [paymentType, setPaymentType] = useState<'one-time' | 'recurring'>('one-time');
 
   // Date picker state
   const [showPurchaseDatePicker, setShowPurchaseDatePicker] = useState(false);
@@ -109,6 +115,11 @@ export default function AddSubscriptionScreen() {
     setSelectedCategory(null);
     setError(null);
     setShowPassword(false);
+    setBankName('');
+    setCardHolderName('');
+    setCardLastFour('');
+    setAutoRenewal(false);
+    setPaymentType('one-time');
     setReminders([
       { days: 30, enabled: true },
       { days: 14, enabled: true },
@@ -197,7 +208,12 @@ export default function AddSubscriptionScreen() {
         vendor: vendor,
         vendor_link: vendorLink,
         category_id: selectedCategory?.id,
-        is_active: true
+        is_active: true,
+        bank_name: bankName || null,
+        card_holder_name: cardHolderName || null,
+        card_last_four: cardLastFour || null,
+        auto_renewal: autoRenewal,
+        payment_type: paymentType
       }, user.id);
 
       // Create reminders
@@ -557,6 +573,110 @@ export default function AddSubscriptionScreen() {
             </View>
 
             <View style={styles.formSection}>
+              <Text style={styles.sectionTitle}>Payment Information (Optional)</Text>
+              
+              <View style={styles.inputRow}>
+                <Building2 size={20} color="#8e8e93" style={styles.inputIcon} />
+                <Input
+                  label="Bank Name"
+                  placeholder="Bank of America, Chase, etc."
+                  value={bankName}
+                  onChangeText={(text) => {
+                    setBankName(text);
+                    clearError();
+                  }}
+                  containerStyle={styles.input}
+                />
+              </View>
+
+              <View style={styles.inputRow}>
+                <User size={20} color="#8e8e93" style={styles.inputIcon} />
+                <Input
+                  label="Card Holder Name"
+                  placeholder="John Doe"
+                  value={cardHolderName}
+                  onChangeText={(text) => {
+                    setCardHolderName(text);
+                    clearError();
+                  }}
+                  containerStyle={styles.input}
+                />
+              </View>
+
+              <View style={styles.inputRow}>
+                <CreditCard size={20} color="#8e8e93" style={styles.inputIcon} />
+                <Input
+                  label="Last 4 Digits of Card"
+                  placeholder="1234"
+                  value={cardLastFour}
+                  onChangeText={(text) => {
+                    // Only allow numbers and limit to 4 digits
+                    const numericText = text.replace(/[^0-9]/g, '').slice(0, 4);
+                    setCardLastFour(numericText);
+                    clearError();
+                  }}
+                  keyboardType="numeric"
+                  maxLength={4}
+                  containerStyle={styles.input}
+                />
+              </View>
+
+              <View style={styles.paymentTypeContainer}>
+                <Text style={styles.paymentTypeLabel}>Payment Type</Text>
+                <View style={styles.paymentTypeButtons}>
+                  <TouchableOpacity
+                    style={[
+                      styles.paymentTypeButton,
+                      paymentType === 'one-time' && styles.paymentTypeButtonActive
+                    ]}
+                    onPress={() => setPaymentType('one-time')}
+                  >
+                    <Text style={[
+                      styles.paymentTypeButtonText,
+                      paymentType === 'one-time' && styles.paymentTypeButtonTextActive
+                    ]}>
+                      One-Time Payment
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.paymentTypeButton,
+                      paymentType === 'recurring' && styles.paymentTypeButtonActive
+                    ]}
+                    onPress={() => setPaymentType('recurring')}
+                  >
+                    <Text style={[
+                      styles.paymentTypeButtonText,
+                      paymentType === 'recurring' && styles.paymentTypeButtonTextActive
+                    ]}>
+                      Recurring Payment
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.paymentTypeDescription}>
+                  {paymentType === 'one-time' 
+                    ? 'Payment is made once and subscription expires after the period'
+                    : 'Payment will be automatically charged on a recurring basis'}
+                </Text>
+              </View>
+
+              <View style={styles.switchRow}>
+                <View style={styles.switchLabelContainer}>
+                  <Text style={styles.switchLabel}>Auto Renewal</Text>
+                  <Text style={styles.switchDescription}>
+                    Automatically renew this subscription when it expires
+                  </Text>
+                </View>
+                <Switch
+                  value={autoRenewal}
+                  onValueChange={setAutoRenewal}
+                  trackColor={{ false: '#e1e5e9', true: '#4158D0' }}
+                  thumbColor={autoRenewal ? '#fff' : '#f4f3f4'}
+                />
+              </View>
+            </View>
+
+            <View style={styles.formSection}>
               <Text style={styles.sectionTitle}>Reminders</Text>
               <Text style={styles.reminderDescription}>
                 Set when you want to be reminded before the subscription expires
@@ -768,5 +888,72 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingVertical: 8,
+  },
+  switchLabelContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
+  switchLabel: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 12,
+    color: '#2c3e50',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  switchDescription: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 11,
+    color: '#7f8c8d',
+  },
+  paymentTypeContainer: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  paymentTypeLabel: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 12,
+    color: '#2c3e50',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  paymentTypeButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  paymentTypeButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 2,
+    borderColor: '#e1e5e9',
+    alignItems: 'center',
+  },
+  paymentTypeButtonActive: {
+    backgroundColor: '#4158D0',
+    borderColor: '#4158D0',
+  },
+  paymentTypeButtonText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 12,
+    color: '#7f8c8d',
+  },
+  paymentTypeButtonTextActive: {
+    color: '#fff',
+  },
+  paymentTypeDescription: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 11,
+    color: '#7f8c8d',
+    marginTop: 4,
   },
 });

@@ -38,6 +38,11 @@ export type Subscription = {
   vendor_link?: string | null;
   category_id?: string | null;
   is_active?: boolean;
+  bank_name?: string | null;
+  card_holder_name?: string | null;
+  card_last_four?: string | null;
+  auto_renewal?: boolean;
+  payment_type?: 'one-time' | 'recurring';
   created_at?: string;
   reminders?: Reminder[];
   history?: SubscriptionHistory[];
@@ -63,6 +68,11 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
       vendor_link: subscription.vendor_link,
       category_id: subscription.category_id,
       is_active: subscription.is_active ?? true,
+      bank_name: subscription.bank_name,
+      card_holder_name: subscription.card_holder_name,
+      card_last_four: subscription.card_last_four,
+      auto_renewal: subscription.auto_renewal ?? false,
+      ...(subscription.payment_type && { payment_type: subscription.payment_type }),
     };
 
     if (!subscriptionPayload.service_name || !subscriptionPayload.purchase_date || subscriptionPayload.purchase_amount_pkr === undefined || !subscriptionPayload.expiry_date) {
@@ -99,6 +109,10 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
         vendor: newSubscription.vendor,
         vendor_link: newSubscription.vendor_link,
         category_id: newSubscription.category_id,
+        bank_name: newSubscription.bank_name,
+        card_holder_name: newSubscription.card_holder_name,
+        card_last_four: newSubscription.card_last_four,
+        auto_renewal: newSubscription.auto_renewal,
       };
 
       const invoice = await generateInvoiceForSubscription(
@@ -134,7 +148,7 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
       }
 
       // Create notification record in database (notification will be shown via real-time listener)
-      const { createNotificationRecord } = await import('./notifications');
+      const { createNotificationRecord, setupRecurringPaymentReminders } = await import('./notifications');
       await createNotificationRecord(
         'New Subscription Added',
         `${newSubscription.service_name} has been added to your subscriptions`,
@@ -142,6 +156,16 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
         newSubscription.id,
         userId
       );
+
+      // Setup recurring payment reminders if applicable
+      if (newSubscription.auto_renewal && newSubscription.payment_type === 'recurring') {
+        try {
+          await setupRecurringPaymentReminders(newSubscription);
+        } catch (error) {
+          console.error('Error setting up recurring payment reminders:', error);
+          // Don't fail subscription creation if reminder setup fails
+        }
+      }
 
       await logActivity({
         user_id: userId,
@@ -272,6 +296,17 @@ export const updateSubscription = async (id: string, subscription: Partial<Subsc
       .single();
 
     if (error) throw error;
+    
+    // Setup recurring payment reminders if applicable
+    if (data.auto_renewal && data.payment_type === 'recurring') {
+      try {
+        const { setupRecurringPaymentReminders } = await import('./notifications');
+        await setupRecurringPaymentReminders(data);
+      } catch (error) {
+        console.error('Error setting up recurring payment reminders after update:', error);
+        // Don't fail update if reminder setup fails
+      }
+    }
     
     await logActivity({
       user_id: userId,
@@ -653,6 +688,13 @@ export const renewSubscription = async (
       vendor_link: renewalData.vendor_link
     });
     
+    // Get the subscription to include card details
+    const { data: fullSubscription } = await supabase
+      .from('subscriptions')
+      .select('bank_name, card_holder_name, card_last_four, auto_renewal')
+      .eq('id', id)
+      .single();
+
     const subscriptionDetailsForInvoice = {
       service_name: existingSubscription.service_name,
       purchase_date: renewalData.purchase_date,
@@ -663,6 +705,10 @@ export const renewSubscription = async (
       vendor: renewalData.vendor,
       vendor_link: renewalData.vendor_link,
       category_id: existingSubscription.category_id,
+      bank_name: fullSubscription?.bank_name,
+      card_holder_name: fullSubscription?.card_holder_name,
+      card_last_four: fullSubscription?.card_last_four,
+      auto_renewal: fullSubscription?.auto_renewal,
     };
 
     await generateInvoiceForSubscription(
@@ -880,6 +926,69 @@ export const exportSubscriptionsToCSV = (subscriptions: Subscription[]): string 
   ].join('\n');
 
   return csvContent;
+};
+
+// Card Management
+export type CardInfo = {
+  bank_name: string;
+  card_holder_name: string;
+  card_last_four: string;
+  subscriptions: Subscription[];
+  total_subscriptions: number;
+};
+
+// Get all unique cards with their associated subscriptions
+export const getCardsWithSubscriptions = async (userId: string): Promise<CardInfo[]> => {
+  try {
+    // Get all subscriptions with card information
+    const { data: subscriptions, error } = await supabase
+      .from('subscriptions')
+      .select(`
+        *,
+        reminders (*),
+        category:categories(*)
+      `)
+      .eq('user_id', userId)
+      .not('card_last_four', 'is', null)
+      .not('bank_name', 'is', null);
+
+    if (error) throw error;
+
+    if (!subscriptions || subscriptions.length === 0) {
+      return [];
+    }
+
+    // Group subscriptions by card (bank_name + card_last_four)
+    const cardMap = new Map<string, CardInfo>();
+
+    subscriptions.forEach((sub: Subscription) => {
+      if (!sub.bank_name || !sub.card_last_four) return;
+
+      const cardKey = `${sub.bank_name}_${sub.card_last_four}`;
+
+      if (!cardMap.has(cardKey)) {
+        cardMap.set(cardKey, {
+          bank_name: sub.bank_name,
+          card_holder_name: sub.card_holder_name || 'N/A',
+          card_last_four: sub.card_last_four,
+          subscriptions: [],
+          total_subscriptions: 0,
+        });
+      }
+
+      const cardInfo = cardMap.get(cardKey)!;
+      cardInfo.subscriptions.push(sub);
+      cardInfo.total_subscriptions = cardInfo.subscriptions.length;
+    });
+
+    // Convert map to array and sort by bank name
+    return Array.from(cardMap.values()).sort((a, b) => 
+      a.bank_name.localeCompare(b.bank_name)
+    );
+  } catch (error) {
+    console.error('Error getting cards with subscriptions:', error);
+    throw error;
+  }
 };
 
 // Activity Logs

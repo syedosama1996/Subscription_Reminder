@@ -47,7 +47,10 @@ import {
   X,
   Check,
   Power,
-  Tag
+  Tag,
+  Building2,
+  CreditCard,
+  RefreshCw
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
@@ -125,7 +128,12 @@ export default function SubscriptionDetailScreen() {
         notes: data.notes,
         vendor: data.vendor,
         vendor_link: data.vendor_link,
-        category_id: data.category_id
+        category_id: data.category_id,
+        bank_name: data.bank_name,
+        card_holder_name: data.card_holder_name,
+        card_last_four: data.card_last_four,
+        auto_renewal: data.auto_renewal,
+        payment_type: data.payment_type
       });
       setEditedCategory(data.category || null);
       
@@ -182,7 +190,12 @@ export default function SubscriptionDetailScreen() {
         notes: subscription.notes,
         vendor: subscription.vendor,
         vendor_link: subscription.vendor_link,
-        category_id: subscription.category_id
+        category_id: subscription.category_id,
+        bank_name: subscription.bank_name,
+        card_holder_name: subscription.card_holder_name,
+        card_last_four: subscription.card_last_four,
+        auto_renewal: subscription.auto_renewal,
+        payment_type: subscription.payment_type
       });
       setEditedCategory(subscription.category || null);
     }
@@ -696,6 +709,140 @@ export default function SubscriptionDetailScreen() {
                     </TouchableOpacity>
                   )}
                 </>
+              )}
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Payment Information</Text>
+          
+          <View style={styles.detailRow}>
+            <Building2 size={20} color="#7f8c8d" style={styles.detailIcon} />
+            <View style={styles.detailContent}>
+              <Text style={styles.detailLabel}>Bank Name</Text>
+              {isEditing ? (
+                <TextInput
+                  style={styles.editInput}
+                  value={editedSubscription.bank_name}
+                  onChangeText={(text) => setEditedSubscription({...editedSubscription, bank_name: text})}
+                  placeholder="Bank name"
+                />
+              ) : (
+                <Text style={styles.detailValue}>{subscription.bank_name || 'N/A'}</Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <User size={20} color="#7f8c8d" style={styles.detailIcon} />
+            <View style={styles.detailContent}>
+              <Text style={styles.detailLabel}>Card Holder Name</Text>
+              {isEditing ? (
+                <TextInput
+                  style={styles.editInput}
+                  value={editedSubscription.card_holder_name}
+                  onChangeText={(text) => setEditedSubscription({...editedSubscription, card_holder_name: text})}
+                  placeholder="Card holder name"
+                />
+              ) : (
+                <Text style={styles.detailValue}>{subscription.card_holder_name || 'N/A'}</Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <CreditCard size={20} color="#7f8c8d" style={styles.detailIcon} />
+            <View style={styles.detailContent}>
+              <Text style={styles.detailLabel}>Card Last 4 Digits</Text>
+              {isEditing ? (
+                <TextInput
+                  style={styles.editInput}
+                  value={editedSubscription.card_last_four}
+                  onChangeText={(text) => {
+                    const numericText = text.replace(/[^0-9]/g, '').slice(0, 4);
+                    setEditedSubscription({...editedSubscription, card_last_four: numericText});
+                  }}
+                  placeholder="1234"
+                  keyboardType="numeric"
+                  maxLength={4}
+                />
+              ) : (
+                <Text style={styles.detailValue}>
+                  {subscription.card_last_four ? `****${subscription.card_last_four}` : 'N/A'}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <RefreshCw size={20} color="#7f8c8d" style={styles.detailIcon} />
+            <View style={styles.detailContent}>
+              <Text style={styles.detailLabel}>Auto Renewal</Text>
+              {isEditing ? (
+                <Switch
+                  value={editedSubscription.auto_renewal ?? false}
+                  onValueChange={(value) => setEditedSubscription({...editedSubscription, auto_renewal: value})}
+                  trackColor={{ false: '#e1e5e9', true: '#4158D0' }}
+                  thumbColor={(editedSubscription.auto_renewal ?? false) ? '#fff' : '#f4f3f4'}
+                />
+              ) : (
+                <View style={styles.autoRenewalContainer}>
+                  <Text style={[
+                    styles.autoRenewalText,
+                    { color: subscription.auto_renewal ? '#2ecc71' : '#e74c3c' }
+                  ]}>
+                    {subscription.auto_renewal ? 'Enabled' : 'Disabled'}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <CreditCard size={20} color="#7f8c8d" style={styles.detailIcon} />
+            <View style={styles.detailContent}>
+              <Text style={styles.detailLabel}>Payment Type</Text>
+              {isEditing ? (
+                <View style={styles.paymentTypeEditContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.paymentTypeEditButton,
+                      editedSubscription.payment_type === 'one-time' && styles.paymentTypeEditButtonActive
+                    ]}
+                    onPress={() => setEditedSubscription({...editedSubscription, payment_type: 'one-time'})}
+                  >
+                    <Text style={[
+                      styles.paymentTypeEditButtonText,
+                      editedSubscription.payment_type === 'one-time' && styles.paymentTypeEditButtonTextActive
+                    ]}>
+                      One-Time
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.paymentTypeEditButton,
+                      editedSubscription.payment_type === 'recurring' && styles.paymentTypeEditButtonActive
+                    ]}
+                    onPress={() => setEditedSubscription({...editedSubscription, payment_type: 'recurring'})}
+                  >
+                    <Text style={[
+                      styles.paymentTypeEditButtonText,
+                      editedSubscription.payment_type === 'recurring' && styles.paymentTypeEditButtonTextActive
+                    ]}>
+                      Recurring
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.paymentTypeContainer}>
+                  <Text style={[
+                    styles.paymentTypeText,
+                    { color: subscription.payment_type === 'recurring' ? '#2ecc71' : '#3498db' }
+                  ]}>
+                    {subscription.payment_type === 'recurring' ? '🔄 Recurring Payment' : '💳 One-Time Payment'}
+                  </Text>
+                </View>
               )}
             </View>
           </View>
@@ -1486,5 +1633,50 @@ const styles = StyleSheet.create({
   },
   categoryDisplay: {
     marginTop: 4,
+  },
+  autoRenewalContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  autoRenewalText: {
+    fontFamily: FONT_FAMILY.medium,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  paymentTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  paymentTypeText: {
+    fontFamily: FONT_FAMILY.medium,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  paymentTypeEditContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  paymentTypeEditButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 2,
+    borderColor: '#e1e5e9',
+    alignItems: 'center',
+  },
+  paymentTypeEditButtonActive: {
+    backgroundColor: '#4158D0',
+    borderColor: '#4158D0',
+  },
+  paymentTypeEditButtonText: {
+    fontFamily: FONT_FAMILY.medium,
+    fontSize: 12,
+    color: '#7f8c8d',
+  },
+  paymentTypeEditButtonTextActive: {
+    color: '#fff',
   },
 });

@@ -53,6 +53,7 @@ export default function HomeScreen() {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedBanks, setSelectedBanks] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
@@ -132,15 +133,34 @@ export default function HomeScreen() {
       );
     }
 
+    // Apply bank name filters if selected
+    let filteredByBank = filteredByCategory;
+    if (selectedBanks.length > 0) {
+      filteredByBank = filteredByCategory.filter(sub =>
+        sub.bank_name && selectedBanks.includes(sub.bank_name)
+      );
+    }
+
     // Sort subscriptions by days until expiry (ascending)
-    const sorted = [...filteredByCategory].sort((a, b) => {
+    const sorted = [...filteredByBank].sort((a, b) => {
       const daysA = getDaysUntilExpiry(a, today);
       const daysB = getDaysUntilExpiry(b, today);
       return daysA - daysB;
     });
 
     return sorted;
-  }, [allSubscriptions, selectedStatuses, selectedCategories, getDaysUntilExpiry]);
+  }, [allSubscriptions, selectedStatuses, selectedCategories, selectedBanks, getDaysUntilExpiry]);
+
+  // Get unique bank names from subscriptions
+  const bankNames = useMemo(() => {
+    const banks = new Set<string>();
+    allSubscriptions.forEach(sub => {
+      if (sub.bank_name && sub.bank_name.trim() !== '') {
+        banks.add(sub.bank_name);
+      }
+    });
+    return Array.from(banks).sort();
+  }, [allSubscriptions]);
 
   // Memoized filtered subscriptions by search query
   const filteredSubscriptions = useMemo(() => {
@@ -511,12 +531,12 @@ export default function HomeScreen() {
                 <View style={styles.filterButtonContainer}>
                   <Filter 
                     size={18} 
-                    color={selectedCategories.length > 0 || selectedStatuses.length > 0 ? "#4158D0" : "#7f8c8d"} 
+                    color={selectedCategories.length > 0 || selectedStatuses.length > 0 || selectedBanks.length > 0 ? "#4158D0" : "#7f8c8d"} 
                   />
-                  {(selectedCategories.length > 0 || selectedStatuses.length > 0) && (
+                  {(selectedCategories.length > 0 || selectedStatuses.length > 0 || selectedBanks.length > 0) && (
                     <View style={styles.filterBadge}>
                       <Text style={styles.filterBadgeText}>
-                        {selectedCategories.length + selectedStatuses.length}
+                        {selectedCategories.length + selectedStatuses.length + selectedBanks.length}
                       </Text>
                     </View>
                   )}
@@ -698,6 +718,9 @@ export default function HomeScreen() {
         onSelectCategories={setSelectedCategories}
         selectedStatuses={selectedStatuses}
         onSelectStatuses={setSelectedStatuses}
+        bankNames={bankNames}
+        selectedBanks={selectedBanks}
+        onSelectBanks={setSelectedBanks}
       />
 
       <NotificationBottomSheet

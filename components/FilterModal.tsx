@@ -7,7 +7,7 @@ import {
   ScrollView,
   TouchableOpacity
 } from 'react-native';
-import { X, Check } from 'lucide-react-native';
+import { X, Check, Building2 } from 'lucide-react-native';
 import { Category } from '../lib/types';
 import CategoryBadge from './CategoryBadge';
 import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
@@ -20,6 +20,9 @@ type FilterModalProps = {
   onSelectCategories: (categoryIds: string[]) => void;
   selectedStatuses: string[];
   onSelectStatuses: (statuses: string[]) => void;
+  bankNames?: string[];
+  selectedBanks?: string[];
+  onSelectBanks?: (banks: string[]) => void;
   showStatusFilter?: boolean; // Optional prop to show/hide status filter section
 };
 
@@ -36,17 +39,22 @@ export default function FilterModal({
   onSelectCategories,
   selectedStatuses,
   onSelectStatuses,
+  bankNames = [],
+  selectedBanks = [],
+  onSelectBanks,
   showStatusFilter = true // Default to true for backward compatibility
 }: FilterModalProps) {
   const [localSelectedCategories, setLocalSelectedCategories] = useState<string[]>([]);
   const [localSelectedStatuses, setLocalSelectedStatuses] = useState<string[]>([]);
+  const [localSelectedBanks, setLocalSelectedBanks] = useState<string[]>([]);
 
   useEffect(() => {
     if (visible) {
       setLocalSelectedCategories([...selectedCategories]);
       setLocalSelectedStatuses([...selectedStatuses]);
+      setLocalSelectedBanks([...selectedBanks]);
     }
-  }, [visible, selectedCategories, selectedStatuses]);
+  }, [visible, selectedCategories, selectedStatuses, selectedBanks]);
 
   const toggleCategory = (categoryId: string) => {
     if (localSelectedCategories.includes(categoryId)) {
@@ -64,10 +72,21 @@ export default function FilterModal({
     }
   };
 
+  const toggleBank = (bankName: string) => {
+    if (localSelectedBanks.includes(bankName)) {
+      setLocalSelectedBanks(localSelectedBanks.filter(name => name !== bankName));
+    } else {
+      setLocalSelectedBanks([...localSelectedBanks, bankName]);
+    }
+  };
+
   const handleApplyFilters = () => {
     // Update parent state - this will trigger useEffect in parent component to reload data
     onSelectCategories(localSelectedCategories);
     onSelectStatuses(localSelectedStatuses);
+    if (onSelectBanks) {
+      onSelectBanks(localSelectedBanks);
+    }
     onClose();
   };
 
@@ -75,12 +94,18 @@ export default function FilterModal({
     // Clear local and parent state - this will trigger useEffect in parent component to reload data
     setLocalSelectedCategories([]);
     setLocalSelectedStatuses([]);
+    setLocalSelectedBanks([]);
     onSelectCategories([]);
     onSelectStatuses([]);
+    if (onSelectBanks) {
+      onSelectBanks([]);
+    }
     onClose();
   };
 
-  const hasActiveFilters = localSelectedCategories.length > 0 || (showStatusFilter && localSelectedStatuses.length > 0);
+  const hasActiveFilters = localSelectedCategories.length > 0 || 
+    (showStatusFilter && localSelectedStatuses.length > 0) || 
+    localSelectedBanks.length > 0;
 
   return (
     <Modal
@@ -160,6 +185,40 @@ export default function FilterModal({
                         category={category} 
                         selected={localSelectedCategories.includes(category.id!)}
                       />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {bankNames.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Bank</Text>
+                <View style={styles.categoriesContainer}>
+                  {bankNames.map((bankName) => (
+                    <TouchableOpacity
+                      key={bankName}
+                      onPress={() => toggleBank(bankName)}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.bankButton,
+                        localSelectedBanks.includes(bankName) && styles.selectedBankButton
+                      ]}
+                    >
+                      <Building2 
+                        size={16} 
+                        color={localSelectedBanks.includes(bankName) ? '#3b82f6' : '#6b7280'} 
+                        style={styles.bankIcon}
+                      />
+                      <Text style={[
+                        styles.bankButtonText,
+                        localSelectedBanks.includes(bankName) && styles.selectedBankButtonText
+                      ]}>
+                        {bankName}
+                      </Text>
+                      {localSelectedBanks.includes(bankName) && (
+                        <Check size={14} color="#3b82f6" style={styles.bankCheckIcon} />
+                      )}
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -332,5 +391,36 @@ const styles = StyleSheet.create({
   applyButtonText: {
     ...TEXT_STYLES.bodySmallMedium,
     color: '#ffffff',
+  },
+  bankButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  selectedBankButton: {
+    backgroundColor: '#f0f9ff',
+    borderColor: '#3b82f6',
+  },
+  bankIcon: {
+    marginRight: 8,
+  },
+  bankButtonText: {
+    ...TEXT_STYLES.bodySmallMedium,
+    color: '#374151',
+    fontFamily: FONT_FAMILY.regular,
+  },
+  selectedBankButtonText: {
+    color: '#1d4ed8',
+    fontFamily: FONT_FAMILY.semiBold,
+  },
+  bankCheckIcon: {
+    marginLeft: 6,
   },
 });

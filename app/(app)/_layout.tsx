@@ -13,7 +13,8 @@ import {
   FileText,
   BarChart2,
   Activity,
-  History
+  History,
+  CreditCard
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,6 +49,11 @@ function CustomDrawerContent(props: DrawerContentComponentPropsType) {
       icon: <FileText size={24} color="#4158D0" />,
       label: 'Invoice',
       onPress: () => router.push('/(app)/invoice')
+    },
+    {
+      icon: <CreditCard size={24} color="#4158D0" />,
+      label: 'Card Management',
+      onPress: () => router.push('/(app)/card-management')
     },
     {
       icon: <BarChart2 size={24} color="#4158D0" />,

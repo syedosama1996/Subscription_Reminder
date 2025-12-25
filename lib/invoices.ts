@@ -28,6 +28,10 @@ export type Invoice = {
   notes?: string | null;
   category_id?: string | null;
   invoice_no: string;
+  bank_name?: string | null;
+  card_holder_name?: string | null;
+  card_last_four?: string | null;
+  auto_renewal?: boolean;
   subscription?: { service_name: string };
 };
 
@@ -75,6 +79,10 @@ export const createInvoice = async (invoiceData: Partial<Invoice>): Promise<Invo
       vendor_link: invoiceData.vendor_link,
       notes: invoiceData.notes,
       category_id: invoiceData.category_id,
+      bank_name: invoiceData.bank_name,
+      card_holder_name: invoiceData.card_holder_name,
+      card_last_four: invoiceData.card_last_four,
+      auto_renewal: invoiceData.auto_renewal,
       purchase_amount: validateNumericValue(invoiceData.purchase_amount ?? 0, 'purchase_amount'),
       service_charges: validateNumericValue(invoiceData.service_charges ?? 0, 'service_charges'),
       subscription_charges: validateNumericValue(invoiceData.subscription_charges ?? 0, 'subscription_charges'),
@@ -141,6 +149,10 @@ export const generateInvoiceForSubscription = async (
     vendor?: string | null;
     vendor_link?: string | null;
     category_id?: string | null;
+    bank_name?: string | null;
+    card_holder_name?: string | null;
+    card_last_four?: string | null;
+    auto_renewal?: boolean;
   },
   serviceCharges: number = 0
 ): Promise<Invoice | null> => {
@@ -160,6 +172,10 @@ export const generateInvoiceForSubscription = async (
       vendor: subscriptionDetails.vendor,
       vendor_link: subscriptionDetails.vendor_link,
       category_id: subscriptionDetails.category_id,
+      bank_name: subscriptionDetails.bank_name,
+      card_holder_name: subscriptionDetails.card_holder_name,
+      card_last_four: subscriptionDetails.card_last_four,
+      auto_renewal: subscriptionDetails.auto_renewal,
       purchase_amount: 0,
       service_charges: serviceChargesRounded,
       subscription_charges: subscriptionCharges,

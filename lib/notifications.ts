@@ -553,4 +553,205 @@ export function setupNotificationListener() {
     .subscribe();
 
   return subscription;
+}
+
+// Schedule recurring payment notification
+export async function scheduleRecurringPaymentNotification(
+  subscriptionName: string,
+  paymentDate: Date,
+  daysBefore: number,
+  subscriptionId: string,
+  bankName: string | null,
+  cardHolderName: string | null
+) {
+  const now = new Date();
+  const daysUntilPayment = Math.ceil((paymentDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Skip if payment date is in the past
+  if (daysUntilPayment <= 0) return null;
+  if (daysBefore < 0) return null;
+
+  // For very soon payments, use actual days until payment
+  const effectiveDaysBefore = Math.min(daysBefore, daysUntilPayment);
+
+  // Calculate trigger date
+  const triggerDate = new Date(paymentDate);
+  triggerDate.setDate(triggerDate.getDate() - effectiveDaysBefore);
+
+  // If trigger would be in the past, set to 1 minute from now
+  if (triggerDate < now) {
+    triggerDate.setTime(now.getTime() + 60000);
+  }
+
+  const notificationId = `${subscriptionId}_recurring_${effectiveDaysBefore}days`;
+
+  // Build notification message with card details
+  let message = `Payment for "${subscriptionName}" will be automatically charged`;
+  if (bankName && cardHolderName) {
+    message += ` from ${bankName} (${cardHolderName})`;
+  } else if (bankName) {
+    message += ` from ${bankName}`;
+  } else if (cardHolderName) {
+    message += ` (${cardHolderName})`;
+  }
+  message += ` on ${paymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.`;
+
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: notificationId,
+      content: {
+        title: 'Recurring Payment Reminder',
+        body: message,
+        data: { 
+          subscriptionId,
+          subscriptionName, 
+          paymentDate: paymentDate.toISOString(),
+          type: 'payment_due',
+          daysBefore: effectiveDaysBefore,
+          notificationId,
+          bankName,
+          cardHolderName
+        },
+        sound: 'default',
+      },
+      trigger: {
+        channelId: 'default',
+        date: triggerDate,
+      } as Notifications.DateTriggerInput,
+    });
+    
+    return notificationId;
+  } catch (error) {
+    console.error(`Error scheduling recurring payment notification for "${subscriptionName}":`, error);
+    throw error;
+  }
+}
+
+// Setup recurring payment reminders for a subscription
+export async function setupRecurringPaymentReminders(subscription: any) {
+  try {
+    // Only process if auto_renewal is true and payment_type is recurring
+    if (!subscription.auto_renewal || subscription.payment_type !== 'recurring') {
+      return;
+    }
+
+    // Need bank name and card info for the notification
+    if (!subscription.bank_name || !subscription.card_holder_name) {
+      console.log(`Skipping ${subscription.service_name}: Missing card information for recurring payment`);
+      return;
+    }
+
+    const now = new Date();
+    const expiryDate = new Date(subscription.expiry_date);
+    const daysUntilPayment = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Skip if payment date is in the past
+    if (daysUntilPayment <= 0) {
+      console.log(`Skipping ${subscription.service_name}: Payment date has passed`);
+      return;
+    }
+
+    // Skip if payment is more than 30 days away
+    if (daysUntilPayment > 30) {
+      console.log(`Skipping ${subscription.service_name}: Payment too far in future (${daysUntilPayment} days)`);
+      return;
+    }
+
+    console.log(`Setting up recurring payment reminders for ${subscription.service_name}:`);
+    console.log(`- Days until payment: ${daysUntilPayment}`);
+    console.log(`- Bank: ${subscription.bank_name}`);
+    console.log(`- Card Holder: ${subscription.card_holder_name}`);
+
+    // Schedule notifications for 2 days and 1 day before payment
+    const reminderDays = [2, 1];
+    const scheduledDays = new Set();
+
+    for (const daysBefore of reminderDays) {
+      // Only schedule if payment is at least that many days away
+      if (daysBefore > daysUntilPayment) {
+        console.log(`- Skipping ${daysBefore} day reminder: Payment is too soon`);
+        continue;
+      }
+
+      // Skip if we've already scheduled this interval
+      if (scheduledDays.has(daysBefore)) {
+        continue;
+      }
+
+      try {
+        const notificationId = await scheduleRecurringPaymentNotification(
+          subscription.service_name,
+          expiryDate,
+          daysBefore,
+          subscription.id,
+          subscription.bank_name,
+          subscription.card_holder_name
+        );
+        
+        if (notificationId) {
+          scheduledDays.add(daysBefore);
+          console.log(`- Scheduled ${daysBefore} day reminder`);
+          
+          // Also create notification record in database if it's due today
+          if (daysUntilPayment === daysBefore) {
+            try {
+              await createNotificationRecord(
+                'Recurring Payment Reminder',
+                `Payment for "${subscription.service_name}" will be automatically charged from ${subscription.bank_name} (${subscription.card_holder_name}) on ${expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.`,
+                'payment_due',
+                subscription.id,
+                subscription.user_id
+              );
+            } catch (error) {
+              console.error('Error creating payment reminder notification record:', error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`- Failed to schedule ${daysBefore} day reminder:`, error);
+      }
+    }
+
+    if (scheduledDays.size > 0) {
+      console.log(`Completed ${subscription.service_name}: Scheduled ${scheduledDays.size} payment reminders`);
+    }
+  } catch (error) {
+    console.error(`Error in setupRecurringPaymentReminders for "${subscription.service_name}"`, error);
+    throw error;
+  }
+}
+
+// Setup recurring payment reminders for all subscriptions
+export async function setupAllRecurringPaymentReminders(subscriptions: any[]) {
+  if (!subscriptions || subscriptions.length === 0) {
+    return;
+  }
+
+  try {
+    const now = new Date();
+    
+    // Filter subscriptions with auto_renewal=true, payment_type=recurring, and have card info
+    const recurringSubscriptions = subscriptions.filter(sub => {
+      if (!sub || !sub.is_active) return false;
+      if (!sub.auto_renewal || sub.payment_type !== 'recurring') return false;
+      if (!sub.bank_name || !sub.card_holder_name) return false;
+      
+      const expiryDate = new Date(sub.expiry_date);
+      const daysUntilPayment = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      return daysUntilPayment > 0 && daysUntilPayment <= 30;
+    });
+
+    console.log(`\nSetting up recurring payment reminders for ${recurringSubscriptions.length} subscriptions...`);
+
+    // Process each recurring subscription
+    for (const subscription of recurringSubscriptions) {
+      await setupRecurringPaymentReminders(subscription);
+    }
+
+    console.log(`\nCompleted setting up recurring payment reminders`);
+  } catch (error) {
+    console.error('Fatal error in setupAllRecurringPaymentReminders:', error);
+    throw error;
+  }
 } 

@@ -510,6 +510,36 @@ export default function InvoiceScreen() {
                  </View>
               </View>
 
+              {(selectedInvoice.bank_name || selectedInvoice.card_holder_name || selectedInvoice.card_last_four) && (
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>Payment Information</Text>
+                  {selectedInvoice.bank_name && (
+                    <View style={styles.modalDetailRow}>
+                      <Text style={styles.modalDetailLabel}>Bank Name:</Text>
+                      <Text style={styles.modalDetailValue}>{selectedInvoice.bank_name}</Text>
+                    </View>
+                  )}
+                  {selectedInvoice.card_holder_name && (
+                    <View style={styles.modalDetailRow}>
+                      <Text style={styles.modalDetailLabel}>Card Holder:</Text>
+                      <Text style={styles.modalDetailValue}>{selectedInvoice.card_holder_name}</Text>
+                    </View>
+                  )}
+                  {selectedInvoice.card_last_four && (
+                    <View style={styles.modalDetailRow}>
+                      <Text style={styles.modalDetailLabel}>Card Number:</Text>
+                      <Text style={styles.modalDetailValue}>****{selectedInvoice.card_last_four}</Text>
+                    </View>
+                  )}
+                  <View style={styles.modalDetailRow}>
+                    <Text style={styles.modalDetailLabel}>Auto Renewal:</Text>
+                    <Text style={[styles.modalDetailValue, { color: selectedInvoice.auto_renewal ? '#2ecc71' : '#e74c3c' }]}>
+                      {selectedInvoice.auto_renewal ? 'Enabled' : 'Disabled'}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
               <View style={styles.modalSection}>
                  <Text style={styles.modalSectionTitle}>Summary</Text>
                  <View style={styles.itemsTableContainer}>
