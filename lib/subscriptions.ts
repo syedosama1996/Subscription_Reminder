@@ -76,7 +76,7 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
     };
 
     if (!subscriptionPayload.service_name || !subscriptionPayload.purchase_date || subscriptionPayload.purchase_amount_pkr === undefined || !subscriptionPayload.expiry_date) {
-        throw new Error("Missing required subscription fields for creation.");
+      throw new Error("Missing required subscription fields for creation.");
     }
 
     const { data, error } = await supabase
@@ -86,7 +86,7 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
       .single();
 
     if (error) throw error;
-    
+
     const newSubscription = data as Subscription;
 
     if (newSubscription?.id) {
@@ -125,14 +125,14 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
       if (invoice) {
         try {
           console.log('[SUBSCRIPTION] Preparing to send purchase confirmation email...');
-          
+
           // Always send to fixed email address
           const fixedEmail = 'usama.shah2077@gmail.com';
           console.log('[SUBSCRIPTION] Sending purchase confirmation to:', fixedEmail);
-          
+
           const { sendSubscriptionPurchaseEmail } = await import('./email');
           const emailSent = await sendSubscriptionPurchaseEmail(fixedEmail, newSubscription, invoice);
-          
+
           if (emailSent) {
             console.log('[SUBSCRIPTION] ✅ Purchase confirmation email sent successfully to', fixedEmail);
           } else {
@@ -157,6 +157,15 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
         userId
       );
 
+      // Setup expiry reminders for the subscription
+      try {
+        const { setupExpiryReminders } = await import('./notifications');
+        await setupExpiryReminders(newSubscription);
+      } catch (error) {
+        console.error('Error setting up expiry reminders:', error);
+        // Don't fail subscription creation if reminder setup fails
+      }
+
       // Setup recurring payment reminders if applicable
       if (newSubscription.auto_renewal && newSubscription.payment_type === 'recurring') {
         try {
@@ -175,7 +184,7 @@ export const createSubscription = async (subscription: Partial<Subscription>, us
         details: { service_name: newSubscription.service_name }
       });
     }
-    
+
     return newSubscription;
   } catch (error) {
     console.error('Error creating subscription:', error);
@@ -226,7 +235,7 @@ export const getSubscriptions = async (userId: string, filter?: SubscriptionFilt
 
       return data.filter(sub => {
         const expiryDate = new Date(sub.expiry_date);
-        
+
         // Only include active subscriptions
         if (!sub.is_active && filter.status && !filter.status.includes('past')) {
           return false;
@@ -245,7 +254,7 @@ export const getSubscriptions = async (userId: string, filter?: SubscriptionFilt
         if (filter.status && filter.status.includes('past') && (!sub.is_active || expiryDate < thirtyDaysAgo)) {
           return true;
         }
-        
+
         return filter.status && filter.status.length === 0; // Include all if no status filter
       });
     }
@@ -287,7 +296,7 @@ export const updateSubscription = async (id: string, subscription: Partial<Subsc
 
     const { data, error } = await supabase
       .from('subscriptions')
-      .update({ 
+      .update({
         ...subscriptionData,
         last_updated_at: new Date().toISOString()
       })
@@ -296,18 +305,26 @@ export const updateSubscription = async (id: string, subscription: Partial<Subsc
       .single();
 
     if (error) throw error;
-    
-    // Setup recurring payment reminders if applicable
-    if (data.auto_renewal && data.payment_type === 'recurring') {
-      try {
-        const { setupRecurringPaymentReminders } = await import('./notifications');
-        await setupRecurringPaymentReminders(data);
-      } catch (error) {
-        console.error('Error setting up recurring payment reminders after update:', error);
-        // Don't fail update if reminder setup fails
+
+    // Setup expiry reminders for the subscription
+    try {
+      const { setupExpiryReminders, setupRecurringPaymentReminders } = await import('./notifications');
+      await setupExpiryReminders(data);
+
+      // Setup recurring payment reminders if applicable
+      if (data.auto_renewal && data.payment_type === 'recurring') {
+        try {
+          await setupRecurringPaymentReminders(data);
+        } catch (error) {
+          console.error('Error setting up recurring payment reminders after update:', error);
+          // Don't fail update if reminder setup fails
+        }
       }
+    } catch (error) {
+      console.error('Error setting up reminders after update:', error);
+      // Don't fail update if reminder setup fails
     }
-    
+
     await logActivity({
       user_id: userId,
       action: 'update',
@@ -315,7 +332,7 @@ export const updateSubscription = async (id: string, subscription: Partial<Subsc
       entity_id: id,
       details: { changes: subscriptionData }
     });
-    
+
     return data;
   } catch (error) {
     console.error('Error updating subscription:', error);
@@ -338,7 +355,7 @@ export const toggleSubscriptionStatus = async (id: string, isActive: boolean, us
     // Update the subscription status
     const { data, error } = await supabase
       .from('subscriptions')
-      .update({ 
+      .update({
         is_active: isActive,
         last_updated_at: new Date().toISOString()
       })
@@ -363,12 +380,12 @@ export const toggleSubscriptionStatus = async (id: string, isActive: boolean, us
       action: isActive ? 'activate' : 'deactivate',
       entity_type: 'subscription',
       entity_id: id,
-      details: { 
+      details: {
         is_active: isActive,
         service_name: subscription.service_name
       }
     });
-    
+
     return data;
   } catch (error) {
     console.error('Error toggling subscription status:', error);
@@ -386,7 +403,7 @@ export const deleteSubscription = async (id: string, userId: string) => {
       .single();
 
     // Delete related records (Invoices handled by ON DELETE CASCADE)
-    
+
     // 1. Delete related reminders
     const { error: reminderError } = await supabase
       .from('reminders')
@@ -420,7 +437,7 @@ export const deleteSubscription = async (id: string, userId: string) => {
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting subscription itself:', error); 
+      console.error('Error deleting subscription itself:', error);
       throw error;
     } else {
       console.log(`Successfully deleted subscription: ${id}`);
@@ -439,7 +456,7 @@ export const deleteSubscription = async (id: string, userId: string) => {
         details: { service_name: subscription.service_name }
       });
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error deleting subscription:', error);
@@ -457,7 +474,7 @@ export const deleteMultipleSubscriptions = async (ids: string[], userId: string)
       .in('id', ids);
 
     // Delete related records (Invoices handled by ON DELETE CASCADE)
-    
+
     // 1. Delete related reminders
     const { error: reminderError } = await supabase
       .from('reminders')
@@ -501,7 +518,7 @@ export const deleteMultipleSubscriptions = async (ids: string[], userId: string)
         });
       }
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error deleting multiple subscriptions:', error);
@@ -543,7 +560,7 @@ export const getRemindersForSubscription = async (subscriptionId: string) => {
     console.error(`Catch block: Error fetching reminders for subscription ${subscriptionId}:`, error);
     // Ensure the return type matches the expected { data, error } structure even in catch block
     // The actual error is already logged above.
-    return { data: null, error: error instanceof Error ? error : new Error('Failed to fetch reminders') }; 
+    return { data: null, error: error instanceof Error ? error : new Error('Failed to fetch reminders') };
   }
 };
 
@@ -638,7 +655,7 @@ export const getSubscriptionHistory = async (userId: string) => {
 
 // Renew subscription
 export const renewSubscription = async (
-  id: string, 
+  id: string,
   renewalData: {
     purchase_date: string;
     expiry_date: string;
@@ -655,10 +672,10 @@ export const renewSubscription = async (
       .select('service_name, domain_name, email, username, vendor, vendor_link, category_id')
       .eq('id', id)
       .single();
-      
+
     if (fetchError) throw fetchError;
     if (!existingSubscription) throw new Error("Subscription not found for renewal.");
-    
+
     const updatePayload = {
       purchase_date: renewalData.purchase_date,
       expiry_date: renewalData.expiry_date,
@@ -666,7 +683,7 @@ export const renewSubscription = async (
       purchase_amount_usd: renewalData.purchase_amount_usd || 0,
       vendor: renewalData.vendor,
       vendor_link: renewalData.vendor_link,
-      is_active: true 
+      is_active: true
     };
 
     const { data: updatedSubscription, error: updateError } = await supabase
@@ -687,7 +704,7 @@ export const renewSubscription = async (
       vendor: renewalData.vendor,
       vendor_link: renewalData.vendor_link
     });
-    
+
     // Get the subscription to include card details
     const { data: fullSubscription } = await supabase
       .from('subscriptions')
@@ -732,7 +749,7 @@ export const renewSubscription = async (
       action: 'renew',
       entity_type: 'subscription',
       entity_id: id,
-      details: { 
+      details: {
         purchase_date: renewalData.purchase_date,
         expiry_date: renewalData.expiry_date
       }
@@ -764,7 +781,7 @@ export const createCategory = async (category: Category) => {
       entity_id: data.id,
       details: { name: category.name }
     });
-    
+
     return data;
   } catch (error) {
     console.error('Error creating category:', error);
@@ -807,7 +824,7 @@ export const updateCategory = async (id: string, category: Partial<Category>, us
       entity_id: id,
       details: { changes: category }
     });
-    
+
     return data;
   } catch (error) {
     console.error('Error updating category:', error);
@@ -841,7 +858,7 @@ export const deleteCategory = async (id: string, userId: string) => {
         details: { name: category.name }
       });
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error deleting category:', error);
@@ -903,9 +920,9 @@ export const exportSubscriptionsToCSV = (subscriptions: Subscription[]): string 
   const csvContent = [
     headers.join(','),
     ...subscriptions.map(sub => {
-      const status = sub.is_active === false ? 'Inactive' : 
-                    (new Date(sub.expiry_date) < new Date() ? 'Expired' : 'Active');
-      
+      const status = sub.is_active === false ? 'Inactive' :
+        (new Date(sub.expiry_date) < new Date() ? 'Expired' : 'Active');
+
       return [
         `"${sub.service_name || ''}"`,
         `"${sub.domain_name || ''}"`,
@@ -982,7 +999,7 @@ export const getCardsWithSubscriptions = async (userId: string): Promise<CardInf
     });
 
     // Convert map to array and sort by bank name
-    return Array.from(cardMap.values()).sort((a, b) => 
+    return Array.from(cardMap.values()).sort((a, b) =>
       a.bank_name.localeCompare(b.bank_name)
     );
   } catch (error) {

@@ -23,7 +23,12 @@
       },
       "distribution": "internal"
     },
-    "production": {}
+    "production": {
+      "distribution": "store",
+      "ios": {
+        "buildConfiguration": "Release"
+      }
+    }
   },
   "submit": {
     "production": {}

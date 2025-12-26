@@ -21,11 +21,77 @@ interface Notification {
 
 // Configure notification handler
 Notifications.setNotificationHandler({
-  handleNotification: async (notification) => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
+  handleNotification: async (notification) => {
+    const data = notification.request.content.data;
+    
+    // For subscription reminders, check if notification was already shown today
+    if (data?.subscriptionId && (data?.type === 'expiry_reminder' || data?.type === 'payment_due')) {
+      try {
+        const now = new Date();
+        const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        const startOfTodayISO = startOfToday.toISOString();
+
+        // Check if a notification for this subscription was already created today
+        const { data: todayNotifications } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('subscription_id', data.subscriptionId)
+          .eq('type', data.type)
+          .gte('created_at', startOfTodayISO)
+          .limit(1);
+
+        // If notification was already shown today, don't show it again
+        if (todayNotifications && todayNotifications.length > 0) {
+          console.log(`Notification already shown today for subscription ${data.subscriptionId}. Suppressing duplicate.`);
+          return {
+            shouldShowAlert: false,
+            shouldPlaySound: false,
+            shouldSetBadge: false,
+          };
+        }
+
+        // If not shown today, create notification record in database
+        // Get userId from subscription if available, otherwise skip user_id
+        let userId: string | undefined;
+        if (data.subscriptionId) {
+          try {
+            const { data: subData } = await supabase
+              .from('subscriptions')
+              .select('user_id')
+              .eq('id', data.subscriptionId)
+              .single();
+            userId = subData?.user_id;
+          } catch (error) {
+            console.error('Error fetching user_id for notification:', error);
+          }
+        }
+
+        // Create notification record (this will also check for duplicates)
+        try {
+          await createNotificationRecord(
+            notification.request.content.title || 'Subscription Reminder',
+            notification.request.content.body || '',
+            data.type,
+            data.subscriptionId,
+            userId,
+            true // Skip today check since we already checked above
+          );
+        } catch (error) {
+          console.error('Error creating notification record in handler:', error);
+          // Continue to show notification even if record creation fails
+        }
+      } catch (error) {
+        console.error('Error checking today notifications in handler:', error);
+        // If error, allow notification to show
+      }
+    }
+
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    };
+  },
 });
 
 export async function registerForPushNotificationsAsync() {
@@ -95,16 +161,64 @@ export async function scheduleNotification(title: string, body: string, data: an
   });
 }
 
+// Helper function to check if notification was already shown today for a subscription
+async function wasNotificationShownToday(
+  subscriptionId: string | undefined,
+  userId: string | undefined,
+  type: 'expiry_reminder' | 'payment_due' | 'general'
+): Promise<boolean> {
+  if (!subscriptionId || !userId) {
+    return false; // For general notifications without subscription, allow
+  }
+
+  try {
+    // Get start of today in UTC
+    const now = new Date();
+    const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const startOfTodayISO = startOfToday.toISOString();
+
+    // Check if a notification for this subscription was already created today
+    const { data: todayNotifications, error } = await supabase
+      .from('notifications')
+      .select('id')
+      .eq('subscription_id', subscriptionId)
+      .eq('user_id', userId)
+      .eq('type', type)
+      .gte('created_at', startOfTodayISO)
+      .limit(1);
+
+    if (error) {
+      console.error('Error checking today notifications:', error);
+      return false; // If error, allow notification to be created
+    }
+
+    return todayNotifications && todayNotifications.length > 0;
+  } catch (error) {
+    console.error('Error in wasNotificationShownToday:', error);
+    return false; // If error, allow notification to be created
+  }
+}
+
 // Create notification record in database
 export async function createNotificationRecord(
   title: string, 
   message: string, 
   type: 'expiry_reminder' | 'payment_due' | 'general' = 'general',
   subscriptionId?: string,
-  userId?: string
+  userId?: string,
+  skipTodayCheck: boolean = false // Allow bypassing today check for special cases
 ) {
   try {
-    // Check for duplicate notifications within the last 5 seconds
+    // For subscription reminders (expiry_reminder and payment_due), check if already shown today
+    if (!skipTodayCheck && (type === 'expiry_reminder' || type === 'payment_due')) {
+      const alreadyShownToday = await wasNotificationShownToday(subscriptionId, userId, type);
+      if (alreadyShownToday) {
+        console.log(`Notification already shown today for subscription ${subscriptionId} (${type}). Skipping.`);
+        return null;
+      }
+    }
+
+    // Also check for duplicate notifications within the last 5 seconds (quick duplicate prevention)
     const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString();
     const { data: recentNotifications } = await supabase
       .from('notifications')
@@ -118,7 +232,7 @@ export async function createNotificationRecord(
 
     // If duplicate found, don't create another notification
     if (recentNotifications && recentNotifications.length > 0) {
-      console.log('Duplicate notification prevented:', title);
+      console.log('Duplicate notification prevented (within 5 seconds):', title);
       return null;
     }
 
@@ -271,12 +385,51 @@ export async function setupExpiryReminders(subscription: any) {
     }
 
     // Only process enabled reminders that are relevant for the current expiry timeframe
-    const relevantReminders = reminders
+    let relevantReminders = reminders
       .filter(r => r.enabled && r.days_before >= 0 && r.days_before <= daysUntilExpiry)
       .sort((a, b) => b.days_before - a.days_before);
 
+    // If no reminders match, use closest future reminder or create default
     if (relevantReminders.length === 0) {
-      console.log(`Skipping ${subscription.service_name}: No relevant reminders for timeframe`);
+      // Find the closest reminder that's greater than daysUntilExpiry
+      const futureReminders = reminders
+        .filter(r => r.enabled && r.days_before > daysUntilExpiry)
+        .sort((a, b) => a.days_before - b.days_before);
+      
+      if (futureReminders.length > 0) {
+        // Use the closest future reminder, but schedule it for the actual days until expiry
+        console.log(`${subscription.service_name}: No reminders match timeframe (${daysUntilExpiry} days), using closest reminder (${futureReminders[0].days_before} days) but scheduling for ${daysUntilExpiry} days`);
+        try {
+          const notificationId = await scheduleExpiryNotification(
+            subscription.service_name,
+            expiryDate,
+            daysUntilExpiry,
+            subscription.id
+          );
+          if (notificationId) {
+            console.log(`- Scheduled reminder for ${daysUntilExpiry} days`);
+          }
+        } catch (error) {
+          console.error(`- Failed to schedule reminder:`, error);
+        }
+      } else {
+        // No reminders at all, create a default reminder
+        console.log(`${subscription.service_name}: No reminders found, creating default reminder for ${daysUntilExpiry} days`);
+        try {
+          const defaultDaysBefore = Math.max(daysUntilExpiry, 1);
+          const notificationId = await scheduleExpiryNotification(
+            subscription.service_name,
+            expiryDate,
+            defaultDaysBefore,
+            subscription.id
+          );
+          if (notificationId) {
+            console.log(`- Scheduled default reminder for ${defaultDaysBefore} days`);
+          }
+        } catch (error) {
+          console.error(`- Failed to schedule default reminder:`, error);
+        }
+      }
       return;
     }
 
@@ -441,12 +594,51 @@ export async function setupAllExpiryReminders(subscriptions: any[]) {
       }
 
       // Filter for enabled reminders that make sense for the remaining time
-      const validReminders = reminders
+      let validReminders = reminders
         .filter(r => r.enabled && r.days_before > 0 && r.days_before <= daysUntilExpiry)
         .sort((a, b) => b.days_before - a.days_before);
 
+      // If no reminders match the timeframe, use the closest reminder or create a default
       if (validReminders.length === 0) {
-        console.log(`- Skipping: No valid reminders for current timeframe`);
+        // Find the closest reminder that's greater than daysUntilExpiry
+        const futureReminders = reminders
+          .filter(r => r.enabled && r.days_before > daysUntilExpiry)
+          .sort((a, b) => a.days_before - b.days_before);
+        
+        if (futureReminders.length > 0) {
+          // Use the closest future reminder, but schedule it for the actual days until expiry
+          console.log(`- No reminders match timeframe (${daysUntilExpiry} days), using closest reminder (${futureReminders[0].days_before} days) but scheduling for ${daysUntilExpiry} days`);
+          try {
+            const notificationId = await scheduleExpiryNotification(
+              subscription.service_name,
+              expiryDate,
+              daysUntilExpiry,
+              subscription.id
+            );
+            if (notificationId) {
+              console.log(`  - Scheduled reminder for ${daysUntilExpiry} days`);
+            }
+          } catch (error) {
+            console.error(`  - Failed to schedule reminder:`, error);
+          }
+        } else {
+          // No reminders at all, create a default reminder
+          console.log(`- No reminders found, creating default reminder for ${daysUntilExpiry} days`);
+          try {
+            const defaultDaysBefore = Math.max(daysUntilExpiry, 1);
+            const notificationId = await scheduleExpiryNotification(
+              subscription.service_name,
+              expiryDate,
+              defaultDaysBefore,
+              subscription.id
+            );
+            if (notificationId) {
+              console.log(`  - Scheduled default reminder for ${defaultDaysBefore} days`);
+            }
+          } catch (error) {
+            console.error(`  - Failed to schedule default reminder:`, error);
+          }
+        }
         continue;
       }
 

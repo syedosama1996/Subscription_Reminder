@@ -56,7 +56,7 @@ const InnerLayout = () => {
   useEffect(() => {
     if (!user) return; // Don't set up notifications if user is not logged in
     
-    let subscriptionSub: any, notificationSub: any, responseListener: any;
+    let subscriptionSub: any, notificationSub: any, responseListener: any, receivedListener: any;
     
     async function setupNotifications() {
       try {
@@ -64,7 +64,7 @@ const InnerLayout = () => {
         subscriptionSub = setupSubscriptionNotifications(user?.id); // Pass user ID
         notificationSub = setupNotificationListener();
         
-        // Set up notification response listener
+        // Set up notification response listener (when user taps notification)
         responseListener = Notifications.addNotificationResponseReceivedListener(response => {
           const data = response.notification.request.content.data;
           
@@ -84,6 +84,7 @@ const InnerLayout = () => {
       if (subscriptionSub?.unsubscribe) subscriptionSub.unsubscribe();
       if (notificationSub?.unsubscribe) notificationSub.unsubscribe();
       if (responseListener) Notifications.removeNotificationSubscription(responseListener);
+      if (receivedListener) Notifications.removeNotificationSubscription(receivedListener);
     };
   }, [user, router]); // Add user as dependency
 

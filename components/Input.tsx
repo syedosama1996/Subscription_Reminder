@@ -6,7 +6,8 @@ import {
   StyleSheet, 
   TextInputProps,
   ViewStyle,
-  TextStyle
+  TextStyle,
+  Platform
 } from 'react-native';
 import { TEXT_STYLES, FONT_FAMILY, FONT_SIZES } from '../constants/Typography';
 
@@ -42,11 +43,12 @@ const Input = forwardRef<TextInput, InputProps>(({
           ref={ref}
           style={[
             styles.input,
+            Platform.OS === 'ios' ? styles.inputIOS : styles.inputAndroid,
             error && styles.inputError,
             multiline && styles.multilineInput,
             inputStyle
           ]}
-          placeholderTextColor="#8e8e93"
+          placeholderTextColor="#95a5a6"
           multiline={multiline}
           numberOfLines={numberOfLines}
           textAlignVertical={multiline ? 'top' : 'center'}
@@ -74,15 +76,22 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: '#f8f9fa',
-    height: 48,
+    height: 50,
     borderRadius: 12,
     paddingLeft: 16,
     paddingRight: 12,
-    ...TEXT_STYLES.input,
-    fontSize: 13,
+    fontFamily: FONT_FAMILY.regular,
+    fontSize: FONT_SIZES.input,
     color: '#1a1a1a',
     borderWidth: 1,
     borderColor: '#e1e5e9',
+  },
+  inputIOS: {
+    // iOS-specific adjustments - no paddingTop/paddingBottom to let iOS handle centering naturally
+  },
+  inputAndroid: {
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   multilineInput: {
     height: 100,

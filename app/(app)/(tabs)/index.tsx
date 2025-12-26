@@ -33,8 +33,6 @@ import { Search, Bell, Plus, Filter, Download, CheckSquare, Menu, CheckCircle2, 
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { Category, SubscriptionFilter } from '../../../lib/types';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import CustomLoader from '../../../components/CustomLoader';
 import { setScrolling } from '../../../components/SubscriptionCard';
 import { TouchableOpacity } from 'react-native';
@@ -54,6 +52,8 @@ export default function HomeScreen() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedBanks, setSelectedBanks] = useState<string[]>([]);
+  const [selectedPaymentTypes, setSelectedPaymentTypes] = useState<string[]>([]);
+  const [selectedAutoRenewal, setSelectedAutoRenewal] = useState<boolean | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([]);
@@ -141,15 +141,31 @@ export default function HomeScreen() {
       );
     }
 
+    // Apply payment type filters if selected
+    let filteredByPaymentType = filteredByBank;
+    if (selectedPaymentTypes.length > 0) {
+      filteredByPaymentType = filteredByBank.filter(sub =>
+        sub.payment_type && selectedPaymentTypes.includes(sub.payment_type)
+      );
+    }
+
+    // Apply auto renewal filter if selected
+    let filteredByAutoRenewal = filteredByPaymentType;
+    if (selectedAutoRenewal !== null) {
+      filteredByAutoRenewal = filteredByPaymentType.filter(sub =>
+        sub.auto_renewal === selectedAutoRenewal
+      );
+    }
+
     // Sort subscriptions by days until expiry (ascending)
-    const sorted = [...filteredByBank].sort((a, b) => {
+    const sorted = [...filteredByAutoRenewal].sort((a, b) => {
       const daysA = getDaysUntilExpiry(a, today);
       const daysB = getDaysUntilExpiry(b, today);
       return daysA - daysB;
     });
 
     return sorted;
-  }, [allSubscriptions, selectedStatuses, selectedCategories, selectedBanks, getDaysUntilExpiry]);
+  }, [allSubscriptions, selectedStatuses, selectedCategories, selectedBanks, selectedPaymentTypes, selectedAutoRenewal, getDaysUntilExpiry]);
 
   // Get unique bank names from subscriptions
   const bankNames = useMemo(() => {
@@ -531,12 +547,12 @@ export default function HomeScreen() {
                 <View style={styles.filterButtonContainer}>
                   <Filter 
                     size={18} 
-                    color={selectedCategories.length > 0 || selectedStatuses.length > 0 || selectedBanks.length > 0 ? "#4158D0" : "#7f8c8d"} 
+                    color={selectedCategories.length > 0 || selectedStatuses.length > 0 || selectedBanks.length > 0 || selectedPaymentTypes.length > 0 || selectedAutoRenewal !== null ? "#4158D0" : "#7f8c8d"} 
                   />
-                  {(selectedCategories.length > 0 || selectedStatuses.length > 0 || selectedBanks.length > 0) && (
+                  {(selectedCategories.length > 0 || selectedStatuses.length > 0 || selectedBanks.length > 0 || selectedPaymentTypes.length > 0 || selectedAutoRenewal !== null) && (
                     <View style={styles.filterBadge}>
                       <Text style={styles.filterBadgeText}>
-                        {selectedCategories.length + selectedStatuses.length + selectedBanks.length}
+                        {selectedCategories.length + selectedStatuses.length + selectedBanks.length + selectedPaymentTypes.length + (selectedAutoRenewal !== null ? 1 : 0)}
                       </Text>
                     </View>
                   )}
@@ -557,157 +573,250 @@ export default function HomeScreen() {
           />
         )}
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.contentContainer}
-          onScrollBeginDrag={() => setScrolling(true)}
-          onScrollEndDrag={() => setScrolling(false)}
-          onMomentumScrollBegin={() => setScrolling(true)}
-          onMomentumScrollEnd={() => setScrolling(false)}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-          overScrollMode="never"
-        >
-          <View style={styles.mainContent}>
-            {categories.length > 0 && (
-              <View style={[
-                styles.categoriesWrapper,
-                selectedSubscriptions.length > 0 && styles.categoriesWrapperWithBulkSelection
-              ]}>
-                <ScrollView
-                  ref={categoriesScrollViewRef}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.categoriesContainer}
-                  contentContainerStyle={styles.categoriesScrollContent}
-                  alwaysBounceHorizontal={false}
-                >
-                  <TouchableOpacity
-                    onPress={() => handleCategoryPress(null)}
-                    style={[
-                      styles.categoryTab,
-                      !activeCategory && styles.activeCategoryTab
-                    ]}
+        {finalFilteredSubscriptions.length === 0 ? (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.contentContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#4158D0']}
+                tintColor="#4158D0"
+              />
+            }
+          >
+            <View style={styles.mainContent}>
+              {categories.length > 0 && (
+                <View style={[
+                  styles.categoriesWrapper,
+                  selectedSubscriptions.length > 0 && styles.categoriesWrapperWithBulkSelection
+                ]}>
+                  <ScrollView
+                    ref={categoriesScrollViewRef}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.categoriesContainer}
+                    contentContainerStyle={styles.categoriesScrollContent}
+                    alwaysBounceHorizontal={false}
                   >
-                    {!activeCategory ? (
-                      <LinearGradient
-                        colors={['#4158D0', '#C850C0']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={[styles.categoryTabContent]}
-                      >
-                        <View style={styles.categoryContent}>
-                          <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>All</Text>
-                          <View style={[styles.badge, styles.activeBadge]}>
-                            <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptions.length}</Text>
+                    <TouchableOpacity
+                      onPress={() => handleCategoryPress(null)}
+                      style={[
+                        styles.categoryTab,
+                        !activeCategory && styles.activeCategoryTab
+                      ]}
+                    >
+                      {!activeCategory ? (
+                        <LinearGradient
+                          colors={['#4158D0', '#C850C0']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={[styles.categoryTabContent]}
+                        >
+                          <View style={styles.categoryContent}>
+                            <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>All</Text>
+                            <View style={[styles.badge, styles.activeBadge]}>
+                              <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptions.length}</Text>
+                            </View>
+                          </View>
+                        </LinearGradient>
+                      ) : (
+                        <View style={styles.categoryTabContent}>
+                          <View style={styles.categoryContent}>
+                            <Text style={styles.categoryTabText}>All</Text>
+                            <View style={styles.badge}>
+                              <Text style={styles.badgeText}>{subscriptions.length}</Text>
+                            </View>
                           </View>
                         </View>
-                      </LinearGradient>
-                    ) : (
-                      <View style={styles.categoryTabContent}>
-                        <View style={styles.categoryContent}>
-                          <Text style={styles.categoryTabText}>All</Text>
-                          <View style={styles.badge}>
-                            <Text style={styles.badgeText}>{subscriptions.length}</Text>
-                          </View>
-                        </View>
-                      </View>
-                    )}
-                  </TouchableOpacity>
+                      )}
+                    </TouchableOpacity>
 
-                  {categories.map(category => {
-                    const subscriptionCount = subscriptions.filter(sub => sub.category_id === category.id).length;
-                    return (
-                      <TouchableOpacity
-                        key={category.id}
-                        onPress={() => handleCategoryPress(category.id!)}
-                        style={[
-                          styles.categoryTab,
-                          activeCategory === category.id && styles.activeCategoryTab
-                        ]}
-                      >
-                        {activeCategory === category.id ? (
-                          <LinearGradient
-                            colors={['#4158D0', '#C850C0']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={[styles.categoryTabContent]}
-                          >
-                            <View style={styles.categoryContent}>
-                              <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>
-                                {category.name}
-                              </Text>
-                              <View style={[styles.badge, styles.activeBadge]}>
-                                <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptionCount}</Text>
+                    {categories.map(category => {
+                      const subscriptionCount = subscriptions.filter(sub => sub.category_id === category.id).length;
+                      return (
+                        <TouchableOpacity
+                          key={category.id}
+                          onPress={() => handleCategoryPress(category.id!)}
+                          style={[
+                            styles.categoryTab,
+                            activeCategory === category.id && styles.activeCategoryTab
+                          ]}
+                        >
+                          {activeCategory === category.id ? (
+                            <LinearGradient
+                              colors={['#4158D0', '#C850C0']}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 1, y: 1 }}
+                              style={[styles.categoryTabContent]}
+                            >
+                              <View style={styles.categoryContent}>
+                                <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>
+                                  {category.name}
+                                </Text>
+                                <View style={[styles.badge, styles.activeBadge]}>
+                                  <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptionCount}</Text>
+                                </View>
+                              </View>
+                            </LinearGradient>
+                          ) : (
+                            <View style={styles.categoryTabContent}>
+                              <View style={styles.categoryContent}>
+                                <Text style={styles.categoryTabText}>{category.name}</Text>
+                                <View style={styles.badge}>
+                                  <Text style={styles.badgeText}>{subscriptionCount}</Text>
+                                </View>
                               </View>
                             </View>
-                          </LinearGradient>
-                        ) : (
-                          <View style={styles.categoryTabContent}>
-                            <View style={styles.categoryContent}>
-                              <Text style={styles.categoryTabText}>{category.name}</Text>
-                              <View style={styles.badge}>
-                                <Text style={styles.badgeText}>{subscriptionCount}</Text>
-                              </View>
-                            </View>
-                          </View>
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
+              {renderEmptyState()}
+            </View>
+          </ScrollView>
+        ) : (
+          <FlatList
+            data={finalFilteredSubscriptions}
+            keyExtractor={(item, index) =>
+              `subscription-${item.id}-${index}`
+            }
+            renderItem={({ item }) => (
+              <View style={styles.cardWrapper}>
+                <SubscriptionCard
+                  subscription={item}
+                  onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id!, isActive)}
+                  selectionMode={selectionMode}
+                  selected={selectedSubscriptions.includes(item.id!)}
+                  onToggleSelection={() => toggleSubscriptionSelection(item.id!)}
+                  disabled={toggleLoading}
+                  onPress={() => router.push(`/subscription/${item.id}`)}
+                  onRefresh={loadData}
+                />
               </View>
             )}
-
-            {/* Subscriptions List */}
-            {finalFilteredSubscriptions.length === 0 ? (
-              renderEmptyState()
-            ) : (
-              <FlatList
-                data={finalFilteredSubscriptions}
-                keyExtractor={(item, index) =>
-                  `subscription-${item.id}-${index}`
-                }
-                renderItem={({ item }) => (
-                  <View style={styles.cardWrapper}>
-                    <SubscriptionCard
-                      subscription={item}
-                      onToggleStatus={(isActive) => handleToggleSubscriptionStatus(item.id!, isActive)}
-                      selectionMode={selectionMode}
-                      selected={selectedSubscriptions.includes(item.id!)}
-                      onToggleSelection={() => toggleSubscriptionSelection(item.id!)}
-                      disabled={toggleLoading}
-                      onPress={() => router.push(`/subscription/${item.id}`)}
-                      onRefresh={loadData}
-                    />
-                  </View>
-                )}
-                contentContainerStyle={styles.listContent}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                    colors={['#4158D0']}
-                    tintColor="#4158D0"
-                    progressViewOffset={Platform.OS === 'android' ? 50 : 0}
-                  />
-                }
-                showsVerticalScrollIndicator={true}
-                scrollEnabled={true}
-                bounces={true}
-                ListEmptyComponent={renderEmptyState}
-                removeClippedSubviews={true}
-                maxToRenderPerBatch={10}
-                updateCellsBatchingPeriod={50}
-                initialNumToRender={10}
-                windowSize={10}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#4158D0']}
+                tintColor="#4158D0"
+                progressViewOffset={Platform.OS === 'android' ? 50 : 0}
               />
-            )}
-          </View>
+            }
+            showsVerticalScrollIndicator={true}
+            scrollEnabled={true}
+            bounces={true}
+            ListEmptyComponent={renderEmptyState}
+            ListHeaderComponent={
+              categories.length > 0 ? (
+                <View style={[
+                  styles.categoriesWrapper,
+                  selectedSubscriptions.length > 0 && styles.categoriesWrapperWithBulkSelection
+                ]}>
+                  <ScrollView
+                    ref={categoriesScrollViewRef}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.categoriesContainer}
+                    contentContainerStyle={styles.categoriesScrollContent}
+                    alwaysBounceHorizontal={false}
+                    nestedScrollEnabled={true}
+                  >
+                    <TouchableOpacity
+                      onPress={() => handleCategoryPress(null)}
+                      style={[
+                        styles.categoryTab,
+                        !activeCategory && styles.activeCategoryTab
+                      ]}
+                    >
+                      {!activeCategory ? (
+                        <LinearGradient
+                          colors={['#4158D0', '#C850C0']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={[styles.categoryTabContent]}
+                        >
+                          <View style={styles.categoryContent}>
+                            <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>All</Text>
+                            <View style={[styles.badge, styles.activeBadge]}>
+                              <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptions.length}</Text>
+                            </View>
+                          </View>
+                        </LinearGradient>
+                      ) : (
+                        <View style={styles.categoryTabContent}>
+                          <View style={styles.categoryContent}>
+                            <Text style={styles.categoryTabText}>All</Text>
+                            <View style={styles.badge}>
+                              <Text style={styles.badgeText}>{subscriptions.length}</Text>
+                            </View>
+                          </View>
+                        </View>
+                      )}
+                    </TouchableOpacity>
 
-          {/* <CustomLoader visible={toggleLoading} /> */}
-        </ScrollView>
+                    {categories.map(category => {
+                      const subscriptionCount = subscriptions.filter(sub => sub.category_id === category.id).length;
+                      return (
+                        <TouchableOpacity
+                          key={category.id}
+                          onPress={() => handleCategoryPress(category.id!)}
+                          style={[
+                            styles.categoryTab,
+                            activeCategory === category.id && styles.activeCategoryTab
+                          ]}
+                        >
+                          {activeCategory === category.id ? (
+                            <LinearGradient
+                              colors={['#4158D0', '#C850C0']}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 1, y: 1 }}
+                              style={[styles.categoryTabContent]}
+                            >
+                              <View style={styles.categoryContent}>
+                                <Text style={[styles.categoryTabText, styles.activeCategoryTabText]}>
+                                  {category.name}
+                                </Text>
+                                <View style={[styles.badge, styles.activeBadge]}>
+                                  <Text style={[styles.badgeText, styles.activeBadgeText]}>{subscriptionCount}</Text>
+                                </View>
+                              </View>
+                            </LinearGradient>
+                          ) : (
+                            <View style={styles.categoryTabContent}>
+                              <View style={styles.categoryContent}>
+                                <Text style={styles.categoryTabText}>{category.name}</Text>
+                                <View style={styles.badge}>
+                                  <Text style={styles.badgeText}>{subscriptionCount}</Text>
+                                </View>
+                              </View>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              ) : null
+            }
+            onScrollBeginDrag={() => setScrolling(true)}
+            onScrollEndDrag={() => setScrolling(false)}
+            onMomentumScrollBegin={() => setScrolling(true)}
+            onMomentumScrollEnd={() => setScrolling(false)}
+            scrollEventThrottle={16}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            updateCellsBatchingPeriod={50}
+            initialNumToRender={10}
+            windowSize={10}
+          />
+        )}
       </View>
 
       <FilterModal
@@ -721,6 +830,10 @@ export default function HomeScreen() {
         bankNames={bankNames}
         selectedBanks={selectedBanks}
         onSelectBanks={setSelectedBanks}
+        selectedPaymentTypes={selectedPaymentTypes}
+        onSelectPaymentTypes={setSelectedPaymentTypes}
+        selectedAutoRenewal={selectedAutoRenewal}
+        onSelectAutoRenewal={setSelectedAutoRenewal}
       />
 
       <NotificationBottomSheet
@@ -788,7 +901,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    marginTop: 10
   },
   headerContainer: {
     backgroundColor: '#fff',
@@ -886,29 +998,30 @@ const styles = StyleSheet.create({
     letterSpacing: -0.8,
   },
   mainContent: {
-    flex: 1,
     marginTop: 0,
-    zIndex: 1,
   },
   categoriesWrapper: {
     borderBottomColor: '#e6e6f0',
     marginTop: 0,
     marginHorizontal: 0,
     paddingHorizontal: 0,
-    paddingBottom: 0,
+    paddingBottom: 20,
+    paddingTop: 0,
   },
   categoriesWrapperWithBulkSelection: {
-    marginTop: 20,
+    marginTop: 0,
     paddingBottom: 0,
+    paddingTop: 0,
   },
   categoriesContainer: {
-    height: 40,
+    height: 38,
   },
   categoriesScrollContent: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
+    paddingHorizontal: 1,
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
+    paddingVertical: 0,
   },
   categoryTab: {
     borderRadius: 20,
@@ -916,7 +1029,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e6e6f0',
     minWidth: 40,
     height: 36,
-    marginHorizontal: 3,
+    marginHorizontal: 0,
   },
   categoryTabContent: {
     width: '100%',
@@ -924,7 +1037,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
   categoryContent: {
     flexDirection: 'row',

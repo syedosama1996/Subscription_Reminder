@@ -28,10 +28,8 @@ const PasswordInput = forwardRef<TextInput, PasswordInputProps>(
           secureTextEntry={!showPassword}
           autoCapitalize="none"
           placeholderTextColor="#95a5a6"
-            
         />
 
-        {/* Eye toggle */}
         <TouchableOpacity
           style={styles.eyeIcon}
           onPress={() => setShowPassword(!showPassword)}
